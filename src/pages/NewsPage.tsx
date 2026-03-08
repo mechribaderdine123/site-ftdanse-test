@@ -1,10 +1,15 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Filter, Calendar, ArrowLeft, ArrowRight } from "lucide-react";
+import { Search, Filter, Calendar as CalendarIcon, ArrowLeft, ArrowRight } from "lucide-react";
+import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { useLang } from "@/contexts/LangContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 import gallery1 from "@/assets/gallery1.jpg";
 import gallery2 from "@/assets/gallery2.jpg";
@@ -49,7 +54,8 @@ const NewsPage = () => {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [disciplineFilter, setDisciplineFilter] = useState("all");
-
+  const [startDate, setStartDate] = useState<Date>();
+  const [endDate, setEndDate] = useState<Date>();
   const filteredNews = newsData.filter((item) => {
     const matchSearch = t(item.titleKey).toLowerCase().includes(search.toLowerCase());
     const matchType = typeFilter === "all" || item.category === typeFilter;
@@ -122,24 +128,54 @@ const NewsPage = () => {
             </select>
 
             {/* Date Start */}
-            <div className="relative">
-              <Calendar className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder={t("np.dateStart")}
-                className="ps-9 pe-3 py-2 text-sm border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring w-36"
-              />
-            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-40 justify-start text-start font-normal text-sm gap-2",
+                    !startDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="w-4 h-4" />
+                  {startDate ? format(startDate, "dd/MM/yyyy") : t("np.dateStart")}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={startDate}
+                  onSelect={setStartDate}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
 
             {/* Date End */}
-            <div className="relative">
-              <Calendar className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder={t("np.dateEnd")}
-                className="ps-9 pe-3 py-2 text-sm border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring w-36"
-              />
-            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-40 justify-start text-start font-normal text-sm gap-2",
+                    !endDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="w-4 h-4" />
+                  {endDate ? format(endDate, "dd/MM/yyyy") : t("np.dateEnd")}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={endDate}
+                  onSelect={setEndDate}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
       </section>
