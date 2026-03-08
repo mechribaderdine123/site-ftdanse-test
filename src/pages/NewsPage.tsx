@@ -11,43 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-import gallery1 from "@/assets/gallery1.jpg";
-import gallery2 from "@/assets/gallery2.jpg";
-import gallery3 from "@/assets/gallery3.jpg";
-import gallery4 from "@/assets/gallery4.jpg";
-import gallery5 from "@/assets/gallery5.jpg";
-import gallery6 from "@/assets/gallery6.jpg";
-import heroDance from "@/assets/hero-dance.jpg";
-import news1 from "@/assets/news1.jpg";
-import news2 from "@/assets/news2.jpg";
+import { newsData } from "@/data/newsData";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
 };
-
-type NewsCategory = "competition" | "event";
-
-interface NewsItem {
-  id: number;
-  image: string;
-  category: NewsCategory;
-  date: string;
-  titleKey: string;
-  descKey: string;
-}
-
-const newsData: NewsItem[] = [
-  { id: 1, image: gallery1, category: "competition", date: "23 Sept 2023", titleKey: "np.card1.title", descKey: "np.card1.desc" },
-  { id: 2, image: gallery2, category: "event", date: "01 Nov 2023", titleKey: "np.card2.title", descKey: "np.card2.desc" },
-  { id: 3, image: gallery3, category: "competition", date: "01 Nov 2023", titleKey: "np.card3.title", descKey: "np.card3.desc" },
-  { id: 4, image: gallery4, category: "competition", date: "23 Sept 2023", titleKey: "np.card1.title", descKey: "np.card1.desc" },
-  { id: 5, image: gallery5, category: "event", date: "01 Nov 2023", titleKey: "np.card2.title", descKey: "np.card2.desc" },
-  { id: 6, image: gallery6, category: "competition", date: "01 Nov 2023", titleKey: "np.card3.title", descKey: "np.card3.desc" },
-  { id: 7, image: heroDance, category: "competition", date: "23 Sept 2023", titleKey: "np.card1.title", descKey: "np.card1.desc" },
-  { id: 8, image: news1, category: "event", date: "01 Nov 2023", titleKey: "np.card2.title", descKey: "np.card2.desc" },
-  { id: 9, image: news2, category: "competition", date: "01 Nov 2023", titleKey: "np.card3.title", descKey: "np.card3.desc" },
-];
 
 const NewsPage = () => {
   const { t } = useLang();
@@ -191,48 +160,39 @@ const NewsPage = () => {
             variants={fadeUp}
           >
             {filteredNews.map((item) => (
-              <motion.div
-                key={item.id}
-                className="bg-card rounded-xl border border-border overflow-hidden card-hover group"
-                variants={fadeUp}
-              >
-                {/* Image */}
-                <div className="relative h-52 overflow-hidden">
-                  <img
-                    src={item.image}
-                    alt={t(item.titleKey)}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <span
-                    className={`absolute top-3 start-3 px-3 py-1 text-[11px] font-semibold rounded-md text-accent-foreground ${
-                      item.category === "competition" ? "bg-accent" : "bg-accent"
-                    }`}
-                  >
-                    {item.category === "competition" ? t("np.competition") : t("np.event")}
-                  </span>
-                </div>
-
-                {/* Content */}
-                <div className="p-5">
-                  <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-2">
-                    <Calendar className="w-3.5 h-3.5" />
-                    {item.date}
+              <Link to={`/news/${item.id}`} key={item.id} className="block">
+                <motion.div
+                  className="bg-card rounded-xl border border-border overflow-hidden card-hover group h-full"
+                  variants={fadeUp}
+                >
+                  <div className="relative h-52 overflow-hidden">
+                    <img
+                      src={item.image}
+                      alt={t(item.titleKey)}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <span className="absolute top-3 start-3 px-3 py-1 text-[11px] font-semibold rounded-md text-accent-foreground bg-accent">
+                      {item.category === "competition" ? t("np.competition") : t("np.event")}
+                    </span>
                   </div>
-                  <h3 className="font-bold text-primary text-sm leading-snug mb-2">
-                    {t(item.titleKey)}
-                  </h3>
-                  <p className="text-muted-foreground text-xs leading-relaxed mb-4">
-                    {t(item.descKey)}
-                  </p>
-                  <a
-                    href="#"
-                    className="inline-flex items-center gap-1 text-accent text-xs font-semibold hover:gap-2 transition-all"
-                  >
-                    {t("np.readMore")}
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </a>
-                </div>
-              </motion.div>
+                  <div className="p-5">
+                    <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-2">
+                      <CalendarIcon className="w-3.5 h-3.5" />
+                      {item.date}
+                    </div>
+                    <h3 className="font-bold text-primary text-sm leading-snug mb-2">
+                      {t(item.titleKey)}
+                    </h3>
+                    <p className="text-muted-foreground text-xs leading-relaxed mb-4">
+                      {t(item.descKey)}
+                    </p>
+                    <span className="inline-flex items-center gap-1 text-accent text-xs font-semibold group-hover:gap-2 transition-all">
+                      {t("np.readMore")}
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </span>
+                  </div>
+                </motion.div>
+              </Link>
             ))}
           </motion.div>
 

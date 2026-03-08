@@ -205,6 +205,18 @@ export const translations: Record<Lang, Record<string, string>> = {
     "np.card2.desc": "Un événement dédié aux danses urbaines rassemblant les meilleurs talents de la scène tunisienne.",
     "np.card3.title": "Finales de la Coupe de Tunisie de Danse",
     "np.card3.desc": "Près de 500 athlètes de 17 associations participent aux finales au Centre Culturel de la Menzah.",
+    "np.card1.body": "La Fédération Nationale des Sports a dévoilé ce jour son plan stratégique quinquennal 2026-2030, un programme ambitieux qui vise à transformer en profondeur le paysage sportif national.\n\nCe plan repose sur quatre axes majeurs : le doublement du nombre de licenciés d'ici 2030, le renforcement de la compétitivité internationale, la modernisation des infrastructures sportives et le développement du sport pour tous.\n\nLe Président de la Fédération a souligné lors de la conférence de presse : « Nous avons l'ambition de faire de notre pays une référence mondiale du sport. Ce plan stratégique est le fruit d'une concertation large avec l'ensemble des acteurs du mouvement sportif. »\n\nUn budget de 50 millions d'euros sera mobilisé sur la période, avec un accent particulier sur la formation des cadres techniques et le soutien aux clubs de proximité.",
+    "np.card2.body": "L'événement Danse Urbaine « Monde de la Danse » a rassemblé les meilleurs talents de la scène tunisienne dans une compétition spectaculaire.\n\nLes participants venus de tout le pays ont présenté des performances exceptionnelles dans plusieurs catégories : solo, duo et groupe. Le jury international a salué le niveau remarquable des danseurs tunisiens.\n\nCette édition a également été marquée par des workshops animés par des chorégraphes de renommée internationale, offrant aux participants une opportunité unique de perfectionnement.",
+    "np.card3.body": "Les finales de la Coupe de Tunisie de Danse se sont tenues au Centre Culturel de la Menzah avec la participation de près de 500 athlètes représentant 17 associations.\n\nLes compétitions se sont déroulées dans 21 épreuves réparties sur 3 disciplines principales. Le niveau technique observé cette année témoigne de la progression constante de la danse sportive en Tunisie.\n\nLes résultats finaux ont confirmé la domination des clubs de la capitale tout en révélant de nouveaux talents prometteurs issus des régions.",
+
+    // ===== News Detail Page =====
+    "nd.backToNews": "← Retour aux actualités",
+    "nd.notFound": "Article introuvable",
+    "nd.gallery": "Galerie photos",
+    "nd.documents": "Documents attachés",
+    "nd.caption1": "Conférence de presse du plan stratégique 2026-2030",
+    "nd.caption2": "Les dirigeants de la fédération lors de l'annonce",
+    "nd.caption3": "Présentation des axes stratégiques",
   },
 
   en: {
@@ -400,6 +412,18 @@ export const translations: Record<Lang, Record<string, string>> = {
     "np.card2.desc": "An event dedicated to urban dances bringing together the best talents of the Tunisian scene.",
     "np.card3.title": "Tunisia Dance Cup Finals",
     "np.card3.desc": "Nearly 500 athletes from 17 associations participate in the finals at the Menzah Cultural Center.",
+    "np.card1.body": "The National Sports Federation today unveiled its five-year strategic plan 2026-2030, an ambitious program aimed at profoundly transforming the national sporting landscape.\n\nThe plan is based on four major pillars: doubling the number of licensed members by 2030, strengthening international competitiveness, modernizing sports infrastructure, and developing sport for all.\n\nThe Federation President emphasized at the press conference: 'We have the ambition to make our country a world reference in sport. This strategic plan is the result of broad consultation with all stakeholders in the sports movement.'\n\nA budget of 50 million euros will be mobilized over the period, with particular emphasis on training technical staff and supporting local clubs.",
+    "np.card2.body": "The Urban Dance 'World of Dance' event brought together the best talents of the Tunisian scene in a spectacular competition.\n\nParticipants from across the country presented exceptional performances in several categories: solo, duo, and group. The international jury praised the remarkable level of Tunisian dancers.\n\nThis edition was also marked by workshops led by internationally renowned choreographers, offering participants a unique opportunity for improvement.",
+    "np.card3.body": "The Tunisia Dance Cup finals were held at the Menzah Cultural Center with the participation of nearly 500 athletes representing 17 associations.\n\nCompetitions took place in 21 events across 3 main disciplines. The technical level observed this year reflects the steady progress of sports dance in Tunisia.\n\nThe final results confirmed the dominance of capital clubs while revealing promising new talents from the regions.",
+
+    // ===== News Detail Page =====
+    "nd.backToNews": "← Back to news",
+    "nd.notFound": "Article not found",
+    "nd.gallery": "Photo gallery",
+    "nd.documents": "Attached documents",
+    "nd.caption1": "Press conference for the 2026-2030 strategic plan",
+    "nd.caption2": "Federation leaders during the announcement",
+    "nd.caption3": "Presentation of strategic pillars",
   },
 
   ar: {
@@ -595,5 +619,17 @@ export const translations: Record<Lang, Record<string, string>> = {
     "np.card2.desc": "حدث مخصص للرقصات الحضرية يجمع أفضل المواهب في الساحة التونسية.",
     "np.card3.title": "نهائيات كأس تونس للرقص",
     "np.card3.desc": "قرابة 500 رياضي من 17 جمعية يشاركون في النهائيات بالمركز الثقافي بالمنزه.",
+    "np.card1.body": "كشفت الجامعة الوطنية للرياضة اليوم عن خطتها الاستراتيجية الخماسية 2026-2030، وهو برنامج طموح يهدف إلى تحويل المشهد الرياضي الوطني بشكل عميق.\n\nتقوم الخطة على أربعة محاور رئيسية: مضاعفة عدد المنخرطين بحلول 2030، وتعزيز التنافسية الدولية، وتحديث البنية التحتية الرياضية، وتطوير الرياضة للجميع.\n\nأكد رئيس الجامعة خلال المؤتمر الصحفي: « لدينا طموح لجعل بلدنا مرجعاً عالمياً في الرياضة. هذه الخطة الاستراتيجية هي ثمرة تشاور واسع مع جميع الفاعلين في الحركة الرياضية. »\n\nسيتم تعبئة ميزانية قدرها 50 مليون يورو خلال هذه الفترة، مع التركيز بشكل خاص على تكوين الأطر التقنية ودعم الأندية المحلية.",
+    "np.card2.body": "جمع حدث الرقص الحضري « عالم الرقص » أفضل المواهب في الساحة التونسية في مسابقة مذهلة.\n\nقدم المشاركون القادمون من جميع أنحاء البلاد عروضاً استثنائية في عدة فئات: فردي، ثنائي وجماعي. أشاد الحكام الدوليون بالمستوى الرائع للراقصين التونسيين.\n\nتميزت هذه النسخة أيضاً بورشات عمل أدارها مصممو رقص ذوو شهرة دولية، مما وفر للمشاركين فرصة فريدة للتطوير.",
+    "np.card3.body": "أقيمت نهائيات كأس تونس للرقص في المركز الثقافي بالمنزه بمشاركة قرابة 500 رياضي يمثلون 17 جمعية.\n\nجرت المسابقات في 21 اختباراً موزعة على 3 تخصصات رئيسية. يشهد المستوى التقني المرصود هذا العام على التقدم المستمر للرقص الرياضي في تونس.\n\nأكدت النتائج النهائية هيمنة أندية العاصمة مع الكشف عن مواهب جديدة واعدة من الجهات.",
+
+    // ===== News Detail Page =====
+    "nd.backToNews": "← العودة إلى الأخبار",
+    "nd.notFound": "المقال غير موجود",
+    "nd.gallery": "معرض الصور",
+    "nd.documents": "الوثائق المرفقة",
+    "nd.caption1": "مؤتمر صحفي للخطة الاستراتيجية 2026-2030",
+    "nd.caption2": "قيادات الجامعة خلال الإعلان",
+    "nd.caption3": "عرض المحاور الاستراتيجية",
   },
 };
