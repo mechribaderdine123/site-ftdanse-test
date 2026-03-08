@@ -96,15 +96,24 @@ export const translations: Record<Lang, Record<string, string>> = {
     "gallery.desc": "Revivez les moments forts de nos événements et compétitions.",
 
     // Footer
-    "footer.desc": "Fédération Tunisienne de Danse et des Activités Parallèles. Promouvoir la danse sous toutes ses formes.",
+    "footer.desc": "Développer, organiser et promouvoir la pratique de la danse sous toutes ses formes en Tunisie depuis 1989.",
+    "footer.subtitle": "Fédération Tunisienne de Danse",
     "footer.quickLinks": "Liens Rapides",
     "footer.resources": "Ressources",
     "footer.contact": "Contact",
+    "footer.contactUs": "Contactez-Nous",
     "footer.clubs": "Clubs",
     "footer.refereeing": "Arbitrage",
     "footer.regulations": "Règlements",
-    "footer.address": "Cité Nationale Sportive, Tunis, Tunisie",
-    "footer.copyright": "© 2026 FTDAP – Fédération Tunisienne de Danse et des Activités Parallèles. Tous droits réservés.",
+    "footer.results": "Résultats",
+    "footer.directory": "Annuaire",
+    "footer.documents": "Documents",
+    "footer.disciplines": "Disciplines",
+    "footer.classique": "Danse Classique",
+    "footer.contemporain": "Contemporain",
+    "footer.worldDance": "Danses du Monde",
+    "footer.address": "4, Rue de la Ligue Arabe, Belvédère, Tunis, Tunisie",
+    "footer.copyright": "© 2024 FTDAP — Fédération Tunisienne de Danse et Activités Associées",
 
     // ===== About Page =====
     "ap.label": "À Propos",
