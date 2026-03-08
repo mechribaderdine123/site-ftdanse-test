@@ -160,48 +160,39 @@ const NewsPage = () => {
             variants={fadeUp}
           >
             {filteredNews.map((item) => (
-              <motion.div
-                key={item.id}
-                className="bg-card rounded-xl border border-border overflow-hidden card-hover group"
-                variants={fadeUp}
-              >
-                {/* Image */}
-                <div className="relative h-52 overflow-hidden">
-                  <img
-                    src={item.image}
-                    alt={t(item.titleKey)}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <span
-                    className={`absolute top-3 start-3 px-3 py-1 text-[11px] font-semibold rounded-md text-accent-foreground ${
-                      item.category === "competition" ? "bg-accent" : "bg-accent"
-                    }`}
-                  >
-                    {item.category === "competition" ? t("np.competition") : t("np.event")}
-                  </span>
-                </div>
-
-                {/* Content */}
-                <div className="p-5">
-                  <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-2">
-                    <Calendar className="w-3.5 h-3.5" />
-                    {item.date}
+              <Link to={`/news/${item.id}`} key={item.id} className="block">
+                <motion.div
+                  className="bg-card rounded-xl border border-border overflow-hidden card-hover group h-full"
+                  variants={fadeUp}
+                >
+                  <div className="relative h-52 overflow-hidden">
+                    <img
+                      src={item.image}
+                      alt={t(item.titleKey)}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <span className="absolute top-3 start-3 px-3 py-1 text-[11px] font-semibold rounded-md text-accent-foreground bg-accent">
+                      {item.category === "competition" ? t("np.competition") : t("np.event")}
+                    </span>
                   </div>
-                  <h3 className="font-bold text-primary text-sm leading-snug mb-2">
-                    {t(item.titleKey)}
-                  </h3>
-                  <p className="text-muted-foreground text-xs leading-relaxed mb-4">
-                    {t(item.descKey)}
-                  </p>
-                  <a
-                    href="#"
-                    className="inline-flex items-center gap-1 text-accent text-xs font-semibold hover:gap-2 transition-all"
-                  >
-                    {t("np.readMore")}
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </a>
-                </div>
-              </motion.div>
+                  <div className="p-5">
+                    <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-2">
+                      <CalendarIcon className="w-3.5 h-3.5" />
+                      {item.date}
+                    </div>
+                    <h3 className="font-bold text-primary text-sm leading-snug mb-2">
+                      {t(item.titleKey)}
+                    </h3>
+                    <p className="text-muted-foreground text-xs leading-relaxed mb-4">
+                      {t(item.descKey)}
+                    </p>
+                    <span className="inline-flex items-center gap-1 text-accent text-xs font-semibold group-hover:gap-2 transition-all">
+                      {t("np.readMore")}
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </span>
+                  </div>
+                </motion.div>
+              </Link>
             ))}
           </motion.div>
 
