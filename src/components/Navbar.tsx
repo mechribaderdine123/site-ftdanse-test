@@ -28,15 +28,25 @@ const Navbar = () => {
           <span className="text-accent">●</span> FTDAP
         </a>
         <div className="hidden lg:flex items-center gap-6">
-          {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors"
-            >
-              {link.label}
-            </a>
-          ))}
+          {navLinks.map((link) =>
+            link.href.startsWith("/") ? (
+              <Link
+                key={link.href}
+                to={link.href}
+                className="text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors"
+              >
+                {link.label}
+              </Link>
+            ) : (
+              <a
+                key={link.href}
+                href={link.href}
+                className="text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors"
+              >
+                {link.label}
+              </a>
+            )
+          )}
         </div>
         <div className="hidden lg:flex items-center gap-3">
           {/* Language Switcher */}
