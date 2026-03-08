@@ -1,9 +1,15 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Filter, Calendar, ArrowLeft, ArrowRight } from "lucide-react";
+import { Search, Filter, Calendar as CalendarIcon, ArrowLeft, ArrowRight } from "lucide-react";
+import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { useLang } from "@/contexts/LangContext";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import Footer from "@/components/Footer";
 
 import gallery1 from "@/assets/gallery1.jpg";
