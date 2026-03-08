@@ -412,6 +412,18 @@ export const translations: Record<Lang, Record<string, string>> = {
     "np.card2.desc": "An event dedicated to urban dances bringing together the best talents of the Tunisian scene.",
     "np.card3.title": "Tunisia Dance Cup Finals",
     "np.card3.desc": "Nearly 500 athletes from 17 associations participate in the finals at the Menzah Cultural Center.",
+    "np.card1.body": "The National Sports Federation today unveiled its five-year strategic plan 2026-2030, an ambitious program aimed at profoundly transforming the national sporting landscape.\n\nThe plan is based on four major pillars: doubling the number of licensed members by 2030, strengthening international competitiveness, modernizing sports infrastructure, and developing sport for all.\n\nThe Federation President emphasized at the press conference: 'We have the ambition to make our country a world reference in sport. This strategic plan is the result of broad consultation with all stakeholders in the sports movement.'\n\nA budget of 50 million euros will be mobilized over the period, with particular emphasis on training technical staff and supporting local clubs.",
+    "np.card2.body": "The Urban Dance 'World of Dance' event brought together the best talents of the Tunisian scene in a spectacular competition.\n\nParticipants from across the country presented exceptional performances in several categories: solo, duo, and group. The international jury praised the remarkable level of Tunisian dancers.\n\nThis edition was also marked by workshops led by internationally renowned choreographers, offering participants a unique opportunity for improvement.",
+    "np.card3.body": "The Tunisia Dance Cup finals were held at the Menzah Cultural Center with the participation of nearly 500 athletes representing 17 associations.\n\nCompetitions took place in 21 events across 3 main disciplines. The technical level observed this year reflects the steady progress of sports dance in Tunisia.\n\nThe final results confirmed the dominance of capital clubs while revealing promising new talents from the regions.",
+
+    // ===== News Detail Page =====
+    "nd.backToNews": "← Back to news",
+    "nd.notFound": "Article not found",
+    "nd.gallery": "Photo gallery",
+    "nd.documents": "Attached documents",
+    "nd.caption1": "Press conference for the 2026-2030 strategic plan",
+    "nd.caption2": "Federation leaders during the announcement",
+    "nd.caption3": "Presentation of strategic pillars",
   },
 
   ar: {
