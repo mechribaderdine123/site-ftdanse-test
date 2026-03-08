@@ -510,12 +510,12 @@ export const translations: Record<Lang, Record<string, string>> = {
 
     "ap.commissions.label": "التنظيم",
     "ap.commissions.title": "اللجان",
-    "ap.commission.arbitrage": "التحكيم",
-    "ap.commission.formation": "التكوين",
-    "ap.commission.competitions": "المسابقات",
-    "ap.commission.discipline": "الانضباط",
-    "ap.commission.medical": "الطبية",
-    "ap.commission.communication": "الاتصال",
+    "ap.commission.arbitrage": "لجنة التحكيم",
+    "ap.commission.formation": "لجنة التكوين",
+    "ap.commission.competitions": "لجنة المسابقات",
+    "ap.commission.discipline": "لجنة الانضباط",
+    "ap.commission.medical": "اللجنة الطبية",
+    "ap.commission.communication": "لجنة الاتصال",
 
     "ap.partners.label": "المنظومة",
     "ap.partners.title": "الشركاء المؤسساتيون",
