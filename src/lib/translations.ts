@@ -380,6 +380,26 @@ export const translations: Record<Lang, Record<string, string>> = {
     "ap.affil4": "Municipality of Tunis",
     "ap.affil5": "World DanceSport Federation",
     "ap.affil6": "African Dance Federation",
+
+    // ===== News Page =====
+    "np.back": "← Back to home",
+    "np.title": "News",
+    "np.subtitle": "Official communications, federal announcements and latest news from sporting events.",
+    "np.search": "Search news...",
+    "np.allTypes": "All types",
+    "np.allDisciplines": "All disciplines",
+    "np.competition": "Competition",
+    "np.event": "Event",
+    "np.dateStart": "Start date",
+    "np.dateEnd": "End date",
+    "np.readMore": "Read more",
+    "np.noResults": "No news found.",
+    "np.card1.title": "National Dance Championship Final in Ben Arous",
+    "np.card1.desc": "With the participation of 23 sports associations from different regions in 21 events and 3 disciplines.",
+    "np.card2.title": "Urban Dance « World of Dance »",
+    "np.card2.desc": "An event dedicated to urban dances bringing together the best talents of the Tunisian scene.",
+    "np.card3.title": "Tunisia Dance Cup Finals",
+    "np.card3.desc": "Nearly 500 athletes from 17 associations participate in the finals at the Menzah Cultural Center.",
   },
 
   ar: {
