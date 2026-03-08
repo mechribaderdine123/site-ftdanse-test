@@ -335,12 +335,12 @@ export const translations: Record<Lang, Record<string, string>> = {
 
     "ap.commissions.label": "Organization",
     "ap.commissions.title": "Commissions",
-    "ap.commission.arbitrage": "Refereeing",
-    "ap.commission.formation": "Training",
-    "ap.commission.competitions": "Competitions",
-    "ap.commission.discipline": "Discipline",
-    "ap.commission.medical": "Medical",
-    "ap.commission.communication": "Communication",
+    "ap.commission.arbitrage": "Refereeing Commission",
+    "ap.commission.formation": "Training Commission",
+    "ap.commission.competitions": "Competitions Commission",
+    "ap.commission.discipline": "Discipline Commission",
+    "ap.commission.medical": "Medical Commission",
+    "ap.commission.communication": "Communication Commission",
 
     "ap.partners.label": "Ecosystem",
     "ap.partners.title": "Institutional Partners",
