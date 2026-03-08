@@ -89,16 +89,27 @@ const Navbar = () => {
       </div>
       {open && (
         <div className="lg:hidden bg-primary border-t border-primary-foreground/10 pb-4">
-          {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="block px-6 py-2 text-sm text-primary-foreground/80 hover:text-primary-foreground"
-              onClick={() => setOpen(false)}
-            >
-              {link.label}
-            </a>
-          ))}
+          {navLinks.map((link) =>
+            link.href.startsWith("/") ? (
+              <Link
+                key={link.href}
+                to={link.href}
+                className="block px-6 py-2 text-sm text-primary-foreground/80 hover:text-primary-foreground"
+                onClick={() => setOpen(false)}
+              >
+                {link.label}
+              </Link>
+            ) : (
+              <a
+                key={link.href}
+                href={link.href}
+                className="block px-6 py-2 text-sm text-primary-foreground/80 hover:text-primary-foreground"
+                onClick={() => setOpen(false)}
+              >
+                {link.label}
+              </a>
+            )
+          )}
           <div className="px-6 pt-3 flex items-center gap-2">
             {(Object.keys(langLabels) as Lang[]).map((l) => (
               <button
