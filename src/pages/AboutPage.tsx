@@ -5,8 +5,7 @@ import Footer from "@/components/Footer";
 import {
   Target, Eye, Flag, Clock, TrendingUp, Star,
   User, Users, FileText, DollarSign, Briefcase,
-  Gavel, GraduationCap, Trophy, ShieldAlert, HeartPulse, Megaphone,
-  Building2, Landmark, Globe2, Award
+  Landmark, Building2, Globe2, Award
 } from "lucide-react";
 
 import heroDanceImg from "@/assets/hero-dance.jpg";
@@ -42,12 +41,8 @@ const AboutPage = () => {
   ];
 
   const commissions = [
-    { icon: Gavel, key: "arbitrage" },
-    { icon: GraduationCap, key: "formation" },
-    { icon: Trophy, key: "competitions" },
-    { icon: ShieldAlert, key: "discipline" },
-    { icon: HeartPulse, key: "medical" },
-    { icon: Megaphone, key: "communication" },
+    "arbitrage", "formation", "competitions",
+    "discipline", "medical", "communication",
   ];
 
   const partners = [
@@ -60,65 +55,69 @@ const AboutPage = () => {
   ];
 
   const affiliations = [
-    { icon: Globe2, key: "affil1" },
-    { icon: Award, key: "affil2" },
+    { icon: Landmark, key: "affil1" },
+    { icon: Building2, key: "affil2" },
     { icon: Globe2, key: "affil3" },
     { icon: Award, key: "affil4" },
+    { icon: Globe2, key: "affil5" },
+    { icon: Award, key: "affil6" },
   ];
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* Hero / Intro Section */}
-      <section className="pt-24 pb-16">
+      {/* Hero Row 1: Single large image + intro text */}
+      <section className="pt-24 pb-8">
         <div className="container mx-auto px-4">
-          {/* Row 1: Images + Intro Text */}
           <motion.div
-            className="grid md:grid-cols-2 gap-8 items-center mb-16"
+            className="grid md:grid-cols-2 gap-10 items-center"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={fadeUp}
           >
-            <div className="grid grid-cols-2 gap-3">
-              <img
-                src={heroDanceImg}
-                alt="Dance"
-                className="rounded-xl w-full h-48 object-cover"
-              />
-              <img
-                src={danceAboutImg}
-                alt="Dance"
-                className="rounded-xl w-full h-48 object-cover"
-              />
-            </div>
+            <img
+              src={heroDanceImg}
+              alt="Dance performance"
+              className="rounded-2xl w-full h-72 md:h-80 object-cover"
+            />
             <div>
-              <p className="section-label mb-2">{t("ap.label")}</p>
-              <h1 className="text-3xl md:text-4xl font-bold text-primary leading-tight mb-4">
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-primary leading-tight mb-4">
                 {t("ap.intro.title1")}{" "}
                 <span className="italic text-accent">{t("ap.intro.title2")}</span>
               </h1>
-              <p className="text-muted-foreground leading-relaxed">
+              <p className="text-muted-foreground leading-relaxed text-sm md:text-base">
                 {t("ap.intro.desc")}
               </p>
             </div>
           </motion.div>
+        </div>
+      </section>
 
-          {/* Row 2: Pratiques */}
+      {/* Hero Row 2: Image + pratiques */}
+      <section className="pb-16">
+        <div className="container mx-auto px-4">
           <motion.div
-            className="grid md:grid-cols-2 gap-8 items-center"
+            className="grid md:grid-cols-2 gap-10 items-center"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={fadeUp}
           >
+            <img
+              src={danceAboutImg}
+              alt="Dance group"
+              className="rounded-2xl w-full h-72 md:h-80 object-cover"
+            />
             <div>
-              <h2 className="text-2xl md:text-3xl font-bold text-primary mb-2">
+              <h2 className="text-2xl md:text-3xl font-bold text-primary mb-3">
                 {t("ap.pratiques.title1")}{" "}
                 <span className="italic text-accent">{t("ap.pratiques.title2")}</span>
               </h2>
-              <p className="text-muted-foreground mb-4">{t("ap.pratiques.desc")}</p>
+              <p className="text-muted-foreground text-sm md:text-base leading-relaxed mb-5">
+                {t("ap.pratiques.desc")}
+              </p>
               <div className="flex flex-wrap gap-2">
                 {["Breakdance", "Hip-Hop", "Contemporain", "Jazz", "Classique", "Danse Sportive"].map((d) => (
                   <span
@@ -130,11 +129,6 @@ const AboutPage = () => {
                 ))}
               </div>
             </div>
-            <img
-              src={styleBreakdanceImg}
-              alt="Pratiques"
-              className="rounded-xl w-full h-56 object-cover"
-            />
           </motion.div>
         </div>
       </section>
@@ -152,12 +146,12 @@ const AboutPage = () => {
             {missionCards.map(({ icon: Icon, key }) => (
               <div
                 key={key}
-                className="bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/20 rounded-xl p-6 text-center"
+                className="bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/20 rounded-xl p-6"
               >
-                <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-accent flex items-center justify-center">
-                  <Icon className="w-6 h-6 text-accent-foreground" />
+                <div className="w-12 h-12 mb-4 rounded-full bg-accent/20 flex items-center justify-center">
+                  <Icon className="w-6 h-6 text-accent" />
                 </div>
-                <h3 className="text-lg font-bold text-accent mb-2">
+                <h3 className="text-base font-bold text-accent mb-2">
                   {t(`ap.${key}.title`)}
                 </h3>
                 <p className="text-primary-foreground/80 text-sm leading-relaxed">
@@ -179,12 +173,10 @@ const AboutPage = () => {
             viewport={{ once: true }}
             variants={fadeUp}
           >
-            <p className="section-label mb-2">{t("ap.history.label")}</p>
             <h2 className="section-title">{t("ap.history.title")}</h2>
           </motion.div>
 
           <div className="relative max-w-3xl mx-auto">
-            {/* Vertical line */}
             <div className="absolute start-6 md:start-1/2 top-0 bottom-0 w-0.5 bg-border -translate-x-1/2" />
 
             {timeline.map(({ icon: Icon, year, key }, i) => (
@@ -198,12 +190,10 @@ const AboutPage = () => {
                 viewport={{ once: true }}
                 variants={fadeUp}
               >
-                {/* Dot */}
                 <div className="absolute start-6 md:start-1/2 w-12 h-12 -translate-x-1/2 rounded-full bg-accent flex items-center justify-center z-10">
                   <Icon className="w-5 h-5 text-accent-foreground" />
                 </div>
 
-                {/* Content */}
                 <div
                   className={`ms-20 md:ms-0 md:w-[calc(50%-2rem)] ${
                     i % 2 === 0 ? "md:pe-8 md:text-end" : "md:ps-8"
@@ -224,50 +214,6 @@ const AboutPage = () => {
       </section>
 
       {/* Bureau Fédéral */}
-      <section className="py-16 bg-muted">
-        <div className="container mx-auto px-4">
-          <motion.div
-            className="text-center mb-12"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeUp}
-          >
-            <p className="section-label mb-2">{t("ap.bureau.label")}</p>
-            <h2 className="section-title">{t("ap.bureau.title")}</h2>
-          </motion.div>
-
-          <motion.div
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeUp}
-          >
-            {bureau.map(({ icon: Icon, key }) => (
-              <div
-                key={key}
-                className="bg-card rounded-xl border border-border p-5 text-center card-hover"
-              >
-                <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Icon className="w-7 h-7 text-primary" />
-                </div>
-                <h4 className="font-bold text-primary text-sm">
-                  {t(`ap.bureau.${key}.name`)}
-                </h4>
-                <p className="text-accent text-xs font-semibold mt-1">
-                  {t(`ap.bureau.${key}.role`)}
-                </p>
-                <p className="text-muted-foreground text-[11px] mt-1">
-                  {t(`ap.bureau.${key}.date`)}
-                </p>
-              </div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Commissions */}
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4">
           <motion.div
@@ -277,26 +223,94 @@ const AboutPage = () => {
             viewport={{ once: true }}
             variants={fadeUp}
           >
-            <p className="section-label mb-2">{t("ap.commissions.label")}</p>
-            <h2 className="section-title">{t("ap.commissions.title")}</h2>
+            <h2 className="section-title">{t("ap.bureau.title")}</h2>
           </motion.div>
 
           <motion.div
-            className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-3xl mx-auto"
+            className="max-w-4xl mx-auto"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={fadeUp}
           >
-            {commissions.map(({ icon: Icon, key }) => (
+            {/* Top row: 3 members */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+              {bureau.slice(0, 3).map(({ icon: Icon, key }) => (
+                <div
+                  key={key}
+                  className="bg-card rounded-xl border border-border p-5 flex items-start gap-4 card-hover"
+                >
+                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+                    <Icon className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-primary text-sm">
+                      {t(`ap.bureau.${key}.name`)}
+                    </h4>
+                    <p className="text-accent text-xs font-semibold mt-0.5">
+                      {t(`ap.bureau.${key}.role`)}
+                    </p>
+                    <p className="text-muted-foreground text-[11px] mt-0.5">
+                      {t(`ap.bureau.${key}.date`)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* Bottom row: 2 members centered */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
+              {bureau.slice(3).map(({ icon: Icon, key }) => (
+                <div
+                  key={key}
+                  className="bg-card rounded-xl border border-border p-5 flex items-start gap-4 card-hover"
+                >
+                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+                    <Icon className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-primary text-sm">
+                      {t(`ap.bureau.${key}.name`)}
+                    </h4>
+                    <p className="text-accent text-xs font-semibold mt-0.5">
+                      {t(`ap.bureau.${key}.role`)}
+                    </p>
+                    <p className="text-muted-foreground text-[11px] mt-0.5">
+                      {t(`ap.bureau.${key}.date`)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Commissions */}
+      <section className="py-12 bg-background">
+        <div className="container mx-auto px-4">
+          <motion.div
+            className="text-center mb-8"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeUp}
+          >
+            <h2 className="section-title text-2xl">{t("ap.commissions.title")}</h2>
+          </motion.div>
+
+          <motion.div
+            className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-4xl mx-auto"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeUp}
+          >
+            {commissions.map((key) => (
               <div
                 key={key}
-                className="flex items-center gap-3 bg-card rounded-xl border border-border p-4 card-hover"
+                className="bg-card rounded-lg border border-border py-3 px-5 text-center card-hover"
               >
-                <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
-                  <Icon className="w-5 h-5 text-accent" />
-                </div>
-                <span className="font-semibold text-primary text-sm">
+                <span className="font-medium text-primary text-sm">
                   {t(`ap.commission.${key}`)}
                 </span>
               </div>
@@ -305,9 +319,18 @@ const AboutPage = () => {
         </div>
       </section>
 
-      {/* Partenaires Institutionnels */}
+      {/* Partenaires */}
       <section className="py-16 bg-muted">
         <div className="container mx-auto px-4">
+          <motion.div
+            className="text-center mb-3"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeUp}
+          >
+            <h2 className="section-title text-accent">{t("ap.partners.mainTitle")}</h2>
+          </motion.div>
           <motion.div
             className="text-center mb-10"
             initial="hidden"
@@ -315,12 +338,11 @@ const AboutPage = () => {
             viewport={{ once: true }}
             variants={fadeUp}
           >
-            <p className="section-label mb-2">{t("ap.partners.label")}</p>
-            <h2 className="section-title">{t("ap.partners.title")}</h2>
+            <p className="text-muted-foreground font-medium">{t("ap.partners.title")}</p>
           </motion.div>
 
           <motion.div
-            className="grid grid-cols-3 md:grid-cols-6 gap-4"
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 max-w-5xl mx-auto"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
@@ -329,10 +351,10 @@ const AboutPage = () => {
             {partners.map(({ icon: Icon, key }) => (
               <div
                 key={key}
-                className="bg-card rounded-xl border border-border p-4 flex flex-col items-center justify-center text-center card-hover"
+                className="bg-card rounded-xl border border-border p-5 flex flex-col items-center justify-center text-center card-hover min-h-[120px]"
               >
-                <Icon className="w-8 h-8 text-primary mb-2" />
-                <span className="text-xs font-medium text-muted-foreground">
+                <Icon className="w-8 h-8 text-accent mb-3" />
+                <span className="text-[11px] font-medium text-muted-foreground leading-tight">
                   {t(`ap.${key}`)}
                 </span>
               </div>
@@ -351,12 +373,11 @@ const AboutPage = () => {
             viewport={{ once: true }}
             variants={fadeUp}
           >
-            <p className="section-label mb-2">{t("ap.affiliations.label")}</p>
             <h2 className="section-title">{t("ap.affiliations.title")}</h2>
           </motion.div>
 
           <motion.div
-            className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto"
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 max-w-5xl mx-auto"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
@@ -365,10 +386,10 @@ const AboutPage = () => {
             {affiliations.map(({ icon: Icon, key }) => (
               <div
                 key={key}
-                className="bg-card rounded-xl border border-border p-5 flex flex-col items-center justify-center text-center card-hover"
+                className="bg-card rounded-xl border border-border p-5 flex flex-col items-center justify-center text-center card-hover min-h-[120px]"
               >
-                <Icon className="w-8 h-8 text-accent mb-2" />
-                <span className="text-xs font-medium text-foreground">
+                <Icon className="w-8 h-8 text-accent mb-3" />
+                <span className="text-[11px] font-medium text-muted-foreground leading-tight">
                   {t(`ap.${key}`)}
                 </span>
               </div>
