@@ -160,12 +160,12 @@ export const translations: Record<Lang, Record<string, string>> = {
 
     "ap.commissions.label": "Organisation",
     "ap.commissions.title": "Commissions",
-    "ap.commission.arbitrage": "Arbitrage",
-    "ap.commission.formation": "Formation",
-    "ap.commission.competitions": "Compétitions",
-    "ap.commission.discipline": "Discipline",
-    "ap.commission.medical": "Médicale",
-    "ap.commission.communication": "Communication",
+    "ap.commission.arbitrage": "Commission d'Arbitrage",
+    "ap.commission.formation": "Commission de Formation",
+    "ap.commission.competitions": "Commission des Compétitions",
+    "ap.commission.discipline": "Commission de Discipline",
+    "ap.commission.medical": "Commission Médicale",
+    "ap.commission.communication": "Commission Communication",
 
     "ap.partners.label": "Écosystème",
     "ap.partners.title": "Partenaires Institutionnels",
