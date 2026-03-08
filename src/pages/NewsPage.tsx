@@ -54,7 +54,8 @@ const NewsPage = () => {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [disciplineFilter, setDisciplineFilter] = useState("all");
-
+  const [startDate, setStartDate] = useState<Date>();
+  const [endDate, setEndDate] = useState<Date>();
   const filteredNews = newsData.filter((item) => {
     const matchSearch = t(item.titleKey).toLowerCase().includes(search.toLowerCase());
     const matchType = typeFilter === "all" || item.category === typeFilter;
