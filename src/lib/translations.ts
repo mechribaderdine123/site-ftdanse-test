@@ -205,6 +205,18 @@ export const translations: Record<Lang, Record<string, string>> = {
     "np.card2.desc": "Un événement dédié aux danses urbaines rassemblant les meilleurs talents de la scène tunisienne.",
     "np.card3.title": "Finales de la Coupe de Tunisie de Danse",
     "np.card3.desc": "Près de 500 athlètes de 17 associations participent aux finales au Centre Culturel de la Menzah.",
+    "np.card1.body": "La Fédération Nationale des Sports a dévoilé ce jour son plan stratégique quinquennal 2026-2030, un programme ambitieux qui vise à transformer en profondeur le paysage sportif national.\n\nCe plan repose sur quatre axes majeurs : le doublement du nombre de licenciés d'ici 2030, le renforcement de la compétitivité internationale, la modernisation des infrastructures sportives et le développement du sport pour tous.\n\nLe Président de la Fédération a souligné lors de la conférence de presse : « Nous avons l'ambition de faire de notre pays une référence mondiale du sport. Ce plan stratégique est le fruit d'une concertation large avec l'ensemble des acteurs du mouvement sportif. »\n\nUn budget de 50 millions d'euros sera mobilisé sur la période, avec un accent particulier sur la formation des cadres techniques et le soutien aux clubs de proximité.",
+    "np.card2.body": "L'événement Danse Urbaine « Monde de la Danse » a rassemblé les meilleurs talents de la scène tunisienne dans une compétition spectaculaire.\n\nLes participants venus de tout le pays ont présenté des performances exceptionnelles dans plusieurs catégories : solo, duo et groupe. Le jury international a salué le niveau remarquable des danseurs tunisiens.\n\nCette édition a également été marquée par des workshops animés par des chorégraphes de renommée internationale, offrant aux participants une opportunité unique de perfectionnement.",
+    "np.card3.body": "Les finales de la Coupe de Tunisie de Danse se sont tenues au Centre Culturel de la Menzah avec la participation de près de 500 athlètes représentant 17 associations.\n\nLes compétitions se sont déroulées dans 21 épreuves réparties sur 3 disciplines principales. Le niveau technique observé cette année témoigne de la progression constante de la danse sportive en Tunisie.\n\nLes résultats finaux ont confirmé la domination des clubs de la capitale tout en révélant de nouveaux talents prometteurs issus des régions.",
+
+    // ===== News Detail Page =====
+    "nd.backToNews": "← Retour aux actualités",
+    "nd.notFound": "Article introuvable",
+    "nd.gallery": "Galerie photos",
+    "nd.documents": "Documents attachés",
+    "nd.caption1": "Conférence de presse du plan stratégique 2026-2030",
+    "nd.caption2": "Les dirigeants de la fédération lors de l'annonce",
+    "nd.caption3": "Présentation des axes stratégiques",
   },
 
   en: {
