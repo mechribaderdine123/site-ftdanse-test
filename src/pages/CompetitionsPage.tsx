@@ -213,10 +213,10 @@ const CompetitionsPage = () => {
                 </div>
 
                 {/* Details Button */}
-                <button className="flex items-center gap-1.5 bg-primary text-primary-foreground text-xs font-semibold px-4 py-2.5 rounded-lg hover:opacity-90 transition-opacity shrink-0">
+                <Link to={`/competitions/${comp.id}`} className="flex items-center gap-1.5 bg-primary text-primary-foreground text-xs font-semibold px-4 py-2.5 rounded-lg hover:opacity-90 transition-opacity shrink-0">
                   <Users className="w-3.5 h-3.5" />
                   {t("cp.details")}
-                </button>
+                </Link>
               </motion.div>
             ))}
 
