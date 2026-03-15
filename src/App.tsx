@@ -9,6 +9,7 @@ import AboutPage from "./pages/AboutPage";
 import NewsPage from "./pages/NewsPage";
 import NewsDetailPage from "./pages/NewsDetailPage";
 import CompetitionsPage from "./pages/CompetitionsPage";
+import CompetitionDetailPage from "./pages/CompetitionDetailPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
