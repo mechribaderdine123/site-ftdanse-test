@@ -606,6 +606,20 @@ export const translations: Record<Lang, Record<string, string>> = {
     "nd.caption1": "Press conference for the 2026-2030 strategic plan",
     "nd.caption2": "Federation leaders during the announcement",
     "nd.caption3": "Presentation of strategic pillars",
+
+    // ===== Annuaire =====
+    "ann.back": "← Back to home",
+    "ann.title": "Members & Clubs",
+    "ann.subtitle": "Search the directory of federation registered members.",
+    "ann.search": "Search a member or club...",
+    "ann.filter.all": "All",
+    "ann.filter.dancers": "Dancers",
+    "ann.filter.referees": "Referees",
+    "ann.filter.coaches": "Coaches",
+    "ann.filter.clubs": "Clubs",
+    "ann.members": "members",
+    "ann.license": "Active license",
+    "ann.empty": "No results found.",
   },
 
   ar: {
