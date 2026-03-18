@@ -9,6 +9,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "nav.competitions": "Compétitions",
     "nav.styles": "Styles de Danse",
     "nav.gallery": "Galerie",
+    "nav.annuaire": "Annuaire",
     "nav.contact": "Contact",
     "nav.join": "Nous Rejoindre",
 
@@ -288,6 +289,20 @@ export const translations: Record<Lang, Record<string, string>> = {
     "nd.caption1": "Conférence de presse du plan stratégique 2026-2030",
     "nd.caption2": "Les dirigeants de la fédération lors de l'annonce",
     "nd.caption3": "Présentation des axes stratégiques",
+
+    // ===== Annuaire =====
+    "ann.back": "← Retour à l'accueil",
+    "ann.title": "Membres et Clubs",
+    "ann.subtitle": "Recherchez dans l'annuaire des membres inscrits à la fédération.",
+    "ann.search": "Rechercher un membre ou club...",
+    "ann.filter.all": "Tout",
+    "ann.filter.dancers": "Danseurs",
+    "ann.filter.referees": "Arbitres",
+    "ann.filter.coaches": "Entraîneurs",
+    "ann.filter.clubs": "Clubs",
+    "ann.members": "membres",
+    "ann.license": "Licence active",
+    "ann.empty": "Aucun résultat trouvé.",
   },
 
   en: {
@@ -297,6 +312,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "nav.competitions": "Competitions",
     "nav.styles": "Dance Styles",
     "nav.gallery": "Gallery",
+    "nav.annuaire": "Directory",
     "nav.contact": "Contact",
     "nav.join": "Join Us",
 
@@ -590,6 +606,20 @@ export const translations: Record<Lang, Record<string, string>> = {
     "nd.caption1": "Press conference for the 2026-2030 strategic plan",
     "nd.caption2": "Federation leaders during the announcement",
     "nd.caption3": "Presentation of strategic pillars",
+
+    // ===== Annuaire =====
+    "ann.back": "← Back to home",
+    "ann.title": "Members & Clubs",
+    "ann.subtitle": "Search the directory of federation registered members.",
+    "ann.search": "Search a member or club...",
+    "ann.filter.all": "All",
+    "ann.filter.dancers": "Dancers",
+    "ann.filter.referees": "Referees",
+    "ann.filter.coaches": "Coaches",
+    "ann.filter.clubs": "Clubs",
+    "ann.members": "members",
+    "ann.license": "Active license",
+    "ann.empty": "No results found.",
   },
 
   ar: {
@@ -599,6 +629,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "nav.competitions": "المسابقات",
     "nav.styles": "أنماط الرقص",
     "nav.gallery": "المعرض",
+    "nav.annuaire": "الدليل",
     "nav.contact": "اتصل بنا",
     "nav.join": "انضم إلينا",
 
@@ -892,5 +923,19 @@ export const translations: Record<Lang, Record<string, string>> = {
     "nd.caption1": "مؤتمر صحفي للخطة الاستراتيجية 2026-2030",
     "nd.caption2": "قيادات الجامعة خلال الإعلان",
     "nd.caption3": "عرض المحاور الاستراتيجية",
+
+    // ===== Annuaire =====
+    "ann.back": "→ العودة إلى الصفحة الرئيسية",
+    "ann.title": "الأعضاء والأندية",
+    "ann.subtitle": "ابحث في دليل الأعضاء المسجلين في الاتحاد.",
+    "ann.search": "البحث عن عضو أو نادي...",
+    "ann.filter.all": "الكل",
+    "ann.filter.dancers": "الراقصون",
+    "ann.filter.referees": "الحكام",
+    "ann.filter.coaches": "المدربون",
+    "ann.filter.clubs": "الأندية",
+    "ann.members": "أعضاء",
+    "ann.license": "رخصة نشطة",
+    "ann.empty": "لم يتم العثور على نتائج.",
   },
 };
