@@ -289,6 +289,20 @@ export const translations: Record<Lang, Record<string, string>> = {
     "nd.caption1": "Conférence de presse du plan stratégique 2026-2030",
     "nd.caption2": "Les dirigeants de la fédération lors de l'annonce",
     "nd.caption3": "Présentation des axes stratégiques",
+
+    // ===== Annuaire =====
+    "ann.back": "← Retour à l'accueil",
+    "ann.title": "Membres et Clubs",
+    "ann.subtitle": "Recherchez dans l'annuaire des membres inscrits à la fédération.",
+    "ann.search": "Rechercher un membre ou club...",
+    "ann.filter.all": "Tout",
+    "ann.filter.dancers": "Danseurs",
+    "ann.filter.referees": "Arbitres",
+    "ann.filter.coaches": "Entraîneurs",
+    "ann.filter.clubs": "Clubs",
+    "ann.members": "membres",
+    "ann.license": "Licence active",
+    "ann.empty": "Aucun résultat trouvé.",
   },
 
   en: {
