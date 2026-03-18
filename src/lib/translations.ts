@@ -923,5 +923,19 @@ export const translations: Record<Lang, Record<string, string>> = {
     "nd.caption1": "مؤتمر صحفي للخطة الاستراتيجية 2026-2030",
     "nd.caption2": "قيادات الجامعة خلال الإعلان",
     "nd.caption3": "عرض المحاور الاستراتيجية",
+
+    // ===== Annuaire =====
+    "ann.back": "→ العودة إلى الصفحة الرئيسية",
+    "ann.title": "الأعضاء والأندية",
+    "ann.subtitle": "ابحث في دليل الأعضاء المسجلين في الاتحاد.",
+    "ann.search": "البحث عن عضو أو نادي...",
+    "ann.filter.all": "الكل",
+    "ann.filter.dancers": "الراقصون",
+    "ann.filter.referees": "الحكام",
+    "ann.filter.coaches": "المدربون",
+    "ann.filter.clubs": "الأندية",
+    "ann.members": "أعضاء",
+    "ann.license": "رخصة نشطة",
+    "ann.empty": "لم يتم العثور على نتائج.",
   },
 };
