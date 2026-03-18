@@ -9,6 +9,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "nav.competitions": "Compétitions",
     "nav.styles": "Styles de Danse",
     "nav.gallery": "Galerie",
+    "nav.annuaire": "Annuaire",
     "nav.contact": "Contact",
     "nav.join": "Nous Rejoindre",
 
