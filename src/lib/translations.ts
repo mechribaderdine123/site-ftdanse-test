@@ -298,6 +298,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "nav.competitions": "Competitions",
     "nav.styles": "Dance Styles",
     "nav.gallery": "Gallery",
+    "nav.annuaire": "Directory",
     "nav.contact": "Contact",
     "nav.join": "Join Us",
 
