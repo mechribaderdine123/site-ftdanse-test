@@ -601,6 +601,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "nav.competitions": "المسابقات",
     "nav.styles": "أنماط الرقص",
     "nav.gallery": "المعرض",
+    "nav.annuaire": "الدليل",
     "nav.contact": "اتصل بنا",
     "nav.join": "انضم إلينا",
 
