@@ -780,6 +780,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "nav.annuaire": "الدليل",
     "nav.contact": "اتصل بنا",
     "nav.join": "انضم إلينا",
+    "topbar.follow": "تابعونا",
 
     "hero.badge": "منذ 2010",
     "hero.title1": "الجامعة",
