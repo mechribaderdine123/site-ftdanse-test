@@ -19,7 +19,7 @@ const Navbar = () => {
     { label: t("nav.results"), href: "/results" },
     { label: t("nav.styles"), href: "/disciplines" },
     { label: t("nav.annuaire"), href: "/annuaire" },
-    { label: t("nav.gallery"), href: "#gallery" },
+    { label: t("nav.mediatheque"), href: "/mediatheque" },
     { label: t("nav.contact"), href: "#contact" },
   ];
 

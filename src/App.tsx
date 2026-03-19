@@ -13,6 +13,7 @@ import CompetitionDetailPage from "./pages/CompetitionDetailPage";
 import ResultsPage from "./pages/ResultsPage";
 import DisciplinesPage from "./pages/DisciplinesPage";
 import AnnuairePage from "./pages/AnnuairePage";
+import MediathequePage from "./pages/MediathequePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/results" element={<ResultsPage />} />
             <Route path="/disciplines" element={<DisciplinesPage />} />
             <Route path="/annuaire" element={<AnnuairePage />} />
+            <Route path="/mediatheque" element={<MediathequePage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
