@@ -779,7 +779,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "nav.gallery": "المعرض",
     "nav.annuaire": "الدليل",
     "nav.contact": "اتصل بنا",
-    "nav.join": "انضم إلينا",
+    "nav.join": "فضاء العضو",
     "topbar.follow": "تابعونا",
 
     "hero.badge": "منذ 2010",
