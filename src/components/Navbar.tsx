@@ -20,7 +20,7 @@ const Navbar = () => {
     { label: t("nav.styles"), href: "/disciplines" },
     { label: t("nav.annuaire"), href: "/annuaire" },
     { label: t("nav.mediatheque"), href: "/mediatheque" },
-    { label: t("nav.contact"), href: "#contact" },
+    { label: t("nav.contact"), href: "/contact" },
   ];
 
   return (
@@ -77,9 +77,9 @@ const Navbar = () => {
             )}
           </div>
 
-          <a href="#contact" className="btn-primary text-sm py-2 px-4">
+          <Link to="/contact" className="btn-primary text-sm py-2 px-4">
             {t("nav.join")}
-          </a>
+          </Link>
         </div>
 
         <button
@@ -128,9 +128,9 @@ const Navbar = () => {
             ))}
           </div>
           <div className="px-6 pt-2">
-            <a href="#contact" className="btn-primary text-sm py-2 px-4 inline-block">
+            <Link to="/contact" className="btn-primary text-sm py-2 px-4 inline-block" onClick={() => setOpen(false)}>
               {t("nav.join")}
-            </a>
+            </Link>
           </div>
         </div>
       )}
