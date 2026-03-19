@@ -389,6 +389,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "nav.annuaire": "Directory",
     "nav.contact": "Contact",
     "nav.join": "Join Us",
+    "topbar.follow": "Follow us",
 
     "hero.badge": "Since 2010",
     "hero.title1": "Tunisian",
