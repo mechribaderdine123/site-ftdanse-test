@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Filter, Image, Video, ArrowLeft } from "lucide-react";
+import { Search, Filter, Image, Video, ArrowLeft, ChevronDown, Calendar as CalendarIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLang } from "@/contexts/LangContext";
 import Navbar from "@/components/Navbar";
@@ -130,57 +130,73 @@ const MediathequePage = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t("media.search")}
-              className="w-full ps-9 pe-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30"
+              className="w-full ps-9 pe-3 py-2.5 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
             />
           </div>
 
-          <select
-            value={discFilter}
-            onChange={(e) => setDiscFilter(e.target.value)}
-            className="text-sm rounded-lg border border-border bg-background text-foreground px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/30"
-          >
-            {disciplines.map((d) => (
-              <option key={d} value={d}>
-                {t(`media.disc.${d}`)}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <Filter className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+            <select
+              value={discFilter}
+              onChange={(e) => setDiscFilter(e.target.value)}
+              className="appearance-none text-sm rounded-lg border border-border bg-background text-foreground ps-9 pe-8 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary cursor-pointer"
+            >
+              {disciplines.map((d) => (
+                <option key={d} value={d}>
+                  {t(`media.disc.${d}`)}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="absolute end-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          </div>
 
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="text-sm rounded-lg border border-border bg-background text-foreground px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/30"
-          >
-            {eventTypes.map((t2) => (
-              <option key={t2} value={t2}>
-                {t(`media.type.${t2}`)}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <CalendarIcon className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+            <select
+              value={yearFilter}
+              onChange={(e) => setYearFilter(e.target.value)}
+              className="appearance-none text-sm rounded-lg border border-border bg-background text-foreground ps-9 pe-8 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary cursor-pointer"
+            >
+              {years.map((y) => (
+                <option key={y} value={y}>
+                  {y === "all" ? t("media.year.all") : y}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="absolute end-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          </div>
 
-          <select
-            value={eventFilter}
-            onChange={(e) => setEventFilter(e.target.value)}
-            className="text-sm rounded-lg border border-border bg-background text-foreground px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/30"
-          >
-            {eventNames.map((en) => (
-              <option key={en} value={en}>
-                {en === "all" ? t("media.event.all") : t(en)}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <Filter className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="appearance-none text-sm rounded-lg border border-border bg-background text-foreground ps-9 pe-8 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary cursor-pointer"
+            >
+              {eventTypes.map((t2) => (
+                <option key={t2} value={t2}>
+                  {t(`media.type.${t2}`)}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="absolute end-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          </div>
 
-          <select
-            value={yearFilter}
-            onChange={(e) => setYearFilter(e.target.value)}
-            className="text-sm rounded-lg border border-border bg-background text-foreground px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/30"
-          >
-            {years.map((y) => (
-              <option key={y} value={y}>
-                {y === "all" ? t("media.year.all") : y}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <Filter className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+            <select
+              value={eventFilter}
+              onChange={(e) => setEventFilter(e.target.value)}
+              className="appearance-none text-sm rounded-lg border border-border bg-background text-foreground ps-9 pe-8 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary cursor-pointer"
+            >
+              {eventNames.map((en) => (
+                <option key={en} value={en}>
+                  {en === "all" ? t("media.event.all") : t(en)}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="absolute end-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          </div>
         </div>
       </section>
 
