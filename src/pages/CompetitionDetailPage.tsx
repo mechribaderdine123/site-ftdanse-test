@@ -85,6 +85,7 @@ const CompetitionDetailPage = () => {
   if (!comp) {
     return (
       <div className="min-h-screen bg-background">
+        <TopBar />
         <Navbar />
         <div className="container mx-auto px-4 py-32 text-center">
           <p className="text-muted-foreground text-lg">{t("cd.notFound")}</p>
