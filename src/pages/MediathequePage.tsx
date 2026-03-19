@@ -25,6 +25,8 @@ interface MediaEvent {
   titleKey: string;
   date: string;
   discipline: string;
+  eventType: string;
+  eventNameKey: string;
   photos: string[];
   videos: string[];
 }
@@ -34,6 +36,8 @@ const eventsData: MediaEvent[] = [
     titleKey: "media.event1",
     date: "2025",
     discipline: "breakdance",
+    eventType: "championnat",
+    eventNameKey: "media.eventName.champNat",
     photos: [g1, g2, g3, g4, heroDance, styleBreak, g5, g6],
     videos: ["https://www.youtube.com/embed/dQw4w9WgXcQ"],
   },
@@ -41,6 +45,8 @@ const eventsData: MediaEvent[] = [
     titleKey: "media.event2",
     date: "2025",
     discipline: "contemporain",
+    eventType: "gala",
+    eventNameKey: "media.eventName.galaContemp",
     photos: [g5, g6, news1, news2, styleContemp, danceAbout, g1, g3],
     videos: [],
   },
@@ -48,6 +54,8 @@ const eventsData: MediaEvent[] = [
     titleKey: "media.event3",
     date: "2024",
     discipline: "hiphop",
+    eventType: "competition",
+    eventNameKey: "media.eventName.compRegion",
     photos: [heroDance, news3, styleHiphop, g4, g2, news1, g6, g5],
     videos: [],
   },
@@ -55,12 +63,16 @@ const eventsData: MediaEvent[] = [
     titleKey: "media.event4",
     date: "2024",
     discipline: "classique",
+    eventType: "stage",
+    eventNameKey: "media.eventName.stageClassique",
     photos: [danceAbout, g1, g3, g5, styleContemp, news2, heroDance, g4],
     videos: [],
   },
 ];
 
 const disciplines = ["all", "breakdance", "contemporain", "hiphop", "classique"];
+const eventTypes = ["all", "championnat", "competition", "gala", "stage"];
+const eventNames = ["all", "media.eventName.champNat", "media.eventName.galaContemp", "media.eventName.compRegion", "media.eventName.stageClassique"];
 const years = ["all", "2025", "2024", "2023"];
 
 const MediathequePage = () => {
@@ -68,13 +80,17 @@ const MediathequePage = () => {
   const [search, setSearch] = useState("");
   const [discFilter, setDiscFilter] = useState("all");
   const [yearFilter, setYearFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [eventFilter, setEventFilter] = useState("all");
   const [activeTabs, setActiveTabs] = useState<Record<number, "photos" | "videos">>({});
 
   const filtered = eventsData.filter((ev) => {
     const matchSearch = t(ev.titleKey).toLowerCase().includes(search.toLowerCase());
     const matchDisc = discFilter === "all" || ev.discipline === discFilter;
     const matchYear = yearFilter === "all" || ev.date === yearFilter;
-    return matchSearch && matchDisc && matchYear;
+    const matchType = typeFilter === "all" || ev.eventType === typeFilter;
+    const matchEvent = eventFilter === "all" || ev.eventNameKey === eventFilter;
+    return matchSearch && matchDisc && matchYear && matchType && matchEvent;
   });
 
   const getTab = (idx: number) => activeTabs[idx] || "photos";
@@ -126,6 +142,30 @@ const MediathequePage = () => {
             {disciplines.map((d) => (
               <option key={d} value={d}>
                 {t(`media.disc.${d}`)}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="text-sm rounded-lg border border-border bg-background text-foreground px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/30"
+          >
+            {eventTypes.map((t2) => (
+              <option key={t2} value={t2}>
+                {t(`media.type.${t2}`)}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={eventFilter}
+            onChange={(e) => setEventFilter(e.target.value)}
+            className="text-sm rounded-lg border border-border bg-background text-foreground px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/30"
+          >
+            {eventNames.map((en) => (
+              <option key={en} value={en}>
+                {en === "all" ? t("media.event.all") : t(en)}
               </option>
             ))}
           </select>
