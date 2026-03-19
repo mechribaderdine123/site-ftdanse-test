@@ -36,7 +36,7 @@ const eventsData: MediaEvent[] = [
     titleKey: "media.event1",
     date: "2025",
     discipline: "breakdance",
-    eventType: "championnat",
+    eventType: "comp_nat",
     eventNameKey: "media.eventName.champNat",
     photos: [g1, g2, g3, g4, heroDance, styleBreak, g5, g6],
     videos: ["https://www.youtube.com/embed/dQw4w9WgXcQ"],
