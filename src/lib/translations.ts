@@ -662,6 +662,8 @@ export const translations: Record<Lang, Record<string, string>> = {
     "res.downloadPdf": "Download PDF",
     "res.noResults": "No results found.",
     "res.rankingComingSoon": "National ranking coming soon.",
+    "res.points": "Points",
+    "res.season": "Season 2025-2026",
   },
 
   ar: {
