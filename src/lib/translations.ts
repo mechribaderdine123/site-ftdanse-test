@@ -745,6 +745,27 @@ export const translations: Record<Lang, Record<string, string>> = {
     "res.rankingComingSoon": "National ranking coming soon.",
     "res.points": "Points",
     "res.season": "Season 2025-2026",
+
+    // Contact Page
+    "contact.subtitle": "CONTACT US",
+    "contact.heroTitle1": "We are here to",
+    "contact.heroTitle2": "help you",
+    "contact.heroDesc": "Do not hesitate to contact us for any question or information request.",
+    "contact.name": "Full name",
+    "contact.namePh": "enter your full name",
+    "contact.email": "Email",
+    "contact.emailPh": "enter your email",
+    "contact.subject": "Subject",
+    "contact.subjectPh": "subject of your message",
+    "contact.message": "Message",
+    "contact.messagePh": "write your message here ...",
+    "contact.send": "send message",
+    "contact.sent": "Message sent successfully!",
+    "contact.infoTitle": "Contact information",
+    "contact.addressTitle": "Tunis, Tunisia",
+    "contact.addressLine": "4, Rue de la Ligue Arabe, Belvédère, Tunis, Tunisia",
+    "contact.hours": "Opening hours",
+    "contact.hoursLine": "Monday - Friday: 8:00 AM - 5:00 PM",
   },
 
   ar: {
