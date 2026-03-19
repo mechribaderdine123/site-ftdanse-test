@@ -79,9 +79,10 @@ const membersDataByLang: Record<string, Entry[]> = {
 };
 
 const AnnuairePage = () => {
-  const { t, isRTL } = useLang();
+  const { t, isRTL, lang } = useLang();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterCategory>("all");
+  const membersData = membersDataByLang[lang] || membersDataByLang.fr;
 
   const filters: { key: FilterCategory; labelKey: string; icon: typeof Users }[] = [
     { key: "all", labelKey: "ann.filter.all", icon: Users },
