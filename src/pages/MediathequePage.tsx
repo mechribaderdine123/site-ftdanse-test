@@ -45,7 +45,7 @@ const eventsData: MediaEvent[] = [
     titleKey: "media.event2",
     date: "2025",
     discipline: "contemporain",
-    eventType: "gala",
+    eventType: "comp_int",
     eventNameKey: "media.eventName.galaContemp",
     photos: [g5, g6, news1, news2, styleContemp, danceAbout, g1, g3],
     videos: [],
