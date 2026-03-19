@@ -66,6 +66,7 @@ const AboutPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <TopBar />
       <Navbar />
 
       {/* Hero Row 1: Single large image + intro text */}
