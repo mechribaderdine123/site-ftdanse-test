@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useLang } from "@/contexts/LangContext";
 import Navbar from "@/components/Navbar";
+import TopBar from "@/components/TopBar";
 import Footer from "@/components/Footer";
 import {
   Target, Eye, Flag, Clock, TrendingUp, Star,
