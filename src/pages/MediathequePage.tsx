@@ -36,7 +36,7 @@ const eventsData: MediaEvent[] = [
     titleKey: "media.event1",
     date: "2025",
     discipline: "breakdance",
-    eventType: "championnat",
+    eventType: "comp_nat",
     eventNameKey: "media.eventName.champNat",
     photos: [g1, g2, g3, g4, heroDance, styleBreak, g5, g6],
     videos: ["https://www.youtube.com/embed/dQw4w9WgXcQ"],
@@ -45,7 +45,7 @@ const eventsData: MediaEvent[] = [
     titleKey: "media.event2",
     date: "2025",
     discipline: "contemporain",
-    eventType: "gala",
+    eventType: "comp_int",
     eventNameKey: "media.eventName.galaContemp",
     photos: [g5, g6, news1, news2, styleContemp, danceAbout, g1, g3],
     videos: [],
@@ -54,7 +54,7 @@ const eventsData: MediaEvent[] = [
     titleKey: "media.event3",
     date: "2024",
     discipline: "hiphop",
-    eventType: "competition",
+    eventType: "comp_nat",
     eventNameKey: "media.eventName.compRegion",
     photos: [heroDance, news3, styleHiphop, g4, g2, news1, g6, g5],
     videos: [],
@@ -63,7 +63,7 @@ const eventsData: MediaEvent[] = [
     titleKey: "media.event4",
     date: "2024",
     discipline: "classique",
-    eventType: "stage",
+    eventType: "formations",
     eventNameKey: "media.eventName.stageClassique",
     photos: [danceAbout, g1, g3, g5, styleContemp, news2, heroDance, g4],
     videos: [],
@@ -71,7 +71,7 @@ const eventsData: MediaEvent[] = [
 ];
 
 const disciplines = ["all", "breakdance", "contemporain", "hiphop", "classique"];
-const eventTypes = ["all", "championnat", "competition", "gala", "stage"];
+const eventTypes = ["all", "comp_nat", "comp_int", "formations"];
 const eventNames = ["all", "media.eventName.champNat", "media.eventName.galaContemp", "media.eventName.compRegion", "media.eventName.stageClassique"];
 const years = ["all", "2025", "2024", "2023"];
 
