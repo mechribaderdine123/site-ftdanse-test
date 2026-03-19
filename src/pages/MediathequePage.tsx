@@ -80,13 +80,17 @@ const MediathequePage = () => {
   const [search, setSearch] = useState("");
   const [discFilter, setDiscFilter] = useState("all");
   const [yearFilter, setYearFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [eventFilter, setEventFilter] = useState("all");
   const [activeTabs, setActiveTabs] = useState<Record<number, "photos" | "videos">>({});
 
   const filtered = eventsData.filter((ev) => {
     const matchSearch = t(ev.titleKey).toLowerCase().includes(search.toLowerCase());
     const matchDisc = discFilter === "all" || ev.discipline === discFilter;
     const matchYear = yearFilter === "all" || ev.date === yearFilter;
-    return matchSearch && matchDisc && matchYear;
+    const matchType = typeFilter === "all" || ev.eventType === typeFilter;
+    const matchEvent = eventFilter === "all" || ev.eventNameKey === eventFilter;
+    return matchSearch && matchDisc && matchYear && matchType && matchEvent;
   });
 
   const getTab = (idx: number) => activeTabs[idx] || "photos";
