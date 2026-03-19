@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLang } from "@/contexts/LangContext";
+import logoFtdap from "@/assets/logo-ftdap.png";
 
 
 const Navbar = () => {
