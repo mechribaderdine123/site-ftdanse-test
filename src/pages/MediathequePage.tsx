@@ -63,7 +63,7 @@ const eventsData: MediaEvent[] = [
     titleKey: "media.event4",
     date: "2024",
     discipline: "classique",
-    eventType: "stage",
+    eventType: "formations",
     eventNameKey: "media.eventName.stageClassique",
     photos: [danceAbout, g1, g3, g5, styleContemp, news2, heroDance, g4],
     videos: [],
