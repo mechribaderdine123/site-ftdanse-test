@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Menu, X, Globe } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLang } from "@/contexts/LangContext";
 import { Lang } from "@/lib/translations";
