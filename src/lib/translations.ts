@@ -1024,6 +1024,27 @@ export const translations: Record<Lang, Record<string, string>> = {
     "ann.license": "رخصة نشطة",
     "ann.empty": "لم يتم العثور على نتائج.",
 
+    // Mediatheque
+    "nav.mediatheque": "المكتبة المرئية",
+    "media.back": "العودة إلى الصفحة الرئيسية",
+    "media.title": "الصور والفيديوهات",
+    "media.desc": "تصفحوا ألبومات الصور والفيديوهات من فعالياتنا ومسابقاتنا.",
+    "media.search": "البحث عن فعالية...",
+    "media.photos": "صور",
+    "media.videos": "فيديوهات",
+    "media.noResults": "لم يتم العثور على نتائج.",
+    "media.noVideos": "لا توجد فيديوهات لهذه الفعالية.",
+    "media.disc.all": "جميع الأنواع",
+    "media.disc.breakdance": "بريك دانس",
+    "media.disc.contemporain": "رقص معاصر",
+    "media.disc.hiphop": "هيب هوب",
+    "media.disc.classique": "رقص كلاسيكي",
+    "media.year.all": "جميع السنوات",
+    "media.event1": "البطولة الوطنية للبريك دانس 2025",
+    "media.event2": "حفل الرقص المعاصر 2025",
+    "media.event3": "باتل هيب هوب تونس 2024",
+    "media.event4": "عرض الرقص الكلاسيكي 2024",
+
     // Results Page
     "nav.results": "النتائج",
     "res.back": "العودة إلى الصفحة الرئيسية",
