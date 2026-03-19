@@ -48,31 +48,6 @@ const Navbar = () => {
           )}
         </div>
         <div className="hidden lg:flex items-center gap-3">
-          {/* Language Switcher */}
-          <div className="relative">
-            <button
-              onClick={() => setLangOpen(!langOpen)}
-              className="flex items-center gap-1.5 text-sm text-primary hover:text-primary transition-colors px-2 py-1 rounded-md border border-primary/20"
-            >
-              <Globe className="w-4 h-4" />
-              {langLabels[lang]}
-            </button>
-            {langOpen && (
-              <div className="absolute top-full mt-1 end-0 bg-card rounded-lg shadow-lg border border-border py-1 min-w-[100px] z-50">
-                {(Object.keys(langLabels) as Lang[]).map((l) => (
-                  <button
-                    key={l}
-                    onClick={() => { setLang(l); setLangOpen(false); }}
-                    className={`block w-full text-start px-4 py-2 text-sm transition-colors ${
-                      l === lang ? "text-accent font-semibold bg-muted" : "text-foreground hover:bg-muted"
-                    }`}
-                  >
-                    {l === "fr" ? "Français" : l === "en" ? "English" : "العربية"}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
 
           <Link to="/contact" className="btn-primary text-sm py-2 px-4">
             {t("nav.join")}
