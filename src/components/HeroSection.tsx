@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import heroBg from "@/assets/hero-dance.jpg";
 import { useLang } from "@/contexts/LangContext";
 
@@ -29,7 +30,7 @@ const HeroSection = () => {
           <p className="text-primary-foreground/70 text-lg mb-8 max-w-md">{t("hero.desc")}</p>
           <div className="flex gap-4 mb-12">
             <a href="#contact" className="btn-primary">{t("hero.cta")}</a>
-            <a href="#about" className="btn-outline-white">{t("hero.more")}</a>
+            <Link to="/about" className="btn-outline-white">{t("hero.more")}</Link>
           </div>
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3 }} className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-xl">
