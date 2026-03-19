@@ -323,6 +323,8 @@ export const translations: Record<Lang, Record<string, string>> = {
     "res.downloadPdf": "Télécharger pdf",
     "res.noResults": "Aucun résultat trouvé.",
     "res.rankingComingSoon": "Le classement national sera bientôt disponible.",
+    "res.points": "Points",
+    "res.season": "Saison 2025-2026",
   },
 
   en: {
@@ -660,6 +662,8 @@ export const translations: Record<Lang, Record<string, string>> = {
     "res.downloadPdf": "Download PDF",
     "res.noResults": "No results found.",
     "res.rankingComingSoon": "National ranking coming soon.",
+    "res.points": "Points",
+    "res.season": "Season 2025-2026",
   },
 
   ar: {
@@ -997,5 +1001,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "res.downloadPdf": "تحميل PDF",
     "res.noResults": "لم يتم العثور على نتائج.",
     "res.rankingComingSoon": "الترتيب الوطني سيكون متاحاً قريباً.",
+    "res.points": "النقاط",
+    "res.season": "موسم 2025-2026",
   },
 };
