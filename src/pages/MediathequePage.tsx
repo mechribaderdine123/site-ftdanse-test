@@ -54,7 +54,7 @@ const eventsData: MediaEvent[] = [
     titleKey: "media.event3",
     date: "2024",
     discipline: "hiphop",
-    eventType: "competition",
+    eventType: "comp_nat",
     eventNameKey: "media.eventName.compRegion",
     photos: [heroDance, news3, styleHiphop, g4, g2, news1, g6, g5],
     videos: [],
