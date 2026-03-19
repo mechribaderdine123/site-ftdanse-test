@@ -303,6 +303,26 @@ export const translations: Record<Lang, Record<string, string>> = {
     "ann.members": "membres",
     "ann.license": "Licence active",
     "ann.empty": "Aucun résultat trouvé.",
+
+    // Results Page
+    "nav.results": "Résultats",
+    "res.back": "Retour à l'accueil",
+    "res.title": "Résultats des Compétitions",
+    "res.subtitle": "Consultez les résultats et classements des compétitions nationales et internationales.",
+    "res.tabCompetitions": "Par compétitions",
+    "res.tabRanking": "Classement national",
+    "res.search": "Rechercher une compétition...",
+    "res.allTypes": "Tous les types",
+    "res.national": "Compétitions nationales",
+    "res.international": "Compétitions internationales",
+    "res.training": "Formations & stages",
+    "res.allDisciplines": "Toutes les disciplines",
+    "res.rank": "Rang",
+    "res.name": "Nom et prénom",
+    "res.club": "Club",
+    "res.downloadPdf": "Télécharger pdf",
+    "res.noResults": "Aucun résultat trouvé.",
+    "res.rankingComingSoon": "Le classement national sera bientôt disponible.",
   },
 
   en: {
