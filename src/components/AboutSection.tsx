@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Users, Trophy, Globe } from "lucide-react";
+import { Link } from "react-router-dom";
 import aboutImg from "@/assets/dance-about.jpg";
 import { useLang } from "@/contexts/LangContext";
 
@@ -20,7 +21,7 @@ const AboutSection = () => {
             <span className="section-label">{t("about.label")}</span>
             <h2 className="section-title mt-2 mb-6">{t("about.title")}</h2>
             <p className="text-muted-foreground mb-6 leading-relaxed">{t("about.desc")}</p>
-            <a href="#contact" className="btn-primary inline-block">{t("about.cta")}</a>
+            <Link to="/about" className="btn-primary inline-block">{t("about.cta")}</Link>
           </motion.div>
           <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }} className="space-y-6">
             <img src={aboutImg} alt="Dance performance" className="rounded-2xl w-full h-64 object-cover mb-6" />
