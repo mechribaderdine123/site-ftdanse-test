@@ -1001,5 +1001,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "res.downloadPdf": "تحميل PDF",
     "res.noResults": "لم يتم العثور على نتائج.",
     "res.rankingComingSoon": "الترتيب الوطني سيكون متاحاً قريباً.",
+    "res.points": "النقاط",
+    "res.season": "موسم 2025-2026",
   },
 };
