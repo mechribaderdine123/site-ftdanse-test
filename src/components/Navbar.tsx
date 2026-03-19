@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLang } from "@/contexts/LangContext";
+import logoFtdap from "@/assets/logo-ftdap.png";
 
 
 const Navbar = () => {
@@ -23,9 +24,9 @@ const Navbar = () => {
   return (
     <nav className="fixed top-[36px] left-0 right-0 z-50 bg-white shadow-sm">
       <div className="container mx-auto flex items-center justify-between h-16 px-4">
-        <a href="#" className="text-xl font-bold text-primary tracking-tight">
-          <span className="text-accent">●</span> FTDAP
-        </a>
+        <Link to="/" className="flex items-center gap-2">
+          <img src={logoFtdap} alt="FTDAP Logo" className="h-10 w-auto" />
+        </Link>
         <div className="hidden lg:flex items-center gap-6">
           {navLinks.map((link) =>
             link.href.startsWith("/") ? (
