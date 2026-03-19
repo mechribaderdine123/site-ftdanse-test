@@ -26,7 +26,7 @@ const Navbar = () => {
   return (
     <nav className="fixed top-[36px] left-0 right-0 z-50 bg-white shadow-sm">
       <div className="container mx-auto flex items-center justify-between h-16 px-4">
-        <a href="#" className="text-xl font-bold text-primary-foreground tracking-tight">
+        <a href="#" className="text-xl font-bold text-primary tracking-tight">
           <span className="text-accent">●</span> FTDAP
         </a>
         <div className="hidden lg:flex items-center gap-6">
