@@ -12,7 +12,7 @@ const Navbar = () => {
   const { t, lang, setLang } = useLang();
 
   const navLinks = [
-    { label: t("nav.home"), href: "#" },
+    { label: t("nav.home"), href: "/" },
     { label: t("nav.about"), href: "/about" },
     { label: t("nav.news"), href: "/news" },
     { label: t("nav.competitions"), href: "/competitions" },
