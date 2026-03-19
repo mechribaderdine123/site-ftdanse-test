@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import heroBg from "@/assets/hero-dance.jpg";
 import { useLang } from "@/contexts/LangContext";
 
