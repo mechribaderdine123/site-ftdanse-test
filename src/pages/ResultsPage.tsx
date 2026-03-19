@@ -336,7 +336,101 @@ const ResultsPage = () => {
       {activeTab === "ranking" && (
         <section className="py-10">
           <div className="container mx-auto px-4">
-            <p className="text-center text-muted-foreground py-16">{t("res.rankingComingSoon")}</p>
+            {(() => {
+              const rankingData: Record<string, { name: string; club: string; points: number; gold: number; silver: number; bronze: number }[]> = {
+                fr: [
+                  { name: "Amira Ben Ali", club: "Club Étoile de Tunis", points: 2850, gold: 5, silver: 2, bronze: 1 },
+                  { name: "Karim Bouazizi", club: "Urban Crew Tunis", points: 2720, gold: 4, silver: 3, bronze: 2 },
+                  { name: "Sara Mejri", club: "Compagnie Danse Libre", points: 2680, gold: 4, silver: 2, bronze: 3 },
+                  { name: "Sami Trabelsi", club: "Académie de Danse Sfax", points: 2510, gold: 3, silver: 4, bronze: 1 },
+                  { name: "Leila Hamdi", club: "Dance Academy Sousse", points: 2340, gold: 3, silver: 2, bronze: 3 },
+                  { name: "Omar Selmi", club: "Troupe Nationale", points: 2180, gold: 2, silver: 3, bronze: 4 },
+                  { name: "Mohamed Ferjani", club: "Street Dance Sfax", points: 2050, gold: 2, silver: 2, bronze: 3 },
+                  { name: "Ines Chaabane", club: "Dance Factory Sousse", points: 1920, gold: 1, silver: 4, bronze: 2 },
+                  { name: "Nour El Houda", club: "Studio Danse Nabeul", points: 1870, gold: 1, silver: 3, bronze: 3 },
+                  { name: "Myriam Aouadi", club: "Studio Modern Tunis", points: 1750, gold: 1, silver: 2, bronze: 4 },
+                  { name: "Youssef Karim", club: "Club Étoile de Tunis", points: 1680, gold: 1, silver: 2, bronze: 2 },
+                  { name: "Rami Jebali", club: "Académie de Danse Sfax", points: 1540, gold: 1, silver: 1, bronze: 3 },
+                  { name: "Ahmed Dridi", club: "Urban Crew Tunis", points: 1420, gold: 0, silver: 3, bronze: 2 },
+                  { name: "Fatma Zouari", club: "Street Dance Sfax", points: 1310, gold: 0, silver: 2, bronze: 4 },
+                  { name: "Salma Mansour", club: "Dance Academy Sousse", points: 1200, gold: 0, silver: 2, bronze: 2 },
+                ],
+                en: [
+                  { name: "Amira Ben Ali", club: "Tunis Star Club", points: 2850, gold: 5, silver: 2, bronze: 1 },
+                  { name: "Karim Bouazizi", club: "Urban Crew Tunis", points: 2720, gold: 4, silver: 3, bronze: 2 },
+                  { name: "Sara Mejri", club: "Free Dance Company", points: 2680, gold: 4, silver: 2, bronze: 3 },
+                  { name: "Sami Trabelsi", club: "Sfax Dance Academy", points: 2510, gold: 3, silver: 4, bronze: 1 },
+                  { name: "Leila Hamdi", club: "Sousse Dance Academy", points: 2340, gold: 3, silver: 2, bronze: 3 },
+                  { name: "Omar Selmi", club: "National Troupe", points: 2180, gold: 2, silver: 3, bronze: 4 },
+                  { name: "Mohamed Ferjani", club: "Street Dance Sfax", points: 2050, gold: 2, silver: 2, bronze: 3 },
+                  { name: "Ines Chaabane", club: "Sousse Dance Factory", points: 1920, gold: 1, silver: 4, bronze: 2 },
+                  { name: "Nour El Houda", club: "Nabeul Dance Studio", points: 1870, gold: 1, silver: 3, bronze: 3 },
+                  { name: "Myriam Aouadi", club: "Modern Studio Tunis", points: 1750, gold: 1, silver: 2, bronze: 4 },
+                  { name: "Youssef Karim", club: "Tunis Star Club", points: 1680, gold: 1, silver: 2, bronze: 2 },
+                  { name: "Rami Jebali", club: "Sfax Dance Academy", points: 1540, gold: 1, silver: 1, bronze: 3 },
+                  { name: "Ahmed Dridi", club: "Urban Crew Tunis", points: 1420, gold: 0, silver: 3, bronze: 2 },
+                  { name: "Fatma Zouari", club: "Street Dance Sfax", points: 1310, gold: 0, silver: 2, bronze: 4 },
+                  { name: "Salma Mansour", club: "Sousse Dance Academy", points: 1200, gold: 0, silver: 2, bronze: 2 },
+                ],
+                ar: [
+                  { name: "أميرة بن علي", club: "نادي نجم تونس", points: 2850, gold: 5, silver: 2, bronze: 1 },
+                  { name: "كريم بوعزيزي", club: "فريق أوربن تونس", points: 2720, gold: 4, silver: 3, bronze: 2 },
+                  { name: "سارة المجري", club: "فرقة الرقص الحر", points: 2680, gold: 4, silver: 2, bronze: 3 },
+                  { name: "سامي الطرابلسي", club: "أكاديمية الرقص صفاقس", points: 2510, gold: 3, silver: 4, bronze: 1 },
+                  { name: "ليلى حمدي", club: "أكاديمية الرقص سوسة", points: 2340, gold: 3, silver: 2, bronze: 3 },
+                  { name: "عمر السالمي", club: "الفرقة الوطنية", points: 2180, gold: 2, silver: 3, bronze: 4 },
+                  { name: "محمد الفرجاني", club: "ستريت دانس صفاقس", points: 2050, gold: 2, silver: 2, bronze: 3 },
+                  { name: "إيناس الشعباني", club: "مصنع الرقص سوسة", points: 1920, gold: 1, silver: 4, bronze: 2 },
+                  { name: "نور الهدى", club: "استوديو الرقص نابل", points: 1870, gold: 1, silver: 3, bronze: 3 },
+                  { name: "مريم العوادي", club: "استوديو مودرن تونس", points: 1750, gold: 1, silver: 2, bronze: 4 },
+                  { name: "يوسف كريم", club: "نادي نجم تونس", points: 1680, gold: 1, silver: 2, bronze: 2 },
+                  { name: "رامي الجبالي", club: "أكاديمية الرقص صفاقس", points: 1540, gold: 1, silver: 1, bronze: 3 },
+                  { name: "أحمد الدريدي", club: "فريق أوربن تونس", points: 1420, gold: 0, silver: 3, bronze: 2 },
+                  { name: "فاطمة الزواري", club: "ستريت دانس صفاقس", points: 1310, gold: 0, silver: 2, bronze: 4 },
+                  { name: "سلمى منصور", club: "أكاديمية الرقص سوسة", points: 1200, gold: 0, silver: 2, bronze: 2 },
+                ],
+              };
+              const ranking = rankingData[lang] || rankingData.fr;
+
+              return (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4 }}
+                  className="rounded-xl border border-border overflow-hidden bg-card"
+                >
+                  <div className="bg-primary px-6 py-4">
+                    <h3 className="text-lg font-bold text-primary-foreground">{t("res.tabRanking")} — {t("res.season")}</h3>
+                  </div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/50">
+                        <TableHead className="w-20 text-center font-bold">#</TableHead>
+                        <TableHead className="font-bold">{t("res.name")}</TableHead>
+                        <TableHead className="font-bold">{t("res.club")}</TableHead>
+                        <TableHead className="text-center font-bold">🥇</TableHead>
+                        <TableHead className="text-center font-bold">🥈</TableHead>
+                        <TableHead className="text-center font-bold">🥉</TableHead>
+                        <TableHead className="text-center font-bold">{t("res.points")}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {ranking.map((r, idx) => (
+                        <TableRow key={idx} className={idx < 3 ? "bg-muted/30" : ""}>
+                          <TableCell className="text-center">{rankBadge(idx + 1)}</TableCell>
+                          <TableCell className="font-medium text-foreground">{r.name}</TableCell>
+                          <TableCell className="text-muted-foreground">{r.club}</TableCell>
+                          <TableCell className="text-center font-semibold text-foreground">{r.gold}</TableCell>
+                          <TableCell className="text-center font-semibold text-foreground">{r.silver}</TableCell>
+                          <TableCell className="text-center font-semibold text-foreground">{r.bronze}</TableCell>
+                          <TableCell className="text-center font-bold text-accent">{r.points}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </motion.div>
+              );
+            })()}
           </div>
         </section>
       )}
