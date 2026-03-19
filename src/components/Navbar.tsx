@@ -24,9 +24,9 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="fixed top-[36px] left-0 right-0 z-50 bg-primary">
+    <nav className="fixed top-[36px] left-0 right-0 z-50 bg-white shadow-sm">
       <div className="container mx-auto flex items-center justify-between h-16 px-4">
-        <a href="#" className="text-xl font-bold text-primary-foreground tracking-tight">
+        <a href="#" className="text-xl font-bold text-primary tracking-tight">
           <span className="text-accent">●</span> FTDAP
         </a>
         <div className="hidden lg:flex items-center gap-6">
@@ -35,7 +35,7 @@ const Navbar = () => {
               <Link
                 key={link.href}
                 to={link.href}
-                className="text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors"
+                className="relative text-sm text-primary hover:text-primary transition-colors pb-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-accent after:transition-all hover:after:w-full"
               >
                 {link.label}
               </Link>
@@ -43,7 +43,7 @@ const Navbar = () => {
               <a
                 key={link.href}
                 href={link.href}
-                className="text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors"
+                className="relative text-sm text-primary hover:text-primary transition-colors pb-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-accent after:transition-all hover:after:w-full"
               >
                 {link.label}
               </a>
@@ -55,7 +55,7 @@ const Navbar = () => {
           <div className="relative">
             <button
               onClick={() => setLangOpen(!langOpen)}
-              className="flex items-center gap-1.5 text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors px-2 py-1 rounded-md border border-primary-foreground/20"
+              className="flex items-center gap-1.5 text-sm text-primary hover:text-primary transition-colors px-2 py-1 rounded-md border border-primary/20"
             >
               <Globe className="w-4 h-4" />
               {langLabels[lang]}
@@ -83,20 +83,20 @@ const Navbar = () => {
         </div>
 
         <button
-          className="lg:hidden text-primary-foreground"
+          className="lg:hidden text-primary"
           onClick={() => setOpen(!open)}
         >
           {open ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
       {open && (
-        <div className="lg:hidden bg-primary border-t border-primary-foreground/10 pb-4">
+        <div className="lg:hidden bg-white border-t border-primary/10 pb-4">
           {navLinks.map((link) =>
             link.href.startsWith("/") ? (
               <Link
                 key={link.href}
                 to={link.href}
-                className="block px-6 py-2 text-sm text-primary-foreground/80 hover:text-primary-foreground"
+                className="block px-6 py-2 text-sm text-primary hover:text-accent"
                 onClick={() => setOpen(false)}
               >
                 {link.label}
@@ -105,7 +105,7 @@ const Navbar = () => {
               <a
                 key={link.href}
                 href={link.href}
-                className="block px-6 py-2 text-sm text-primary-foreground/80 hover:text-primary-foreground"
+                className="block px-6 py-2 text-sm text-primary hover:text-accent"
                 onClick={() => setOpen(false)}
               >
                 {link.label}
@@ -120,7 +120,7 @@ const Navbar = () => {
                 className={`px-3 py-1 text-xs rounded-md border transition-colors ${
                   l === lang
                     ? "bg-accent border-accent text-accent-foreground"
-                    : "border-primary-foreground/20 text-primary-foreground/70 hover:text-primary-foreground"
+                    : "border-primary/20 text-primary/70 hover:text-primary"
                 }`}
               >
                 {l === "fr" ? "FR" : l === "en" ? "EN" : "عر"}
