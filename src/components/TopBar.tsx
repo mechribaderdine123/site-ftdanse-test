@@ -8,7 +8,7 @@ const TopBar = () => {
   const { lang, setLang, t } = useLang();
 
   return (
-    <div className="bg-primary text-primary-foreground text-xs py-2 border-b border-primary-foreground/10">
+    <div className="fixed top-0 left-0 right-0 z-[60] bg-primary text-primary-foreground text-xs py-2 border-b border-primary-foreground/10">
       <div className="container mx-auto flex items-center justify-between px-4">
         <div className="flex items-center gap-4 md:gap-6">
           <a href="tel:+21671285649" className="flex items-center gap-1.5 hover:text-accent transition-colors">
