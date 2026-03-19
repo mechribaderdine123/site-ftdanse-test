@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Filter, Image, Video, ArrowLeft } from "lucide-react";
+import { Search, Filter, Image, Video, ArrowLeft, ChevronDown, Calendar as CalendarIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLang } from "@/contexts/LangContext";
 import Navbar from "@/components/Navbar";
