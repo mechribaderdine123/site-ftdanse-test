@@ -71,7 +71,7 @@ const eventsData: MediaEvent[] = [
 ];
 
 const disciplines = ["all", "breakdance", "contemporain", "hiphop", "classique"];
-const eventTypes = ["all", "championnat", "competition", "gala", "stage"];
+const eventTypes = ["all", "comp_nat", "comp_int", "formations"];
 const eventNames = ["all", "media.eventName.champNat", "media.eventName.galaContemp", "media.eventName.compRegion", "media.eventName.stageClassique"];
 const years = ["all", "2025", "2024", "2023"];
 
