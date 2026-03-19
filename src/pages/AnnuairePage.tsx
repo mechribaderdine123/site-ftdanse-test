@@ -4,6 +4,7 @@ import { Search, ArrowLeft, ArrowRight, Users, User, Award, Dumbbell, Building2,
 import { Link } from "react-router-dom";
 import { useLang } from "@/contexts/LangContext";
 import Navbar from "@/components/Navbar";
+import TopBar from "@/components/TopBar";
 import Footer from "@/components/Footer";
 
 type MemberType = "dancer" | "referee" | "coach";
@@ -112,6 +113,7 @@ const AnnuairePage = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <TopBar />
       <Navbar />
 
       {/* Hero */}

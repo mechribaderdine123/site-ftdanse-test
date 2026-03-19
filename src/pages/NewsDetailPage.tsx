@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Calendar, Image, FileText, Download } from "lucide-react";
 import { useLang } from "@/contexts/LangContext";
 import Navbar from "@/components/Navbar";
+import TopBar from "@/components/TopBar";
 import Footer from "@/components/Footer";
 import { newsData } from "@/data/newsData";
 
@@ -25,6 +26,7 @@ const NewsDetailPage = () => {
   if (!article) {
     return (
       <div className="min-h-screen bg-background">
+        <TopBar />
         <Navbar />
         <div className="container mx-auto px-4 py-32 text-center">
           <h1 className="text-2xl font-bold text-primary mb-4">{t("nd.notFound")}</h1>
@@ -39,6 +41,7 @@ const NewsDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <TopBar />
       <Navbar />
 
       {/* Hero Banner */}

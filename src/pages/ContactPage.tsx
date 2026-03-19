@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { MapPin, Phone, Mail, Clock, Send } from "lucide-react";
 import { useLang } from "@/contexts/LangContext";
 import Navbar from "@/components/Navbar";
+import TopBar from "@/components/TopBar";
 import Footer from "@/components/Footer";
 
 const ContactPage = () => {
@@ -22,6 +23,7 @@ const ContactPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <TopBar />
       <Navbar />
 
       {/* Hero */}

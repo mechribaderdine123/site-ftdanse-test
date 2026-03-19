@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Search, Filter, MapPin, Users, ArrowLeft, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
+import TopBar from "@/components/TopBar";
 import Footer from "@/components/Footer";
 import { useLang } from "@/contexts/LangContext";
 import { Badge } from "@/components/ui/badge";
@@ -81,6 +82,7 @@ const CompetitionsPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <TopBar />
       <Navbar />
 
       {/* Hero Banner */}

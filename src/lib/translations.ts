@@ -12,6 +12,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "nav.annuaire": "Annuaire",
     "nav.contact": "Contact",
     "nav.join": "Nous Rejoindre",
+    "topbar.follow": "Suivez-nous",
 
     // Hero
     "hero.badge": "Depuis 2010",
@@ -388,6 +389,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "nav.annuaire": "Directory",
     "nav.contact": "Contact",
     "nav.join": "Join Us",
+    "topbar.follow": "Follow us",
 
     "hero.badge": "Since 2010",
     "hero.title1": "Tunisian",
@@ -778,6 +780,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "nav.annuaire": "الدليل",
     "nav.contact": "اتصل بنا",
     "nav.join": "انضم إلينا",
+    "topbar.follow": "تابعونا",
 
     "hero.badge": "منذ 2010",
     "hero.title1": "الجامعة",

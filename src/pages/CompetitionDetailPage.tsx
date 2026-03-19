@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Calendar, MapPin, Users } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import TopBar from "@/components/TopBar";
 import Footer from "@/components/Footer";
 import { useLang } from "@/contexts/LangContext";
 import { Badge } from "@/components/ui/badge";
@@ -84,6 +85,7 @@ const CompetitionDetailPage = () => {
   if (!comp) {
     return (
       <div className="min-h-screen bg-background">
+        <TopBar />
         <Navbar />
         <div className="container mx-auto px-4 py-32 text-center">
           <p className="text-muted-foreground text-lg">{t("cd.notFound")}</p>
@@ -105,6 +107,7 @@ const CompetitionDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <TopBar />
       <Navbar />
 
       {/* Hero Banner with background */}

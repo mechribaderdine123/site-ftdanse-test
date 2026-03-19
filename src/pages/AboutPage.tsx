@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useLang } from "@/contexts/LangContext";
 import Navbar from "@/components/Navbar";
+import TopBar from "@/components/TopBar";
 import Footer from "@/components/Footer";
 import {
   Target, Eye, Flag, Clock, TrendingUp, Star,
@@ -65,6 +66,7 @@ const AboutPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <TopBar />
       <Navbar />
 
       {/* Hero Row 1: Single large image + intro text */}

@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Search, Filter, Download, MapPin, ChevronDown, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
+import TopBar from "@/components/TopBar";
 import Footer from "@/components/Footer";
 import { useLang } from "@/contexts/LangContext";
 import {
@@ -183,6 +184,7 @@ const ResultsPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <TopBar />
       <Navbar />
 
       {/* Hero */}

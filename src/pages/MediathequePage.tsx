@@ -4,6 +4,7 @@ import { Search, Filter, Image, Video, ArrowLeft, ChevronDown, Calendar as Calen
 import { Link } from "react-router-dom";
 import { useLang } from "@/contexts/LangContext";
 import Navbar from "@/components/Navbar";
+import TopBar from "@/components/TopBar";
 import Footer from "@/components/Footer";
 
 import g1 from "@/assets/gallery1.jpg";
@@ -99,6 +100,7 @@ const MediathequePage = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <TopBar />
       <Navbar />
 
       {/* Hero */}
