@@ -640,6 +640,26 @@ export const translations: Record<Lang, Record<string, string>> = {
     "ann.members": "members",
     "ann.license": "Active license",
     "ann.empty": "No results found.",
+
+    // Results Page
+    "nav.results": "Results",
+    "res.back": "Back to home",
+    "res.title": "Competition Results",
+    "res.subtitle": "View results and rankings from national and international competitions.",
+    "res.tabCompetitions": "By competitions",
+    "res.tabRanking": "National ranking",
+    "res.search": "Search a competition...",
+    "res.allTypes": "All types",
+    "res.national": "National competitions",
+    "res.international": "International competitions",
+    "res.training": "Training & workshops",
+    "res.allDisciplines": "All disciplines",
+    "res.rank": "Rank",
+    "res.name": "Full name",
+    "res.club": "Club",
+    "res.downloadPdf": "Download PDF",
+    "res.noResults": "No results found.",
+    "res.rankingComingSoon": "National ranking coming soon.",
   },
 
   ar: {
