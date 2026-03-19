@@ -1,4 +1,4 @@
-import { Phone, Mail, MapPin } from "lucide-react";
+import { Phone, Mail, MapPin, Facebook, Instagram } from "lucide-react";
 import { useLang } from "@/contexts/LangContext";
 import { Lang } from "@/lib/translations";
 
@@ -42,6 +42,12 @@ const TopBar = () => {
           </div>
           <span className="text-primary-foreground/50">|</span>
           <span className="text-primary-foreground/80 hidden sm:inline">{t("topbar.follow")}</span>
+          <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors">
+            <Facebook className="w-3.5 h-3.5" />
+          </a>
+          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors">
+            <Instagram className="w-3.5 h-3.5" />
+          </a>
         </div>
       </div>
     </div>
