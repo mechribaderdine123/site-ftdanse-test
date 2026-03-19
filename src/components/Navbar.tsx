@@ -128,9 +128,9 @@ const Navbar = () => {
             ))}
           </div>
           <div className="px-6 pt-2">
-            <a href="#contact" className="btn-primary text-sm py-2 px-4 inline-block">
+            <Link to="/contact" className="btn-primary text-sm py-2 px-4 inline-block" onClick={() => setOpen(false)}>
               {t("nav.join")}
-            </a>
+            </Link>
           </div>
         </div>
       )}
