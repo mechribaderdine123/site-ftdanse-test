@@ -323,6 +323,8 @@ export const translations: Record<Lang, Record<string, string>> = {
     "res.downloadPdf": "Télécharger pdf",
     "res.noResults": "Aucun résultat trouvé.",
     "res.rankingComingSoon": "Le classement national sera bientôt disponible.",
+    "res.points": "Points",
+    "res.season": "Saison 2025-2026",
   },
 
   en: {
