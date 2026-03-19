@@ -120,7 +120,7 @@ const Navbar = () => {
                 className={`px-3 py-1 text-xs rounded-md border transition-colors ${
                   l === lang
                     ? "bg-accent border-accent text-accent-foreground"
-                    : "border-primary-foreground/20 text-primary-foreground/70 hover:text-primary-foreground"
+                    : "border-primary/20 text-primary/70 hover:text-primary"
                 }`}
               >
                 {l === "fr" ? "FR" : l === "en" ? "EN" : "عر"}
