@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { useLang } from "@/contexts/LangContext";
 import Navbar from "@/components/Navbar";
+import TopBar from "@/components/TopBar";
 import Footer from "@/components/Footer";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
