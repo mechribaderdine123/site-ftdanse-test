@@ -664,6 +664,27 @@ export const translations: Record<Lang, Record<string, string>> = {
     "ann.license": "Active license",
     "ann.empty": "No results found.",
 
+    // Mediatheque
+    "nav.mediatheque": "Media Gallery",
+    "media.back": "Back to home",
+    "media.title": "Photos & Videos",
+    "media.desc": "Browse photo and video albums from our events and competitions.",
+    "media.search": "Search an event...",
+    "media.photos": "Photos",
+    "media.videos": "Videos",
+    "media.noResults": "No results found.",
+    "media.noVideos": "No videos available for this event.",
+    "media.disc.all": "All disciplines",
+    "media.disc.breakdance": "Break Dance",
+    "media.disc.contemporain": "Contemporary",
+    "media.disc.hiphop": "Hip-Hop",
+    "media.disc.classique": "Classical Dance",
+    "media.year.all": "All years",
+    "media.event1": "National Break Dance Championship 2025",
+    "media.event2": "Contemporary Dance Gala 2025",
+    "media.event3": "Hip-Hop Battle Tunis 2024",
+    "media.event4": "Classical Dance Show 2024",
+
     // Results Page
     "nav.results": "Results",
     "res.back": "Back to home",
