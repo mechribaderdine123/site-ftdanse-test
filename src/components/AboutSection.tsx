@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Users, Trophy, Globe } from "lucide-react";
+import { Link } from "react-router-dom";
 import aboutImg from "@/assets/dance-about.jpg";
 import { useLang } from "@/contexts/LangContext";
 
