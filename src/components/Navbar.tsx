@@ -55,7 +55,7 @@ const Navbar = () => {
           <div className="relative">
             <button
               onClick={() => setLangOpen(!langOpen)}
-              className="flex items-center gap-1.5 text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors px-2 py-1 rounded-md border border-primary-foreground/20"
+              className="flex items-center gap-1.5 text-sm text-primary hover:text-primary transition-colors px-2 py-1 rounded-md border border-primary/20"
             >
               <Globe className="w-4 h-4" />
               {langLabels[lang]}
