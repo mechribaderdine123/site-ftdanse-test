@@ -84,21 +84,6 @@ const Navbar = () => {
               </a>
             )
           )}
-          <div className="px-6 pt-3 flex items-center gap-2">
-            {(Object.keys(langLabels) as Lang[]).map((l) => (
-              <button
-                key={l}
-                onClick={() => { setLang(l); setOpen(false); }}
-                className={`px-3 py-1 text-xs rounded-md border transition-colors ${
-                  l === lang
-                    ? "bg-accent border-accent text-accent-foreground"
-                    : "border-primary/20 text-primary/70 hover:text-primary"
-                }`}
-              >
-                {l === "fr" ? "FR" : l === "en" ? "EN" : "عر"}
-              </button>
-            ))}
-          </div>
           <div className="px-6 pt-2">
             <Link to="/contact" className="btn-primary text-sm py-2 px-4 inline-block" onClick={() => setOpen(false)}>
               {t("nav.join")}
