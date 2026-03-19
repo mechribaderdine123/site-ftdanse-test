@@ -77,9 +77,9 @@ const Navbar = () => {
             )}
           </div>
 
-          <a href="#contact" className="btn-primary text-sm py-2 px-4">
+          <Link to="/contact" className="btn-primary text-sm py-2 px-4">
             {t("nav.join")}
-          </a>
+          </Link>
         </div>
 
         <button
