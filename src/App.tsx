@@ -10,6 +10,7 @@ import NewsPage from "./pages/NewsPage";
 import NewsDetailPage from "./pages/NewsDetailPage";
 import CompetitionsPage from "./pages/CompetitionsPage";
 import CompetitionDetailPage from "./pages/CompetitionDetailPage";
+import ResultsPage from "./pages/ResultsPage";
 import DisciplinesPage from "./pages/DisciplinesPage";
 import AnnuairePage from "./pages/AnnuairePage";
 import NotFound from "./pages/NotFound";
