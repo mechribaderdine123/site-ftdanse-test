@@ -90,7 +90,7 @@ const Navbar = () => {
         </button>
       </div>
       {open && (
-        <div className="lg:hidden bg-primary border-t border-primary-foreground/10 pb-4">
+        <div className="lg:hidden bg-white border-t border-primary/10 pb-4">
           {navLinks.map((link) =>
             link.href.startsWith("/") ? (
               <Link
