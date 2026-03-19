@@ -83,7 +83,7 @@ const Navbar = () => {
         </div>
 
         <button
-          className="lg:hidden text-primary-foreground"
+          className="lg:hidden text-primary"
           onClick={() => setOpen(!open)}
         >
           {open ? <X size={24} /> : <Menu size={24} />}
