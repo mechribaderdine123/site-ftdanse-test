@@ -170,9 +170,9 @@ const ResultsPage = () => {
   );
 
   const rankBadge = (rank: number) => {
-    if (rank === 1) return <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-yellow-400 text-yellow-900 font-bold text-sm">1</span>;
-    if (rank === 2) return <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-gray-300 text-gray-800 font-bold text-sm">2</span>;
-    if (rank === 3) return <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-orange-400 text-orange-900 font-bold text-sm">3</span>;
+    if (rank === 1) return <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-accent text-accent-foreground font-bold text-sm">1</span>;
+    if (rank === 2) return <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-muted text-muted-foreground font-bold text-sm border border-border">2</span>;
+    if (rank === 3) return <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-secondary text-secondary-foreground font-bold text-sm">3</span>;
     return <span className="text-muted-foreground font-medium">{rank}</span>;
   };
 
