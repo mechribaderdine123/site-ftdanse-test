@@ -12,6 +12,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "nav.annuaire": "Annuaire",
     "nav.contact": "Contact",
     "nav.join": "Nous Rejoindre",
+    "topbar.follow": "Suivez-nous",
 
     // Hero
     "hero.badge": "Depuis 2010",
