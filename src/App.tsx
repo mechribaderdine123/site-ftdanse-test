@@ -14,6 +14,7 @@ import ResultsPage from "./pages/ResultsPage";
 import DisciplinesPage from "./pages/DisciplinesPage";
 import AnnuairePage from "./pages/AnnuairePage";
 import MediathequePage from "./pages/MediathequePage";
+import ContactPage from "./pages/ContactPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
