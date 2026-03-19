@@ -6,8 +6,7 @@ import { useLang } from "@/contexts/LangContext";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
-  const [langOpen, setLangOpen] = useState(false);
-  const { t, lang, setLang } = useLang();
+  const { t } = useLang();
 
   const navLinks = [
     { label: t("nav.home"), href: "/" },
