@@ -105,7 +105,7 @@ const Navbar = () => {
               <a
                 key={link.href}
                 href={link.href}
-                className="block px-6 py-2 text-sm text-primary-foreground/80 hover:text-primary-foreground"
+                className="block px-6 py-2 text-sm text-primary hover:text-accent"
                 onClick={() => setOpen(false)}
               >
                 {link.label}
