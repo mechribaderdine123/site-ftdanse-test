@@ -147,6 +147,30 @@ const MediathequePage = () => {
           </select>
 
           <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="text-sm rounded-lg border border-border bg-background text-foreground px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/30"
+          >
+            {eventTypes.map((t2) => (
+              <option key={t2} value={t2}>
+                {t(`media.type.${t2}`)}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={eventFilter}
+            onChange={(e) => setEventFilter(e.target.value)}
+            className="text-sm rounded-lg border border-border bg-background text-foreground px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/30"
+          >
+            {eventNames.map((en) => (
+              <option key={en} value={en}>
+                {en === "all" ? t("media.event.all") : t(en)}
+              </option>
+            ))}
+          </select>
+
+          <select
             value={yearFilter}
             onChange={(e) => setYearFilter(e.target.value)}
             className="text-sm rounded-lg border border-border bg-background text-foreground px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/30"
