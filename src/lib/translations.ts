@@ -11,7 +11,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "nav.gallery": "Galerie",
     "nav.annuaire": "Annuaire",
     "nav.contact": "Contact",
-    "nav.join": "Nous Rejoindre",
+    "nav.join": "Espace Membre",
     "topbar.follow": "Suivez-nous",
 
     // Hero
