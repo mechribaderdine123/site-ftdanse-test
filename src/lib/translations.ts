@@ -355,6 +355,27 @@ export const translations: Record<Lang, Record<string, string>> = {
     "res.rankingComingSoon": "Le classement national sera bientôt disponible.",
     "res.points": "Points",
     "res.season": "Saison 2025-2026",
+
+    // Contact Page
+    "contact.subtitle": "CONTACTEZ-NOUS",
+    "contact.heroTitle1": "Nous sommes là pour",
+    "contact.heroTitle2": "vous aider",
+    "contact.heroDesc": "N'hésitez pas à nous contacter pour toute question ou demande d'information.",
+    "contact.name": "Nom complet",
+    "contact.namePh": "entrer le nom complet",
+    "contact.email": "Email",
+    "contact.emailPh": "entrer votre mail",
+    "contact.subject": "Sujet",
+    "contact.subjectPh": "sujet de votre message",
+    "contact.message": "Message",
+    "contact.messagePh": "écrire votre message ici ...",
+    "contact.send": "envoyer le message",
+    "contact.sent": "Message envoyé avec succès !",
+    "contact.infoTitle": "Informations de contact",
+    "contact.addressTitle": "Tunis, Tunisie",
+    "contact.addressLine": "4, Rue de la Ligue Arabe, Belvédère, Tunis, Tunisie",
+    "contact.hours": "Heures d'ouverture",
+    "contact.hoursLine": "Lundi - Vendredi : 8h00 - 17h00",
   },
 
   en: {
