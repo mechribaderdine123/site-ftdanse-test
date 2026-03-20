@@ -16,6 +16,16 @@ import AnnuairePage from "./pages/AnnuairePage";
 import MediathequePage from "./pages/MediathequePage";
 import ContactPage from "./pages/ContactPage";
 import NotFound from "./pages/NotFound";
+import AdminLayout from "./components/admin/AdminLayout";
+import Dashboard from "./pages/admin/Dashboard";
+import AdminNews from "./pages/admin/AdminNews";
+import AdminCompetitions from "./pages/admin/AdminCompetitions";
+import AdminResults from "./pages/admin/AdminResults";
+import AdminDisciplines from "./pages/admin/AdminDisciplines";
+import AdminDirectory from "./pages/admin/AdminDirectory";
+import AdminMedia from "./pages/admin/AdminMedia";
+import AdminPartners from "./pages/admin/AdminPartners";
+import AdminSettings from "./pages/admin/AdminSettings";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +48,20 @@ const App = () => (
             <Route path="/annuaire" element={<AnnuairePage />} />
             <Route path="/mediatheque" element={<MediathequePage />} />
             <Route path="/contact" element={<ContactPage />} />
+
+            {/* Admin Dashboard */}
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="news" element={<AdminNews />} />
+              <Route path="competitions" element={<AdminCompetitions />} />
+              <Route path="results" element={<AdminResults />} />
+              <Route path="disciplines" element={<AdminDisciplines />} />
+              <Route path="directory" element={<AdminDirectory />} />
+              <Route path="media" element={<AdminMedia />} />
+              <Route path="partners" element={<AdminPartners />} />
+              <Route path="settings" element={<AdminSettings />} />
+            </Route>
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
