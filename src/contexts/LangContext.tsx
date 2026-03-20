@@ -21,9 +21,6 @@ export const LangProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("ftdap-lang", lang);
     document.documentElement.dir = isRTL ? "rtl" : "ltr";
     document.documentElement.lang = lang;
-    document.documentElement.style.fontFamily = isRTL
-      ? "'Cairo', sans-serif"
-      : "'Inter', sans-serif";
   }, [lang, isRTL]);
 
   const t = (key: string): string => {
