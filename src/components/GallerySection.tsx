@@ -13,15 +13,15 @@ const GallerySection = () => {
   const { t } = useLang();
 
   return (
-    <section id="gallery" className="py-20 bg-background">
+    <section id="gallery" className="py-14 md:py-20 bg-background">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-10">
+        <div className="text-center mb-8 md:mb-10">
           <h2 className="section-title">{t("gallery.title")}</h2>
           <p className="text-muted-foreground text-sm mt-2">{t("gallery.desc")}</p>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 md:gap-4">
           {images.map((img, i) => (
-            <motion.div key={i} initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.4, delay: i * 0.05 }} className="rounded-xl overflow-hidden aspect-[4/3] card-hover">
+            <motion.div key={i} initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.4, delay: i * 0.05 }} className="rounded-lg md:rounded-xl overflow-hidden aspect-[4/3] card-hover">
               <img src={img} alt={`${t("gallery.title")} ${i + 1}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
             </motion.div>
           ))}
