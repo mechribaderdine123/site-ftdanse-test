@@ -3,7 +3,7 @@ import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLang } from "@/contexts/LangContext";
 import logoFtdap from "@/assets/logo-ftdap.png";
-
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
@@ -23,75 +23,66 @@ const Navbar = () => {
 
   return (
     <nav className="fixed top-[36px] left-0 right-0 z-50 bg-white shadow-sm">
-      <div className="container mx-auto flex items-center justify-between h-16 px-4">
+      <div className="container mx-auto flex items-center justify-between h-14 md:h-16 px-4">
         <Link to="/" className="flex items-center gap-2">
-          <img src={logoFtdap} alt="FTDAP Logo" className="h-10 w-auto" />
+          <img src={logoFtdap} alt="FTDAP Logo" className="h-8 md:h-10 w-auto" />
         </Link>
         <div className="hidden lg:flex items-center gap-6">
-          {navLinks.map((link) =>
-            link.href.startsWith("/") ? (
-              <Link
-                key={link.href}
-                to={link.href}
-                className="relative text-sm text-primary hover:text-primary transition-colors pb-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-accent after:transition-all hover:after:w-full"
-              >
-                {link.label}
-              </Link>
-            ) : (
-              <a
-                key={link.href}
-                href={link.href}
-                className="relative text-sm text-primary hover:text-primary transition-colors pb-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-accent after:transition-all hover:after:w-full"
-              >
-                {link.label}
-              </a>
-            )
-          )}
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              to={link.href}
+              className="relative text-sm text-primary hover:text-primary transition-colors pb-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-accent after:transition-all hover:after:w-full"
+            >
+              {link.label}
+            </Link>
+          ))}
         </div>
         <div className="hidden lg:flex items-center gap-3">
-
           <Link to="/contact" className="btn-primary text-sm py-2 px-4">
             {t("nav.join")}
           </Link>
         </div>
 
         <button
-          className="lg:hidden text-primary"
-          onClick={() => setOpen(!open)}
+          className="lg:hidden text-primary p-2 -mr-2 active:scale-95 transition-transform"
+          onClick={() => setOpen(true)}
+          aria-label="Open menu"
         >
-          {open ? <X size={24} /> : <Menu size={24} />}
+          <Menu size={24} />
         </button>
       </div>
-      {open && (
-        <div className="lg:hidden bg-white border-t border-primary/10 pb-4">
-          {navLinks.map((link) =>
-            link.href.startsWith("/") ? (
+
+      {/* Mobile Sheet Menu */}
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent side="right" className="w-[280px] bg-white p-0 flex flex-col">
+          <SheetTitle className="sr-only">Navigation</SheetTitle>
+          <div className="flex items-center justify-between p-4 border-b border-border">
+            <img src={logoFtdap} alt="FTDAP Logo" className="h-8 w-auto" />
+          </div>
+          <nav className="flex-1 overflow-y-auto py-2">
+            {navLinks.map((link) => (
               <Link
                 key={link.href}
                 to={link.href}
-                className="block px-6 py-2 text-sm text-primary hover:text-accent"
+                className="block px-5 py-3 text-sm text-primary font-medium hover:bg-muted hover:text-accent transition-colors border-b border-border/40 last:border-0"
                 onClick={() => setOpen(false)}
               >
                 {link.label}
               </Link>
-            ) : (
-              <a
-                key={link.href}
-                href={link.href}
-                className="block px-6 py-2 text-sm text-primary hover:text-accent"
-                onClick={() => setOpen(false)}
-              >
-                {link.label}
-              </a>
-            )
-          )}
-          <div className="px-6 pt-2">
-            <Link to="/contact" className="btn-primary text-sm py-2 px-4 inline-block" onClick={() => setOpen(false)}>
+            ))}
+          </nav>
+          <div className="p-4 border-t border-border">
+            <Link
+              to="/contact"
+              className="btn-primary text-sm py-3 px-4 block text-center rounded-xl"
+              onClick={() => setOpen(false)}
+            >
               {t("nav.join")}
             </Link>
           </div>
-        </div>
-      )}
+        </SheetContent>
+      </Sheet>
     </nav>
   );
 };

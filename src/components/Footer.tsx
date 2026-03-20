@@ -6,10 +6,10 @@ const Footer = () => {
 
   return (
     <footer id="contact" className="bg-primary text-primary-foreground">
-      <div className="container mx-auto px-4 py-16">
-        <div className="grid md:grid-cols-4 gap-10">
+      <div className="container mx-auto px-4 py-10 md:py-16">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-10">
           {/* Column 1: FTDAP Info */}
-          <div>
+          <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-accent-foreground font-bold text-xs">
                 FT
@@ -24,8 +24,8 @@ const Footer = () => {
 
           {/* Column 2: Liens Rapides */}
           <div>
-            <h4 className="font-semibold text-sm mb-4 text-primary-foreground uppercase tracking-wider">{t("footer.quickLinks")}</h4>
-            <ul className="space-y-2 text-xs text-primary-foreground/60">
+            <h4 className="font-semibold text-xs md:text-sm mb-3 md:mb-4 text-primary-foreground uppercase tracking-wider">{t("footer.quickLinks")}</h4>
+            <ul className="space-y-1.5 md:space-y-2 text-xs text-primary-foreground/60">
               <li><a href="#" className="hover:text-primary-foreground transition-colors">{t("nav.home")}</a></li>
               <li><a href="/about" className="hover:text-primary-foreground transition-colors">{t("nav.about")}</a></li>
               <li><a href="#styles" className="hover:text-primary-foreground transition-colors">{t("nav.styles")}</a></li>
@@ -39,8 +39,8 @@ const Footer = () => {
 
           {/* Column 3: Disciplines */}
           <div>
-            <h4 className="font-semibold text-sm mb-4 text-primary-foreground uppercase tracking-wider">{t("footer.disciplines")}</h4>
-            <ul className="space-y-2 text-xs text-primary-foreground/60">
+            <h4 className="font-semibold text-xs md:text-sm mb-3 md:mb-4 text-primary-foreground uppercase tracking-wider">{t("footer.disciplines")}</h4>
+            <ul className="space-y-1.5 md:space-y-2 text-xs text-primary-foreground/60">
               <li><a href="#" className="hover:text-primary-foreground transition-colors">{t("footer.classique")}</a></li>
               <li><a href="#" className="hover:text-primary-foreground transition-colors">Jazz</a></li>
               <li><a href="#" className="hover:text-primary-foreground transition-colors">Hip-Hop</a></li>
@@ -50,9 +50,9 @@ const Footer = () => {
           </div>
 
           {/* Column 4: Contact */}
-          <div>
-            <h4 className="font-semibold text-sm mb-4 text-primary-foreground uppercase tracking-wider">{t("footer.contactUs")}</h4>
-            <ul className="space-y-3 text-xs text-primary-foreground/60">
+          <div className="col-span-2 md:col-span-1">
+            <h4 className="font-semibold text-xs md:text-sm mb-3 md:mb-4 text-primary-foreground uppercase tracking-wider">{t("footer.contactUs")}</h4>
+            <ul className="space-y-2.5 md:space-y-3 text-xs text-primary-foreground/60">
               <li className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-accent shrink-0 mt-0.5" />
                 {t("footer.address")}
