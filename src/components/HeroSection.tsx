@@ -22,7 +22,7 @@ const HeroSection = () => {
           <span className="inline-block bg-accent text-accent-foreground text-xs font-semibold px-3 py-1 rounded-full mb-3 md:mb-4">
             {t("hero.badge")}
           </span>
-          <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-primary-foreground leading-snug md:leading-relaxed rtl:leading-loose rtl:md:leading-[1.8] mb-3 md:mb-4">
+          <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-primary-foreground leading-snug md:leading-relaxed rtl:leading-relaxed rtl:md:leading-[1.5] mb-3 md:mb-4">
             {t("hero.title1")}<br />
             {t("hero.title2")}<br />
             <span className="text-accent">{t("hero.title3")}</span>
