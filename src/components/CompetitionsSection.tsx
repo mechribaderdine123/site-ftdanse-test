@@ -8,49 +8,49 @@ const CompetitionsSection = () => {
 
   const competitions = [
     {
-      date: "15", month: "MARS", year: "2024",
-      title: "Championnat Régional - Tunis",
-      location: "Salle Omnisports El Menzah",
-      athletes: "200+ athlètes",
-      status: "Inscriptions ouvertes",
+      date: "15", month: t("comp.month.mar"), year: "2024",
+      title: t("comp.1"),
+      location: t("comp.1.loc"),
+      athletes: t("comp.athletes200"),
+      status: t("comp.status.open"),
       statusColor: "bg-green-500",
-      disciplines: ["Classique", "Contemporain"],
+      disciplines: [t("comp.disc.classique"), t("comp.disc.contemporain")],
     },
     {
-      date: "28", month: "AVR", year: "2024",
-      title: "Coupe de Tunisie – Demi-finales",
-      location: "Centre Culturel de Sousse",
-      athletes: "350+ athlètes",
-      status: "Bientôt",
+      date: "28", month: t("comp.month.apr"), year: "2024",
+      title: t("comp.2"),
+      location: t("comp.2.loc"),
+      athletes: t("comp.athletes350"),
+      status: t("comp.status.soon"),
       statusColor: "bg-accent",
-      disciplines: ["Hip-Hop", "Jazz", "Contemporain"],
+      disciplines: [t("comp.disc.hiphop"), t("comp.disc.jazz"), t("comp.disc.contemporain")],
     },
     {
-      date: "12", month: "MAI", year: "2024",
-      title: "Battle Urbaine Nationale",
-      location: "Cité de la Culture, Tunis",
-      athletes: "150+ danseurs",
-      status: "Bientôt",
+      date: "12", month: t("comp.month.may"), year: "2024",
+      title: t("comp.3"),
+      location: t("comp.3.loc"),
+      athletes: t("comp.athletes150"),
+      status: t("comp.status.soon"),
       statusColor: "bg-accent",
-      disciplines: ["Breaking", "Hip-Hop", "Freestyle"],
+      disciplines: [t("comp.disc.breaking"), t("comp.disc.hiphop"), t("comp.disc.freestyle")],
     },
     {
-      date: "08", month: "JUIN", year: "2024",
-      title: "Finale Championnat National",
-      location: "Palais des Sports, Ben Arous",
-      athletes: "500+ athlètes",
-      status: "À venir",
+      date: "08", month: t("comp.month.jun"), year: "2024",
+      title: t("comp.4"),
+      location: t("comp.4.loc"),
+      athletes: t("comp.athletes500"),
+      status: t("comp.status.upcoming"),
       statusColor: "bg-primary",
-      disciplines: ["Toutes disciplines"],
+      disciplines: [t("comp.disc.all")],
     },
     {
-      date: "20", month: "JUIL", year: "2024",
-      title: "Gala International de Danse",
-      location: "Théâtre Municipal de Tunis",
-      athletes: "300+ artistes",
-      status: "À venir",
+      date: "20", month: t("comp.month.jul"), year: "2024",
+      title: t("comp.5"),
+      location: t("comp.5.loc"),
+      athletes: t("comp.athletes300"),
+      status: t("comp.status.upcoming"),
       statusColor: "bg-primary",
-      disciplines: ["Classique", "Jazz", "Contemporain"],
+      disciplines: [t("comp.disc.classique"), t("comp.disc.jazz"), t("comp.disc.contemporain")],
     },
   ];
 
@@ -67,7 +67,7 @@ const CompetitionsSection = () => {
             to="/competitions"
             className="flex items-center gap-2 text-accent font-semibold text-sm mt-4 md:mt-0 hover:underline"
           >
-            Calendrier complet <ArrowRight className="w-4 h-4" />
+            {t("comp.fullCalendar")} <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
@@ -146,7 +146,7 @@ const CompetitionsSection = () => {
                 to="/competitions"
                 className="shrink-0 bg-primary text-primary-foreground text-xs sm:text-sm font-semibold px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity w-full sm:w-auto"
               >
-                <Users className="w-4 h-4" /> Détails
+                <Users className="w-4 h-4" /> {t("comp.detailsBtn")}
               </Link>
             </motion.div>
           ))}
