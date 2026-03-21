@@ -150,8 +150,8 @@ const AboutPage = () => {
                 key={key}
                 className="bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/20 rounded-xl p-6"
               >
-                <div className="w-12 h-12 mb-4 rounded-full bg-accent/20 flex items-center justify-center">
-                  <Icon className="w-6 h-6 text-accent" />
+                <div className="w-12 h-12 mb-4 rounded-full bg-primary-foreground/20 flex items-center justify-center">
+                  <Icon className="w-6 h-6 text-primary-foreground" />
                 </div>
                 <h3 className="text-base font-bold text-accent mb-2">
                   {t(`ap.${key}.title`)}
