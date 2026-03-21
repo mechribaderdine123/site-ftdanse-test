@@ -16,16 +16,6 @@ import AnnuairePage from "./pages/AnnuairePage";
 import MediathequePage from "./pages/MediathequePage";
 import ContactPage from "./pages/ContactPage";
 import NotFound from "./pages/NotFound";
-import AdminLayout from "./components/admin/AdminLayout";
-import Dashboard from "./pages/admin/Dashboard";
-import AdminNews from "./pages/admin/AdminNews";
-import AdminCompetitions from "./pages/admin/AdminCompetitions";
-import AdminResults from "./pages/admin/AdminResults";
-import AdminDisciplines from "./pages/admin/AdminDisciplines";
-import AdminDirectory from "./pages/admin/AdminDirectory";
-import AdminMedia from "./pages/admin/AdminMedia";
-import AdminPartners from "./pages/admin/AdminPartners";
-import AdminSettings from "./pages/admin/AdminSettings";
 
 const queryClient = new QueryClient();
 
