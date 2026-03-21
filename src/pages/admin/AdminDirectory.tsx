@@ -7,10 +7,10 @@ import { Plus, Search, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 const mockMembers = [
-  { id: 1, name: "Youssef Amrani", type: "dancer", club: "Club Casablanca", license: "active" },
-  { id: 2, name: "Sara Benali", type: "dancer", club: "Club Rabat", license: "active" },
-  { id: 3, name: "Mohamed Tazi", type: "coach", club: "Club Marrakech", license: "expired" },
-  { id: 4, name: "Nadia Idrissi", type: "referee", club: "—", license: "active" },
+  { id: 1, name: "Danseur Amine", type: "dancer", club: "Club Casablanca", license: "active" },
+  { id: 2, name: "Danseuse Nadia", type: "dancer", club: "Club Rabat", license: "active" },
+  { id: 3, name: "Entraineur Rachid", type: "coach", club: "Club Marrakech", license: "expired" },
+  { id: 4, name: "Arbitre Samia", type: "referee", club: "—", license: "active" },
   { id: 5, name: "Club Atlas Danse", type: "club", club: "Fès", license: "active" },
 ];
 
