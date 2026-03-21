@@ -165,7 +165,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "footer.copyright": "© 2024 FTDAP — Fédération Tunisienne de Danse et Activités Associées",
 
     // ===== Competitions Page =====
-    "cp.back": "← Retour à l'accueil",
+    "cp.back": "Retour à l'accueil",
     "cp.title": "Compétitions & événements",
     "cp.subtitle": "Retrouvez l'ensemble des compétitions nationales, internationales, formations et stages organisés par la fédération.",
     "cp.search": "Rechercher une compétition...",
@@ -207,7 +207,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "cp.c8.loc": "Palais des Sports, Ben Arous",
 
     // ===== Competition Detail Page =====
-    "cd.backToList": "← Retour aux compétitions",
+    "cd.backToList": "Retour aux compétitions",
     "cd.notFound": "Compétition non trouvée",
     "cd.tabDesc": "Description",
     "cd.tabProgramme": "Programme",
@@ -307,7 +307,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "ap.affil6": "Fédération Africaine de Danse",
 
     // ===== News Page =====
-    "np.back": "← Retour à l'accueil",
+    "np.back": "Retour à l'accueil",
     "np.title": "Actualités",
     "np.subtitle": "Communiqués officiels, annonces fédérales et dernières nouvelles des événements sportifs.",
     "np.search": "Rechercher une actualité...",
@@ -330,7 +330,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "np.card3.body": "Les finales de la Coupe de Tunisie de Danse se sont tenues au Centre Culturel de la Menzah avec la participation de près de 500 athlètes représentant 17 associations.\n\nLes compétitions se sont déroulées dans 21 épreuves réparties sur 3 disciplines principales. Le niveau technique observé cette année témoigne de la progression constante de la danse sportive en Tunisie.\n\nLes résultats finaux ont confirmé la domination des clubs de la capitale tout en révélant de nouveaux talents prometteurs issus des régions.",
 
     // ===== News Detail Page =====
-    "nd.backToNews": "← Retour aux actualités",
+    "nd.backToNews": "Retour aux actualités",
     "nd.notFound": "Article introuvable",
     "nd.gallery": "Galerie photos",
     "nd.documents": "Documents attachés",
@@ -339,7 +339,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "nd.caption3": "Présentation des axes stratégiques",
 
     // ===== Annuaire =====
-    "ann.back": "← Retour à l'accueil",
+    "ann.back": "Retour à l'accueil",
     "ann.title": "Membres et Clubs",
     "ann.subtitle": "Recherchez dans l'annuaire des membres inscrits à la fédération.",
     "ann.search": "Rechercher un membre ou club...",
@@ -578,7 +578,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "footer.copyright": "© 2024 FTDAP — Tunisian Federation of Dance and Associated Activities",
 
     // ===== Competitions Page =====
-    "cp.back": "← Back to home",
+    "cp.back": "Back to home",
     "cp.title": "Competitions & Events",
     "cp.subtitle": "Find all national, international competitions, training sessions and workshops organized by the federation.",
     "cp.search": "Search a competition...",
@@ -620,7 +620,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "cp.c8.loc": "Sports Palace, Ben Arous",
 
     // ===== Competition Detail Page =====
-    "cd.backToList": "← Back to competitions",
+    "cd.backToList": "Back to competitions",
     "cd.notFound": "Competition not found",
     "cd.tabDesc": "Description",
     "cd.tabProgramme": "Programme",
@@ -720,7 +720,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "ap.affil6": "African Dance Federation",
 
     // ===== News Page =====
-    "np.back": "← Back to home",
+    "np.back": "Back to home",
     "np.title": "News",
     "np.subtitle": "Official communications, federal announcements and latest news from sporting events.",
     "np.search": "Search news...",
@@ -743,7 +743,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "np.card3.body": "The Tunisia Dance Cup finals were held at the Menzah Cultural Center with the participation of nearly 500 athletes representing 17 associations.\n\nCompetitions took place in 21 events across 3 main disciplines. The technical level observed this year reflects the steady progress of sports dance in Tunisia.\n\nThe final results confirmed the dominance of capital clubs while revealing promising new talents from the regions.",
 
     // ===== News Detail Page =====
-    "nd.backToNews": "← Back to news",
+    "nd.backToNews": "Back to news",
     "nd.notFound": "Article not found",
     "nd.gallery": "Photo gallery",
     "nd.documents": "Attached documents",
@@ -752,7 +752,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "nd.caption3": "Presentation of strategic pillars",
 
     // ===== Annuaire =====
-    "ann.back": "← Back to home",
+    "ann.back": "Back to home",
     "ann.title": "Members & Clubs",
     "ann.subtitle": "Search the directory of federation registered members.",
     "ann.search": "Search a member or club...",
@@ -991,7 +991,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "footer.copyright": "© 2024 FTDAP — الجامعة التونسية للرقص والأنشطة المرتبطة",
 
     // ===== Competitions Page =====
-    "cp.back": "← العودة إلى الرئيسية",
+    "cp.back": "العودة إلى الرئيسية",
     "cp.title": "المسابقات والأحداث",
     "cp.subtitle": "اكتشفوا جميع المسابقات الوطنية والدولية والتدريبات والملتقيات التي تنظمها الجامعة.",
     "cp.search": "البحث عن مسابقة...",
@@ -1033,7 +1033,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "cp.c8.loc": "قصر الرياضة، بن عروس",
 
     // ===== Competition Detail Page =====
-    "cd.backToList": "← العودة إلى المسابقات",
+    "cd.backToList": "العودة إلى المسابقات",
     "cd.notFound": "المسابقة غير موجودة",
     "cd.tabDesc": "الوصف",
     "cd.tabProgramme": "البرنامج",
@@ -1133,7 +1133,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "ap.affil6": "الاتحاد الأفريقي للرقص",
 
     // ===== News Page =====
-    "np.back": "← العودة إلى الرئيسية",
+    "np.back": "العودة إلى الرئيسية",
     "np.title": "الأخبار",
     "np.subtitle": "بلاغات رسمية، إعلانات جامعية وآخر أخبار الأحداث الرياضية.",
     "np.search": "البحث عن خبر...",
@@ -1156,7 +1156,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "np.card3.body": "أقيمت نهائيات كأس تونس للرقص في المركز الثقافي بالمنزه بمشاركة قرابة 500 رياضي يمثلون 17 جمعية.\n\nجرت المسابقات في 21 اختباراً موزعة على 3 تخصصات رئيسية. يشهد المستوى التقني المرصود هذا العام على التقدم المستمر للرقص الرياضي في تونس.\n\nأكدت النتائج النهائية هيمنة أندية العاصمة مع الكشف عن مواهب جديدة واعدة من الجهات.",
 
     // ===== News Detail Page =====
-    "nd.backToNews": "← العودة إلى الأخبار",
+    "nd.backToNews": "العودة إلى الأخبار",
     "nd.notFound": "المقال غير موجود",
     "nd.gallery": "معرض الصور",
     "nd.documents": "الوثائق المرفقة",
@@ -1165,7 +1165,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     "nd.caption3": "عرض المحاور الاستراتيجية",
 
     // ===== Annuaire =====
-    "ann.back": "→ العودة إلى الصفحة الرئيسية",
+    "ann.back": "العودة إلى الصفحة الرئيسية",
     "ann.title": "الأعضاء والأندية",
     "ann.subtitle": "ابحث في دليل الأعضاء المسجلين في الاتحاد.",
     "ann.search": "البحث عن عضو أو نادي...",
