@@ -179,7 +179,7 @@ const AboutPage = () => {
           </motion.div>
 
           <div className="relative max-w-3xl mx-auto">
-            <div className="absolute start-6 md:start-1/2 top-0 bottom-0 w-0.5 bg-border -translate-x-1/2" />
+            <div className="absolute left-6 md:left-1/2 top-0 bottom-0 w-0.5 bg-border md:-translate-x-1/2 rtl:left-auto rtl:right-6 rtl:md:right-1/2 rtl:md:translate-x-1/2" />
 
             {timeline.map(({ icon: Icon, year, key }, i) => (
               <motion.div
@@ -192,13 +192,15 @@ const AboutPage = () => {
                 viewport={{ once: true }}
                 variants={fadeUp}
               >
-                <div className="absolute start-6 md:start-1/2 w-12 h-12 -translate-x-1/2 rounded-full bg-accent flex items-center justify-center z-10">
+                <div className="absolute left-6 md:left-1/2 w-12 h-12 -translate-x-1/2 rounded-full bg-accent flex items-center justify-center z-10 rtl:left-auto rtl:right-6 rtl:md:right-1/2 rtl:translate-x-1/2">
                   <Icon className="w-5 h-5 text-accent-foreground" />
                 </div>
 
                 <div
-                  className={`ms-20 md:ms-0 md:w-[calc(50%-2rem)] ${
-                    i % 2 === 0 ? "md:pe-8 md:text-end" : "md:ps-8"
+                  className={`ml-20 md:ml-0 rtl:ml-0 rtl:mr-20 rtl:md:mr-0 md:w-[calc(50%-2rem)] ${
+                    i % 2 === 0
+                      ? "md:pr-8 md:text-right rtl:md:pr-0 rtl:md:pl-8 rtl:md:text-left"
+                      : "md:pl-8 md:text-left rtl:md:pl-0 rtl:md:pr-8 rtl:md:text-right"
                   }`}
                 >
                   <span className="text-sm font-bold text-accent">{year}</span>
