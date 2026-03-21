@@ -146,7 +146,7 @@ const CompetitionsSection = () => {
                 to="/competitions"
                 className="shrink-0 bg-primary text-primary-foreground text-xs sm:text-sm font-semibold px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity w-full sm:w-auto"
               >
-                <Users className="w-4 h-4" /> Détails
+                <Users className="w-4 h-4" /> {t("comp.detailsBtn")}
               </Link>
             </motion.div>
           ))}
