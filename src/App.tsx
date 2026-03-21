@@ -39,18 +39,6 @@ const App = () => (
             <Route path="/mediatheque" element={<MediathequePage />} />
             <Route path="/contact" element={<ContactPage />} />
 
-            {/* Admin Dashboard */}
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<Dashboard />} />
-              <Route path="news" element={<AdminNews />} />
-              <Route path="competitions" element={<AdminCompetitions />} />
-              <Route path="results" element={<AdminResults />} />
-              <Route path="disciplines" element={<AdminDisciplines />} />
-              <Route path="directory" element={<AdminDirectory />} />
-              <Route path="media" element={<AdminMedia />} />
-              <Route path="partners" element={<AdminPartners />} />
-              <Route path="settings" element={<AdminSettings />} />
-            </Route>
 
             <Route path="*" element={<NotFound />} />
           </Routes>
