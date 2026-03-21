@@ -67,7 +67,7 @@ const CompetitionsSection = () => {
             to="/competitions"
             className="flex items-center gap-2 text-accent font-semibold text-sm mt-4 md:mt-0 hover:underline"
           >
-            Calendrier complet <ArrowRight className="w-4 h-4" />
+            {t("comp.fullCalendar")} <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
