@@ -14,9 +14,6 @@ const AdminLayout = () => {
     );
   }
 
-  if (!user) {
-    return <Navigate to="/admin/login" replace />;
-  }
 
   return (
     <SidebarProvider>
