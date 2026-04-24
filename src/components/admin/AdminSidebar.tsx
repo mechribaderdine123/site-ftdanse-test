@@ -8,6 +8,7 @@ import {
   LogOut,
   ArrowLeft,
   Info,
+  Music2,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, Link } from "react-router-dom";
@@ -33,6 +34,7 @@ const menuItems = [
   { title: "Actualités", url: "/admin/news", icon: Newspaper },
   { title: "Compétitions", url: "/admin/competitions", icon: Trophy },
   { title: "Résultats", url: "/admin/results", icon: Medal },
+  { title: "Styles de Danse", url: "/admin/disciplines", icon: Music2 },
   { title: "Annuaire", url: "/admin/directory", icon: Users },
   { title: "Médiathèque", url: "/admin/media", icon: Image },
 ];

@@ -13,6 +13,7 @@ import CompetitionsPage from "./pages/CompetitionsPage";
 import CompetitionDetailPage from "./pages/CompetitionDetailPage";
 import ResultsPage from "./pages/ResultsPage";
 import DisciplinesPage from "./pages/DisciplinesPage";
+import DisciplineDetailPage from "./pages/DisciplineDetailPage";
 import AnnuairePage from "./pages/AnnuairePage";
 import MediathequePage from "./pages/MediathequePage";
 import ContactPage from "./pages/ContactPage";
@@ -28,6 +29,7 @@ import AdminResults from "./pages/admin/AdminResults";
 import AdminDirectory from "./pages/admin/AdminDirectory";
 import AdminMedia from "./pages/admin/AdminMedia";
 import AdminAbout from "./pages/admin/AdminAbout";
+import AdminDisciplines from "./pages/admin/AdminDisciplines";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +50,7 @@ const App = () => (
               <Route path="/competitions/:id" element={<CompetitionDetailPage />} />
               <Route path="/results" element={<ResultsPage />} />
               <Route path="/disciplines" element={<DisciplinesPage />} />
+              <Route path="/disciplines/:slug" element={<DisciplineDetailPage />} />
               <Route path="/annuaire" element={<AnnuairePage />} />
               <Route path="/mediatheque" element={<MediathequePage />} />
               <Route path="/contact" element={<ContactPage />} />
@@ -62,6 +65,7 @@ const App = () => (
                 <Route path="directory" element={<AdminDirectory />} />
                 <Route path="media" element={<AdminMedia />} />
                 <Route path="about" element={<AdminAbout />} />
+                <Route path="disciplines" element={<AdminDisciplines />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
