@@ -61,7 +61,7 @@ const AdminMedia = () => {
   const videos = filtered.filter((m) => m.type === "video");
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader
         title="Gestion de la Médiathèque"
         description="Photos et vidéos des événements de la fédération"

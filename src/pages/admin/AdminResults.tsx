@@ -55,7 +55,7 @@ const AdminResults = () => {
   };
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader
         title="Gestion des Résultats"
         description="Saisissez les classements et points des compétitions"

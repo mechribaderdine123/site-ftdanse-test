@@ -57,7 +57,7 @@ const AdminCompetitions = () => {
   };
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader
         title="Gestion des Compétitions"
         description="Planifiez et organisez les événements de la fédération"

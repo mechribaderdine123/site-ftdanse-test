@@ -52,7 +52,7 @@ const AdminDirectory = () => {
   };
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader
         title="Gestion de l'Annuaire"
         description="Membres, clubs et licences de la fédération"

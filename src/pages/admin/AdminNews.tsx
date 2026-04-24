@@ -45,7 +45,7 @@ const AdminNews = () => {
   };
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader
         title="Gestion des Actualités"
         description="Créez, modifiez et publiez les articles du site"
