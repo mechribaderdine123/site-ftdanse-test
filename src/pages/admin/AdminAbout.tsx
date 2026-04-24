@@ -5,12 +5,58 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Trash2, Plus, Save, ImageIcon, Eye } from "lucide-react";
+import {
+  Upload, Trash2, Plus, Save, ImageIcon, Eye,
+  Target, Flag, Heart, Star, Award, Trophy, Users, Zap,
+  Globe, Shield, Rocket, Lightbulb, Compass, BookOpen,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/admin/PageHeader";
 import heroDanceImg from "@/assets/hero-dance.jpg";
 import danceAboutImg from "@/assets/dance-about.jpg";
 import { Link } from "react-router-dom";
+
+/** Available icons for Mission / Vision / Objectifs cards */
+const ICON_OPTIONS = {
+  Target, Eye, Flag, Heart, Star, Award, Trophy, Users,
+  Zap, Globe, Shield, Rocket, Lightbulb, Compass, BookOpen,
+} as const;
+type IconName = keyof typeof ICON_OPTIONS;
+
+const IconPicker = ({ value, onChange }: { value: IconName; onChange: (v: IconName) => void }) => {
+  const Current = ICON_OPTIONS[value];
+  return (
+    <div className="space-y-2">
+      <Label className="text-xs">Icône</Label>
+      <div className="flex items-center gap-3">
+        <div className="w-14 h-14 rounded-lg bg-primary flex items-center justify-center shrink-0">
+          <Current className="w-7 h-7 text-primary-foreground" />
+        </div>
+        <div className="grid grid-cols-8 gap-1.5 flex-1">
+          {(Object.keys(ICON_OPTIONS) as IconName[]).map((name) => {
+            const Icon = ICON_OPTIONS[name];
+            const active = name === value;
+            return (
+              <button
+                key={name}
+                type="button"
+                onClick={() => onChange(name)}
+                title={name}
+                className={`h-8 w-8 rounded-md flex items-center justify-center border transition-colors ${
+                  active
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-muted/40 border-border hover:bg-muted"
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 /** Reusable image picker (mockup mode — uses object URL) */
 const ImagePicker = ({
@@ -65,7 +111,7 @@ const ImagePicker = ({
 
 interface TimelineItem { id: string; year: string; title: string; desc: string; }
 interface BureauMember { id: string; name: string; role: string; date: string; photo: string; }
-interface ValueCard { id: string; title: string; desc: string; icon: string; }
+interface ValueCard { id: string; title: string; desc: string; icon: IconName; }
 
 const AdminAbout = () => {
   const { toast } = useToast();
@@ -84,9 +130,9 @@ const AdminAbout = () => {
 
   // Mission / Vision / Valeurs
   const [values, setValues] = useState<ValueCard[]>([
-    { id: "1", title: "Mission", desc: "Promouvoir et développer la danse sportive et artistique en Tunisie.", icon: "" },
-    { id: "2", title: "Vision", desc: "Faire de la Tunisie une référence régionale en danse sportive.", icon: "" },
-    { id: "3", title: "Objectifs", desc: "Former, encadrer et organiser les compétitions nationales et internationales.", icon: "" },
+    { id: "1", title: "Mission", desc: "Promouvoir et développer la danse sportive et artistique en Tunisie.", icon: "Target" },
+    { id: "2", title: "Vision", desc: "Faire de la Tunisie une référence régionale en danse sportive.", icon: "Eye" },
+    { id: "3", title: "Objectifs", desc: "Former, encadrer et organiser les compétitions nationales et internationales.", icon: "Flag" },
   ]);
 
   // Timeline
@@ -105,7 +151,7 @@ const AdminAbout = () => {
     { id: "5", name: "Ahmed Hamdi", role: "Directeur Technique", date: "Depuis 2021", photo: "" },
   ]);
 
-  const updateValue = (id: string, field: keyof ValueCard, val: string) =>
+  const updateValue = <K extends keyof ValueCard>(id: string, field: K, val: ValueCard[K]) =>
     setValues((p) => p.map((v) => (v.id === id ? { ...v, [field]: val } : v)));
 
   const updateTimeline = (id: string, field: keyof TimelineItem, val: string) =>
@@ -210,11 +256,9 @@ const AdminAbout = () => {
             {values.map((v) => (
               <Card key={v.id}>
                 <CardContent className="p-4 space-y-3">
-                  <ImagePicker
+                  <IconPicker
                     value={v.icon}
                     onChange={(val) => updateValue(v.id, "icon", val)}
-                    label="Icône (PNG/SVG transparent recommandé)"
-                    ratio="aspect-square"
                   />
                   <div className="space-y-1.5">
                     <Label className="text-xs">Titre</Label>
