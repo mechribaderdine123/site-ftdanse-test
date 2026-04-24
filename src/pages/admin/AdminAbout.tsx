@@ -65,7 +65,7 @@ const ImagePicker = ({
 
 interface TimelineItem { id: string; year: string; title: string; desc: string; }
 interface BureauMember { id: string; name: string; role: string; date: string; photo: string; }
-interface ValueCard { id: string; title: string; desc: string; }
+interface ValueCard { id: string; title: string; desc: string; icon: string; }
 
 const AdminAbout = () => {
   const { toast } = useToast();
@@ -84,9 +84,9 @@ const AdminAbout = () => {
 
   // Mission / Vision / Valeurs
   const [values, setValues] = useState<ValueCard[]>([
-    { id: "1", title: "Mission", desc: "Promouvoir et développer la danse sportive et artistique en Tunisie." },
-    { id: "2", title: "Vision", desc: "Faire de la Tunisie une référence régionale en danse sportive." },
-    { id: "3", title: "Objectifs", desc: "Former, encadrer et organiser les compétitions nationales et internationales." },
+    { id: "1", title: "Mission", desc: "Promouvoir et développer la danse sportive et artistique en Tunisie.", icon: "" },
+    { id: "2", title: "Vision", desc: "Faire de la Tunisie une référence régionale en danse sportive.", icon: "" },
+    { id: "3", title: "Objectifs", desc: "Former, encadrer et organiser les compétitions nationales et internationales.", icon: "" },
   ]);
 
   // Timeline
@@ -209,19 +209,29 @@ const AdminAbout = () => {
           <div className="grid md:grid-cols-3 gap-4">
             {values.map((v) => (
               <Card key={v.id}>
-                <CardHeader className="pb-2">
-                  <Input
-                    value={v.title}
-                    onChange={(e) => updateValue(v.id, "title", e.target.value)}
-                    className="font-bold text-base"
+                <CardContent className="p-4 space-y-3">
+                  <ImagePicker
+                    value={v.icon}
+                    onChange={(val) => updateValue(v.id, "icon", val)}
+                    label="Icône (PNG/SVG transparent recommandé)"
+                    ratio="aspect-square"
                   />
-                </CardHeader>
-                <CardContent>
-                  <Textarea
-                    rows={6}
-                    value={v.desc}
-                    onChange={(e) => updateValue(v.id, "desc", e.target.value)}
-                  />
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Titre</Label>
+                    <Input
+                      value={v.title}
+                      onChange={(e) => updateValue(v.id, "title", e.target.value)}
+                      className="font-bold"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Description</Label>
+                    <Textarea
+                      rows={5}
+                      value={v.desc}
+                      onChange={(e) => updateValue(v.id, "desc", e.target.value)}
+                    />
+                  </div>
                 </CardContent>
               </Card>
             ))}
