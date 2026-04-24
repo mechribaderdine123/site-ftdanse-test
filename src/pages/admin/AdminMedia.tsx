@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { Plus, Trash2, Search, ImageIcon, Video, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { PageHeader } from "@/components/admin/PageHeader";
 
 import gallery1 from "@/assets/gallery1.jpg";
 import gallery2 from "@/assets/gallery2.jpg";
@@ -60,16 +61,22 @@ const AdminMedia = () => {
   const videos = filtered.filter((m) => m.type === "video");
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Gestion de la Médiathèque</h2>
-          <p className="text-muted-foreground">{items.length} médias au total</p>
-        </div>
-        <Button onClick={() => setDialogOpen(true)}>
-          <Upload className="mr-2 h-4 w-4" /> Ajouter un média
-        </Button>
-      </div>
+    <div>
+      <PageHeader
+        title="Gestion de la Médiathèque"
+        description="Photos et vidéos des événements de la fédération"
+        stats={[
+          { label: "Total médias", value: items.length },
+          { label: "Photos", value: items.filter(i => i.type === "photo").length, color: "text-pink-600" },
+          { label: "Vidéos", value: items.filter(i => i.type === "video").length, color: "text-blue-600" },
+          { label: "Événements", value: new Set(items.map(i => i.event)).size, color: "text-emerald-600" },
+        ]}
+        actions={
+          <Button onClick={() => setDialogOpen(true)}>
+            <Upload className="mr-2 h-4 w-4" /> Ajouter un média
+          </Button>
+        }
+      />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg">

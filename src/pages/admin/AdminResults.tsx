@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, Search, Medal } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { PageHeader } from "@/components/admin/PageHeader";
 
 interface Result {
   id: number;
@@ -54,16 +55,22 @@ const AdminResults = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Gestion des Résultats</h2>
-          <p className="text-muted-foreground">{items.length} résultats au total</p>
-        </div>
-        <Button onClick={() => { setEditItem(null); setDialogOpen(true); }}>
-          <Plus className="mr-2 h-4 w-4" /> Ajouter
-        </Button>
-      </div>
+    <div>
+      <PageHeader
+        title="Gestion des Résultats"
+        description="Saisissez les classements et points des compétitions"
+        stats={[
+          { label: "Résultats", value: items.length },
+          { label: "Médailles d'or", value: items.filter(i => i.rank === 1).length, color: "text-yellow-600" },
+          { label: "Disciplines", value: new Set(items.map(i => i.discipline)).size, color: "text-blue-600" },
+          { label: "Points totaux", value: items.reduce((s, i) => s + i.points, 0), color: "text-emerald-600" },
+        ]}
+        actions={
+          <Button onClick={() => { setEditItem(null); setDialogOpen(true); }}>
+            <Plus className="mr-2 h-4 w-4" /> Nouveau résultat
+          </Button>
+        }
+      />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg">
