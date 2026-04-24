@@ -7,6 +7,7 @@ import {
   Image,
   LogOut,
   ArrowLeft,
+  Info,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, Link } from "react-router-dom";
@@ -28,6 +29,7 @@ import logoFtdap from "@/assets/logo-ftdap.png";
 
 const menuItems = [
   { title: "Tableau de bord", url: "/admin", icon: LayoutDashboard },
+  { title: "Page À propos", url: "/admin/about", icon: Info },
   { title: "Actualités", url: "/admin/news", icon: Newspaper },
   { title: "Compétitions", url: "/admin/competitions", icon: Trophy },
   { title: "Résultats", url: "/admin/results", icon: Medal },

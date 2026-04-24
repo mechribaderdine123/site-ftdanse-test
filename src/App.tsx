@@ -27,6 +27,7 @@ import AdminCompetitions from "./pages/admin/AdminCompetitions";
 import AdminResults from "./pages/admin/AdminResults";
 import AdminDirectory from "./pages/admin/AdminDirectory";
 import AdminMedia from "./pages/admin/AdminMedia";
+import AdminAbout from "./pages/admin/AdminAbout";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,7 @@ const App = () => (
                 <Route path="results" element={<AdminResults />} />
                 <Route path="directory" element={<AdminDirectory />} />
                 <Route path="media" element={<AdminMedia />} />
+                <Route path="about" element={<AdminAbout />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
