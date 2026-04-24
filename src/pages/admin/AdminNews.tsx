@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { PageHeader } from "@/components/admin/PageHeader";
 
 const AdminNews = () => {
   const [search, setSearch] = useState("");
@@ -45,15 +46,23 @@ const AdminNews = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Gestion des Actualités</h2>
-          <p className="text-muted-foreground">{items.length} articles au total</p>
-        </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <PageHeader
+        title="Gestion des Actualités"
+        description="Créez, modifiez et publiez les articles du site"
+        stats={[
+          { label: "Articles", value: items.length },
+          { label: "Compétitions", value: items.filter(i => i.category === "competition").length, color: "text-blue-600" },
+          { label: "Événements", value: items.filter(i => i.category === "event").length, color: "text-emerald-600" },
+          { label: "Ce mois", value: items.length },
+        ]}
+        actions={
           <Button onClick={handleNew}>
-            <Plus className="mr-2 h-4 w-4" /> Ajouter
+            <Plus className="mr-2 h-4 w-4" /> Nouvel article
           </Button>
+        }
+      />
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>{editItem ? "Modifier l'article" : "Nouvel article"}</DialogTitle>
@@ -92,7 +101,6 @@ const AdminNews = () => {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
 
       <Card>
         <CardHeader className="pb-3">

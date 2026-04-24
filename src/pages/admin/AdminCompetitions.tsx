@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { PageHeader } from "@/components/admin/PageHeader";
 
 interface Competition {
   id: number;
@@ -57,15 +58,21 @@ const AdminCompetitions = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Gestion des Compétitions</h2>
-          <p className="text-muted-foreground">{items.length} compétitions au total</p>
-        </div>
-        <Button onClick={() => { setEditItem(null); setDialogOpen(true); }}>
-          <Plus className="mr-2 h-4 w-4" /> Ajouter
-        </Button>
-      </div>
+      <PageHeader
+        title="Gestion des Compétitions"
+        description="Planifiez et organisez les événements de la fédération"
+        stats={[
+          { label: "Total", value: items.length },
+          { label: "À venir", value: items.filter(i => i.status === "upcoming").length, color: "text-blue-600" },
+          { label: "En cours", value: items.filter(i => i.status === "ongoing").length, color: "text-amber-600" },
+          { label: "Athlètes", value: items.reduce((s, i) => s + i.athletes, 0), color: "text-emerald-600" },
+        ]}
+        actions={
+          <Button onClick={() => { setEditItem(null); setDialogOpen(true); }}>
+            <Plus className="mr-2 h-4 w-4" /> Nouvelle compétition
+          </Button>
+        }
+      />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg">

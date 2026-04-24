@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, Search, User, Building2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { PageHeader } from "@/components/admin/PageHeader";
 
 interface DirectoryEntry {
   id: number;
@@ -52,15 +53,21 @@ const AdminDirectory = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Gestion de l'Annuaire</h2>
-          <p className="text-muted-foreground">{items.length} entrées au total</p>
-        </div>
-        <Button onClick={() => { setEditItem(null); setDialogOpen(true); }}>
-          <Plus className="mr-2 h-4 w-4" /> Ajouter
-        </Button>
-      </div>
+      <PageHeader
+        title="Gestion de l'Annuaire"
+        description="Membres, clubs et licences de la fédération"
+        stats={[
+          { label: "Total", value: items.length },
+          { label: "Membres", value: items.filter(i => i.type === "member").length, color: "text-blue-600" },
+          { label: "Clubs", value: items.filter(i => i.type === "club").length, color: "text-violet-600" },
+          { label: "Licences actives", value: items.filter(i => i.licenseActive).length, color: "text-emerald-600" },
+        ]}
+        actions={
+          <Button onClick={() => { setEditItem(null); setDialogOpen(true); }}>
+            <Plus className="mr-2 h-4 w-4" /> Nouvelle entrée
+          </Button>
+        }
+      />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg">
