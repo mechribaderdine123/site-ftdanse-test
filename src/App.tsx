@@ -30,6 +30,8 @@ import AdminDirectory from "./pages/admin/AdminDirectory";
 import AdminMedia from "./pages/admin/AdminMedia";
 import AdminAbout from "./pages/admin/AdminAbout";
 import AdminDisciplines from "./pages/admin/AdminDisciplines";
+import MemberAuth from "./pages/member/MemberAuth";
+import MemberDashboard from "./pages/member/MemberDashboard";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +56,10 @@ const App = () => (
               <Route path="/annuaire" element={<AnnuairePage />} />
               <Route path="/mediatheque" element={<MediathequePage />} />
               <Route path="/contact" element={<ContactPage />} />
+
+              {/* Member portal */}
+              <Route path="/member/login" element={<MemberAuth />} />
+              <Route path="/member" element={<MemberDashboard />} />
 
               {/* Admin */}
               <Route path="/admin/login" element={<AdminLogin />} />
