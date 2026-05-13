@@ -39,10 +39,7 @@ const Navbar = () => {
           ))}
         </div>
         <div className="hidden lg:flex items-center gap-3">
-          <Link to="/member/login" className="text-sm text-primary hover:text-accent transition-colors font-medium">
-            {t("nav.member") || "Espace Membre"}
-          </Link>
-          <Link to="/contact" className="btn-primary text-sm py-2 px-4">
+          <Link to="/member/login" className="btn-primary text-sm py-2 px-4">
             {t("nav.join")}
           </Link>
         </div>
@@ -78,13 +75,6 @@ const Navbar = () => {
           <div className="p-4 border-t border-border">
             <Link
               to="/member/login"
-              className="block text-center text-sm py-2.5 mb-2 rounded-xl border border-border text-primary hover:bg-muted"
-              onClick={() => setOpen(false)}
-            >
-              {t("nav.member") || "Espace Membre"}
-            </Link>
-            <Link
-              to="/contact"
               className="btn-primary text-sm py-3 px-4 block text-center rounded-xl"
               onClick={() => setOpen(false)}
             >
