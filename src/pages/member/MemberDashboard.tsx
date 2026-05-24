@@ -36,6 +36,7 @@ interface MemberSession {
   city: string;
   discipline: string;
   clubName?: string;
+  avatarUrl?: string;
 }
 
 interface Dancer {
@@ -304,8 +305,14 @@ const MemberDashboard = () => {
             <div className="bg-gradient-to-r from-primary to-primary/80 h-28" />
             <CardContent className="pt-0 pb-6">
               <div className="-mt-12 mb-4">
-                <div className="w-24 h-24 shrink-0 rounded-full bg-card border-4 border-card shadow-lg flex-col flex items-center justify-center">
-                  {isClub ? <Building2 className="w-10 h-10 text-primary" /> : <User className="w-10 h-10 text-primary" />}
+                <div className="w-24 h-24 shrink-0 rounded-full bg-card border-4 border-card shadow-lg flex items-center justify-center overflow-hidden">
+                  {isClub && session.avatarUrl ? (
+                    <img src={session.avatarUrl} alt="Logo club" className="w-full h-full object-cover" />
+                  ) : isClub ? (
+                    <Building2 className="w-10 h-10 text-primary" />
+                  ) : (
+                    <User className="w-10 h-10 text-primary" />
+                  )}
                 </div>
               </div>
               <div className="min-w-0">
@@ -338,6 +345,43 @@ const MemberDashboard = () => {
               <Card>
                 <CardHeader><CardTitle>Mes informations</CardTitle></CardHeader>
                 <CardContent className="grid sm:grid-cols-2 gap-4">
+                  {isClub && (
+                    <div className="sm:col-span-2 space-y-2">
+                      <Label>Logo du club</Label>
+                      <div className="flex items-center gap-4">
+                        <div className="w-20 h-20 rounded-full bg-muted border-2 border-border flex items-center justify-center overflow-hidden">
+                          {session.avatarUrl ? (
+                            <img src={session.avatarUrl} alt="Logo club" className="w-full h-full object-cover" />
+                          ) : (
+                            <Building2 className="w-8 h-8 text-muted-foreground" />
+                          )}
+                        </div>
+                        <label className="cursor-pointer">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              const reader = new FileReader();
+                              reader.onload = (ev) => {
+                                const url = ev.target?.result as string;
+                                const updated = { ...session, avatarUrl: url };
+                                localStorage.setItem("ftdap_member", JSON.stringify(updated));
+                                setSession(updated);
+                                toast({ title: "Logo mis à jour" });
+                              };
+                              reader.readAsDataURL(file);
+                            }}
+                          />
+                          <Button type="button" variant="outline" size="sm" asChild>
+                            <span><Upload className="w-3.5 h-3.5 mr-1" /> Changer l'image</span>
+                          </Button>
+                        </label>
+                      </div>
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <Label>{isClub ? "Nom du club" : "Nom complet"}</Label>
                     <Input defaultValue={session.fullName} />
