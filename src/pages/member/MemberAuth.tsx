@@ -95,6 +95,7 @@ const MemberAuth = () => {
       avatarUrl: demoKind === "club" ? "" : undefined,
     };
     localStorage.setItem("ftdap_member", JSON.stringify(session));
+    window.dispatchEvent(new Event("ftdap-auth-change"));
     toast({ title: "Connexion réussie" });
     navigate("/member");
   };
