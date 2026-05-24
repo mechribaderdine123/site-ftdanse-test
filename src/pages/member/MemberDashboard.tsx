@@ -259,7 +259,7 @@ const MemberDashboard = () => {
     ).length;
     toast({
       title: "Paiement enregistré",
-      description: `Reçu attaché à ${paidIds.length} membre(s) payé(s). ${submittedCount} soumission(s) envoyée(s) à la fédération.`,
+      description: `Reçu attaché à ${paidIds.length} membre(s) payé(s). ${submittedCount} soumission(s) envoyée(s) pour licence.`,
     });
     setBulkPayDialog(false);
   };
@@ -486,7 +486,7 @@ const MemberDashboard = () => {
                     <div>
                       <CardTitle>Membres du club</CardTitle>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Gestion des inscriptions, paiements et soumissions à la fédération
+                        Gestion des inscriptions, paiements et soumissions de licence
                       </p>
                     </div>
                     <div className="flex gap-2">
@@ -508,7 +508,7 @@ const MemberDashboard = () => {
                     <div className="bg-muted/40 border border-border rounded-lg p-3 mb-4 text-xs text-muted-foreground">
                       Activez le statut <strong>Payé</strong> pour les membres qui ont réglé, puis cliquez
                       sur <strong>Payer</strong> pour téléverser un seul reçu commun. Tous les membres
-                      marqués payés seront automatiquement soumis à la fédération
+                      marqués payés seront automatiquement soumis pour licence
                       (si leurs documents sont complets). Les membres non payés ne seront pas envoyés.
                     </div>
                     <Table>
@@ -519,7 +519,7 @@ const MemberDashboard = () => {
                           <TableHead>Discipline</TableHead>
                           <TableHead>Documents</TableHead>
                           <TableHead>Paiement</TableHead>
-                          <TableHead>Fédération</TableHead>
+                          <TableHead>Licence</TableHead>
                           <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -788,7 +788,7 @@ const MemberDashboard = () => {
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
                   Vous allez attacher un reçu commun à <strong>{paidMembers.length} membre(s) payé(s)</strong>
-                  {" "}et les soumettre à la fédération.
+                  {" "}et les soumettre pour licence.
                 </p>
                 <div className="max-h-40 overflow-y-auto border border-border rounded-md p-2 text-xs space-y-1">
                   {paidMembers.map((m) => {
