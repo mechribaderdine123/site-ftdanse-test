@@ -493,11 +493,11 @@ const MemberDashboard = () => {
                       <Button
                         size="sm"
                         variant="default"
-                        disabled={selectedIds.length === 0}
+                        disabled={paidMembers.length === 0}
                         onClick={() => setBulkPayDialog(true)}
                       >
                         <Upload className="w-4 h-4 mr-2" />
-                        Payer la sélection ({selectedIds.length})
+                        Payer ({paidMembers.length})
                       </Button>
                       <Button size="sm" variant="outline" onClick={openNewClubMember}>
                         <Plus className="w-4 h-4 mr-2" /> Nouveau membre
@@ -506,25 +506,14 @@ const MemberDashboard = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="bg-muted/40 border border-border rounded-lg p-3 mb-4 text-xs text-muted-foreground">
-                      Cochez les membres qui ont payé puis cliquez sur <strong>Payer la sélection</strong> pour
-                      téléverser un seul reçu commun. Les membres sélectionnés seront marqués payés et
-                      automatiquement soumis à la fédération (si leurs documents sont complets).
-                      Les membres non sélectionnés ne seront pas envoyés.
+                      Activez le statut <strong>Payé</strong> pour les membres qui ont réglé, puis cliquez
+                      sur <strong>Payer</strong> pour téléverser un seul reçu commun. Tous les membres
+                      marqués payés seront automatiquement soumis à la fédération
+                      (si leurs documents sont complets). Les membres non payés ne seront pas envoyés.
                     </div>
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="w-10">
-                            <Checkbox
-                              checked={
-                                myClubMembers.length > 0 &&
-                                myClubMembers.every((m) => selectedIds.includes(m.id))
-                              }
-                              onCheckedChange={(c) =>
-                                setSelectedIds(c ? myClubMembers.map((m) => m.id) : [])
-                              }
-                            />
-                          </TableHead>
                           <TableHead>Nom</TableHead>
                           <TableHead>Âge</TableHead>
                           <TableHead>Discipline</TableHead>
@@ -541,12 +530,6 @@ const MemberDashboard = () => {
                           const required = minor ? 2 : 2;
                           return (
                             <TableRow key={m.id}>
-                              <TableCell>
-                                <Checkbox
-                                  checked={selectedIds.includes(m.id)}
-                                  onCheckedChange={() => toggleSelect(m.id)}
-                                />
-                              </TableCell>
                               <TableCell className="font-medium">
                                 {m.fullName}
                                 <div className="text-xs text-muted-foreground">{m.gender === "M" ? "Homme" : "Femme"}</div>
@@ -562,19 +545,17 @@ const MemberDashboard = () => {
                                 </span>
                               </TableCell>
                               <TableCell>
-                                <div className="flex flex-col gap-0.5">
-                                  <span
-                                    className={`inline-flex w-fit px-2 py-0.5 rounded-full text-xs font-medium ${
-                                      m.payment.status === "paid"
-                                        ? "bg-green-100 text-green-700"
-                                        : "bg-red-100 text-red-700"
-                                    }`}
-                                  >
+                                <div className="flex items-center gap-2">
+                                  <Switch
+                                    checked={m.payment.status === "paid"}
+                                    onCheckedChange={(c) => togglePaymentStatus(m, c)}
+                                  />
+                                  <span className={`text-xs font-medium ${m.payment.status === "paid" ? "text-green-700" : "text-muted-foreground"}`}>
                                     {m.payment.status === "paid" ? "Payé" : "Non payé"}
                                   </span>
                                   {m.payment.receipt && (
-                                    <span className="text-[10px] text-muted-foreground truncate max-w-[140px]">
-                                      Reçu : {m.payment.receipt.name}
+                                    <span className="text-[10px] text-muted-foreground truncate max-w-[100px]" title={m.payment.receipt.name}>
+                                      📄 {m.payment.receipt.name}
                                     </span>
                                   )}
                                 </div>
