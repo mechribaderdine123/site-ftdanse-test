@@ -109,13 +109,32 @@ const Navbar = () => {
             ))}
           </nav>
           <div className="p-4 border-t border-border">
-            <Link
-              to="/member/login"
-              className="btn-primary text-sm py-3 px-4 block text-center rounded-xl"
-              onClick={() => setOpen(false)}
-            >
-              {t("nav.join")}
-            </Link>
+            {session ? (
+              <Link
+                to="/member"
+                className="inline-flex items-center justify-center gap-2 w-full rounded-xl border border-border bg-muted/60 px-4 py-3 text-sm font-medium text-primary hover:bg-muted transition-colors"
+                onClick={() => setOpen(false)}
+              >
+                {session.kind === "club" ? (
+                  session.avatarUrl ? (
+                    <img src={session.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover" />
+                  ) : (
+                    <Building2 className="w-4 h-4 text-violet-600" />
+                  )
+                ) : (
+                  <User className="w-4 h-4 text-blue-600" />
+                )}
+                <span className="truncate">{session.fullName}</span>
+              </Link>
+            ) : (
+              <Link
+                to="/member/login"
+                className="btn-primary text-sm py-3 px-4 block text-center rounded-xl"
+                onClick={() => setOpen(false)}
+              >
+                {t("nav.join")}
+              </Link>
+            )}
           </div>
         </SheetContent>
       </Sheet>
