@@ -336,7 +336,6 @@ const MemberDashboard = () => {
               {isAthlete && <TabsTrigger value="results">Mes résultats</TabsTrigger>}
               {isCoach && <TabsTrigger value="dancers">Mes danseurs</TabsTrigger>}
               {isClub && <TabsTrigger value="club-members">Membres du club</TabsTrigger>}
-              {isClub && <TabsTrigger value="club-competitions">Compétitions</TabsTrigger>}
               {isReferee && <TabsTrigger value="missions">Mes missions</TabsTrigger>}
               <TabsTrigger value="documents">Documents</TabsTrigger>
             </TabsList>
