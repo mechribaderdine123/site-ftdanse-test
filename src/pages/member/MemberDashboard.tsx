@@ -23,6 +23,7 @@ import {
 } from "@/data/clubMembersStore";
 import { Switch } from "@/components/ui/switch";
 import { Upload, Send, FileCheck2, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type AccountKind = "individual" | "club";
 type IndividualRole = "athlete" | "coach" | "referee";
@@ -90,7 +91,8 @@ const MemberDashboard = () => {
   const [cmBirth, setCmBirth] = useState<string>("");
   const [cmDocs, setCmDocs] = useState<ClubMember["documents"]>({});
   const [cmPayment, setCmPayment] = useState<ClubMember["payment"]>({ status: "unpaid" });
-  const [receiptDialog, setReceiptDialog] = useState<ClubMember | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkPayDialog, setBulkPayDialog] = useState(false);
 
   useEffect(() => {
     const raw = localStorage.getItem("ftdap_member");
@@ -213,39 +215,44 @@ const MemberDashboard = () => {
     toast({ title: "Membre supprimé" });
   };
 
-  const togglePaymentStatus = (m: ClubMember, checked: boolean) => {
-    const updated: ClubMember = {
-      ...m,
-      payment: {
-        ...m.payment,
-        status: checked ? "paid" : "unpaid",
-        updatedAt: new Date().toISOString(),
-        receipt: checked ? m.payment.receipt : undefined,
-      },
-    };
-    upsertClubMember(updated);
-    setClubMembers(loadClubMembers());
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
   };
 
-  const uploadReceipt = (m: ClubMember, file: File) => {
-    const updated: ClubMember = {
-      ...m,
-      payment: { ...m.payment, receipt: fakeUpload(file), updatedAt: new Date().toISOString() },
-    };
-    upsertClubMember(updated);
-    setClubMembers(loadClubMembers());
-    toast({ title: "Reçu téléchargé" });
-    setReceiptDialog(null);
+  const handleBulkPayment = (file: File) => {
+    if (selectedIds.length === 0) return;
+    const receipt = fakeUpload(file);
+    const now = new Date().toISOString();
+    const all = loadClubMembers();
+    const updated = all.map((m) => {
+      if (!selectedIds.includes(m.id)) return m;
+      const docsCount = Object.values(m.documents).filter(Boolean).length;
+      const canSubmit = docsCount >= 2;
+      return {
+        ...m,
+        payment: { status: "paid" as const, receipt, updatedAt: now },
+        approval: canSubmit
+          ? { status: "pending" as const, submittedAt: now }
+          : m.approval,
+      };
+    });
+    saveAllAndReload(updated);
+    const submittedCount = updated.filter(
+      (m) => selectedIds.includes(m.id) && m.approval.status === "pending" && m.approval.submittedAt === now,
+    ).length;
+    toast({
+      title: "Paiement enregistré",
+      description: `${selectedIds.length} membre(s) marqué(s) payé(s). ${submittedCount} soumission(s) envoyée(s) à la fédération.`,
+    });
+    setSelectedIds([]);
+    setBulkPayDialog(false);
   };
 
-  const submitToFederation = (m: ClubMember) => {
-    const updated: ClubMember = {
-      ...m,
-      approval: { status: "pending", submittedAt: new Date().toISOString() },
-    };
-    upsertClubMember(updated);
+  const saveAllAndReload = (list: ClubMember[]) => {
+    localStorage.setItem("ftdap_club_members", JSON.stringify(list));
     setClubMembers(loadClubMembers());
-    toast({ title: "Demande envoyée à la fédération", description: "En attente d'approbation." });
   };
 
   const approvalBadge = (status: ClubMember["approval"]["status"]) => {
