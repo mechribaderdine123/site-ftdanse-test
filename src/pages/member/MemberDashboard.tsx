@@ -91,7 +91,6 @@ const MemberDashboard = () => {
   const [cmBirth, setCmBirth] = useState<string>("");
   const [cmDocs, setCmDocs] = useState<ClubMember["documents"]>({});
   const [cmPayment, setCmPayment] = useState<ClubMember["payment"]>({ status: "unpaid" });
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkPayDialog, setBulkPayDialog] = useState(false);
 
   useEffect(() => {
@@ -215,19 +214,35 @@ const MemberDashboard = () => {
     toast({ title: "Membre supprimé" });
   };
 
-  const toggleSelect = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+  const togglePaymentStatus = (m: ClubMember, paid: boolean) => {
+    const all = loadClubMembers();
+    const updated = all.map((x) =>
+      x.id === m.id
+        ? {
+            ...x,
+            payment: {
+              ...x.payment,
+              status: paid ? ("paid" as const) : ("unpaid" as const),
+              updatedAt: new Date().toISOString(),
+              // clear receipt if marked unpaid
+              receipt: paid ? x.payment.receipt : undefined,
+            },
+          }
+        : x,
     );
+    saveAllAndReload(updated);
   };
 
+  const paidMembers = myClubMembers.filter((m) => m.payment.status === "paid");
+
   const handleBulkPayment = (file: File) => {
-    if (selectedIds.length === 0) return;
+    if (paidMembers.length === 0) return;
     const receipt = fakeUpload(file);
     const now = new Date().toISOString();
     const all = loadClubMembers();
+    const paidIds = paidMembers.map((p) => p.id);
     const updated = all.map((m) => {
-      if (!selectedIds.includes(m.id)) return m;
+      if (!paidIds.includes(m.id)) return m;
       const docsCount = Object.values(m.documents).filter(Boolean).length;
       const canSubmit = docsCount >= 2;
       return {
@@ -240,13 +255,12 @@ const MemberDashboard = () => {
     });
     saveAllAndReload(updated);
     const submittedCount = updated.filter(
-      (m) => selectedIds.includes(m.id) && m.approval.status === "pending" && m.approval.submittedAt === now,
+      (m) => paidIds.includes(m.id) && m.approval.status === "pending" && m.approval.submittedAt === now,
     ).length;
     toast({
       title: "Paiement enregistré",
-      description: `${selectedIds.length} membre(s) marqué(s) payé(s). ${submittedCount} soumission(s) envoyée(s) à la fédération.`,
+      description: `Reçu attaché à ${paidIds.length} membre(s) payé(s). ${submittedCount} soumission(s) envoyée(s) à la fédération.`,
     });
-    setSelectedIds([]);
     setBulkPayDialog(false);
   };
 
