@@ -301,22 +301,22 @@ const MemberDashboard = () => {
 
           {/* Profile header */}
           <Card className="mb-6 overflow-hidden">
-            <div className="bg-gradient-to-r from-primary to-primary/80 h-32" />
+            <div className="bg-gradient-to-r from-primary to-primary/80 h-28" />
             <CardContent className="pt-0 pb-6">
-              <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-14">
+              <div className="-mt-12 mb-4">
                 <div className="w-24 h-24 shrink-0 rounded-full bg-card border-4 border-card shadow-lg flex items-center justify-center">
                   {isClub ? <Building2 className="w-10 h-10 text-primary" /> : <User className="w-10 h-10 text-primary" />}
                 </div>
-                <div className="flex-1 min-w-0 pt-4 sm:pt-0">
-                  <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <h1 className="text-2xl font-bold text-foreground break-words">{session.fullName}</h1>
-                    <RoleBadge session={session} />
-                  </div>
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5" /> {session.email}</span>
-                    <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {session.city}</span>
-                    <span className="flex items-center gap-1"><Trophy className="w-3.5 h-3.5" /> {session.discipline}</span>
-                  </div>
+              </div>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <h1 className="text-2xl font-bold text-foreground break-words">{session.fullName}</h1>
+                  <RoleBadge session={session} />
+                </div>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5" /> {session.email}</span>
+                  <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {session.city}</span>
+                  <span className="flex items-center gap-1"><Trophy className="w-3.5 h-3.5" /> {session.discipline}</span>
                 </div>
               </div>
             </CardContent>
