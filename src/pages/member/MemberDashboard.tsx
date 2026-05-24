@@ -755,7 +755,7 @@ const MemberDashboard = () => {
 
                 {/* Payment section */}
                 <div className="border border-border rounded-lg p-4 space-y-3">
-                  <h4 className="font-semibold text-sm">Paiement</h4>
+                  <h4 className="font-semibold text-sm">Statut de paiement</h4>
                   <div className="flex items-center gap-3">
                     <Switch
                       checked={cmPayment.status === "paid"}
@@ -765,19 +765,10 @@ const MemberDashboard = () => {
                     />
                     <span className="text-sm">{cmPayment.status === "paid" ? "Payé" : "Non payé"}</span>
                   </div>
-                  {cmPayment.status === "paid" && (
-                    <div className="space-y-1">
-                      <Label className="text-xs">Reçu de paiement</Label>
-                      <Input
-                        type="file" accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          if (f) setCmPayment((p) => ({ ...p, receipt: fakeUpload(f) }));
-                        }}
-                      />
-                      {cmPayment.receipt && <p className="text-xs text-green-700">✓ {cmPayment.receipt.name}</p>}
-                    </div>
-                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Le reçu sera téléversé en une seule fois pour tous les membres payés via
+                    le bouton « Payer » sur la liste.
+                  </p>
                 </div>
 
                 <div className="flex justify-end gap-2">
@@ -796,19 +787,17 @@ const MemberDashboard = () => {
               </DialogHeader>
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  Vous allez marquer <strong>{selectedIds.length} membre(s)</strong> comme payés et
-                  les soumettre à la fédération avec un reçu commun.
+                  Vous allez attacher un reçu commun à <strong>{paidMembers.length} membre(s) payé(s)</strong>
+                  {" "}et les soumettre à la fédération.
                 </p>
                 <div className="max-h-40 overflow-y-auto border border-border rounded-md p-2 text-xs space-y-1">
-                  {myClubMembers
-                    .filter((m) => selectedIds.includes(m.id))
-                    .map((m) => {
+                  {paidMembers.map((m) => {
                       const docsOk = Object.values(m.documents).filter(Boolean).length >= 2;
                       return (
                         <div key={m.id} className="flex justify-between">
                           <span>{m.fullName}</span>
                           <span className={docsOk ? "text-green-700" : "text-yellow-700"}>
-                            {docsOk ? "Sera soumis" : "Payé seulement (docs incomplets)"}
+                            {docsOk ? "Sera soumis" : "Reçu seulement (docs incomplets)"}
                           </span>
                         </div>
                       );
