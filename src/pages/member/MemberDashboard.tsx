@@ -636,6 +636,81 @@ const MemberDashboard = () => {
             )}
 
             {/* REFEREE MISSIONS */}
+            {isClub && (
+              <TabsContent value="club-competitions">
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between gap-2">
+                      <CardTitle>Compétitions à venir</CardTitle>
+                      <Button asChild variant="outline" size="sm">
+                        <Link to="/competitions">Voir toutes</Link>
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="bg-muted/40 border border-border rounded-lg p-3 mb-4 text-xs text-muted-foreground">
+                      Inscrivez votre club en sélectionnant les membres qui participeront. Seuls les
+                      membres avec une licence acceptée peuvent être engagés.
+                    </div>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      {[
+                        { id: 1, title: "Championnat National FTDAP 2026", date: "15 MARS 2026", venue: "Tunis", discipline: "Toutes disciplines" },
+                        { id: 2, title: "Open de Sousse", date: "28 AVR 2026", venue: "Sousse", discipline: "Hip-Hop & Breakdance" },
+                        { id: 3, title: "Coupe d'Hammamet", date: "12 MAI 2026", venue: "Nabeul", discipline: "Danse Sportive" },
+                        { id: 4, title: "Tournoi de Sfax", date: "08 JUN 2026", venue: "Sfax", discipline: "Toutes disciplines" },
+                      ].map((c) => {
+                        const joined = joinedComps.includes(c.id);
+                        return (
+                          <div key={c.id} className="border border-border rounded-xl p-4 flex flex-col">
+                            <div className="flex items-start justify-between mb-2 gap-2">
+                              <h4 className="font-semibold text-foreground">{c.title}</h4>
+                              {joined && (
+                                <Badge className="bg-green-100 text-green-700 hover:bg-green-100 gap-1">
+                                  <CheckCircle2 className="w-3 h-3" /> Inscrit
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="text-xs text-muted-foreground space-y-1 mb-4">
+                              <p className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {c.date}</p>
+                              <p className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {c.venue}</p>
+                              <p className="flex items-center gap-1"><Trophy className="w-3 h-3" /> {c.discipline}</p>
+                            </div>
+                            <div className="mt-auto flex gap-2">
+                              <Button
+                                size="sm"
+                                className="flex-1"
+                                disabled={joined}
+                                onClick={() => {
+                                  setJoinSelection([]);
+                                  setJoinDialog({ id: c.id, title: c.title });
+                                }}
+                              >
+                                {joined ? "Déjà inscrit" : "Rejoindre"}
+                              </Button>
+                              {joined && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    const next = joinedComps.filter((x) => x !== c.id);
+                                    setJoinedComps(next);
+                                    localStorage.setItem("ftdap_joined_comps", JSON.stringify(next));
+                                    toast({ title: "Inscription annulée" });
+                                  }}
+                                >
+                                  Annuler
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
+
             {isReferee && (
               <TabsContent value="missions">
                 <Card>
