@@ -36,6 +36,7 @@ interface MemberSession {
   city: string;
   discipline: string;
   clubName?: string;
+  avatarUrl?: string;
 }
 
 interface Dancer {
