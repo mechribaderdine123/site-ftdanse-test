@@ -91,7 +91,6 @@ const MemberDashboard = () => {
   const [cmBirth, setCmBirth] = useState<string>("");
   const [cmDocs, setCmDocs] = useState<ClubMember["documents"]>({});
   const [cmPayment, setCmPayment] = useState<ClubMember["payment"]>({ status: "unpaid" });
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkPayDialog, setBulkPayDialog] = useState(false);
 
   useEffect(() => {
@@ -215,19 +214,35 @@ const MemberDashboard = () => {
     toast({ title: "Membre supprimé" });
   };
 
-  const toggleSelect = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+  const togglePaymentStatus = (m: ClubMember, paid: boolean) => {
+    const all = loadClubMembers();
+    const updated = all.map((x) =>
+      x.id === m.id
+        ? {
+            ...x,
+            payment: {
+              ...x.payment,
+              status: paid ? ("paid" as const) : ("unpaid" as const),
+              updatedAt: new Date().toISOString(),
+              // clear receipt if marked unpaid
+              receipt: paid ? x.payment.receipt : undefined,
+            },
+          }
+        : x,
     );
+    saveAllAndReload(updated);
   };
 
+  const paidMembers = myClubMembers.filter((m) => m.payment.status === "paid");
+
   const handleBulkPayment = (file: File) => {
-    if (selectedIds.length === 0) return;
+    if (paidMembers.length === 0) return;
     const receipt = fakeUpload(file);
     const now = new Date().toISOString();
     const all = loadClubMembers();
+    const paidIds = paidMembers.map((p) => p.id);
     const updated = all.map((m) => {
-      if (!selectedIds.includes(m.id)) return m;
+      if (!paidIds.includes(m.id)) return m;
       const docsCount = Object.values(m.documents).filter(Boolean).length;
       const canSubmit = docsCount >= 2;
       return {
@@ -240,13 +255,12 @@ const MemberDashboard = () => {
     });
     saveAllAndReload(updated);
     const submittedCount = updated.filter(
-      (m) => selectedIds.includes(m.id) && m.approval.status === "pending" && m.approval.submittedAt === now,
+      (m) => paidIds.includes(m.id) && m.approval.status === "pending" && m.approval.submittedAt === now,
     ).length;
     toast({
       title: "Paiement enregistré",
-      description: `${selectedIds.length} membre(s) marqué(s) payé(s). ${submittedCount} soumission(s) envoyée(s) à la fédération.`,
+      description: `Reçu attaché à ${paidIds.length} membre(s) payé(s). ${submittedCount} soumission(s) envoyée(s) à la fédération.`,
     });
-    setSelectedIds([]);
     setBulkPayDialog(false);
   };
 
@@ -479,11 +493,11 @@ const MemberDashboard = () => {
                       <Button
                         size="sm"
                         variant="default"
-                        disabled={selectedIds.length === 0}
+                        disabled={paidMembers.length === 0}
                         onClick={() => setBulkPayDialog(true)}
                       >
                         <Upload className="w-4 h-4 mr-2" />
-                        Payer la sélection ({selectedIds.length})
+                        Payer ({paidMembers.length})
                       </Button>
                       <Button size="sm" variant="outline" onClick={openNewClubMember}>
                         <Plus className="w-4 h-4 mr-2" /> Nouveau membre
@@ -492,25 +506,14 @@ const MemberDashboard = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="bg-muted/40 border border-border rounded-lg p-3 mb-4 text-xs text-muted-foreground">
-                      Cochez les membres qui ont payé puis cliquez sur <strong>Payer la sélection</strong> pour
-                      téléverser un seul reçu commun. Les membres sélectionnés seront marqués payés et
-                      automatiquement soumis à la fédération (si leurs documents sont complets).
-                      Les membres non sélectionnés ne seront pas envoyés.
+                      Activez le statut <strong>Payé</strong> pour les membres qui ont réglé, puis cliquez
+                      sur <strong>Payer</strong> pour téléverser un seul reçu commun. Tous les membres
+                      marqués payés seront automatiquement soumis à la fédération
+                      (si leurs documents sont complets). Les membres non payés ne seront pas envoyés.
                     </div>
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="w-10">
-                            <Checkbox
-                              checked={
-                                myClubMembers.length > 0 &&
-                                myClubMembers.every((m) => selectedIds.includes(m.id))
-                              }
-                              onCheckedChange={(c) =>
-                                setSelectedIds(c ? myClubMembers.map((m) => m.id) : [])
-                              }
-                            />
-                          </TableHead>
                           <TableHead>Nom</TableHead>
                           <TableHead>Âge</TableHead>
                           <TableHead>Discipline</TableHead>
@@ -527,12 +530,6 @@ const MemberDashboard = () => {
                           const required = minor ? 2 : 2;
                           return (
                             <TableRow key={m.id}>
-                              <TableCell>
-                                <Checkbox
-                                  checked={selectedIds.includes(m.id)}
-                                  onCheckedChange={() => toggleSelect(m.id)}
-                                />
-                              </TableCell>
                               <TableCell className="font-medium">
                                 {m.fullName}
                                 <div className="text-xs text-muted-foreground">{m.gender === "M" ? "Homme" : "Femme"}</div>
@@ -548,19 +545,17 @@ const MemberDashboard = () => {
                                 </span>
                               </TableCell>
                               <TableCell>
-                                <div className="flex flex-col gap-0.5">
-                                  <span
-                                    className={`inline-flex w-fit px-2 py-0.5 rounded-full text-xs font-medium ${
-                                      m.payment.status === "paid"
-                                        ? "bg-green-100 text-green-700"
-                                        : "bg-red-100 text-red-700"
-                                    }`}
-                                  >
+                                <div className="flex items-center gap-2">
+                                  <Switch
+                                    checked={m.payment.status === "paid"}
+                                    onCheckedChange={(c) => togglePaymentStatus(m, c)}
+                                  />
+                                  <span className={`text-xs font-medium ${m.payment.status === "paid" ? "text-green-700" : "text-muted-foreground"}`}>
                                     {m.payment.status === "paid" ? "Payé" : "Non payé"}
                                   </span>
                                   {m.payment.receipt && (
-                                    <span className="text-[10px] text-muted-foreground truncate max-w-[140px]">
-                                      Reçu : {m.payment.receipt.name}
+                                    <span className="text-[10px] text-muted-foreground truncate max-w-[100px]" title={m.payment.receipt.name}>
+                                      📄 {m.payment.receipt.name}
                                     </span>
                                   )}
                                 </div>
@@ -760,7 +755,7 @@ const MemberDashboard = () => {
 
                 {/* Payment section */}
                 <div className="border border-border rounded-lg p-4 space-y-3">
-                  <h4 className="font-semibold text-sm">Paiement</h4>
+                  <h4 className="font-semibold text-sm">Statut de paiement</h4>
                   <div className="flex items-center gap-3">
                     <Switch
                       checked={cmPayment.status === "paid"}
@@ -770,19 +765,10 @@ const MemberDashboard = () => {
                     />
                     <span className="text-sm">{cmPayment.status === "paid" ? "Payé" : "Non payé"}</span>
                   </div>
-                  {cmPayment.status === "paid" && (
-                    <div className="space-y-1">
-                      <Label className="text-xs">Reçu de paiement</Label>
-                      <Input
-                        type="file" accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          if (f) setCmPayment((p) => ({ ...p, receipt: fakeUpload(f) }));
-                        }}
-                      />
-                      {cmPayment.receipt && <p className="text-xs text-green-700">✓ {cmPayment.receipt.name}</p>}
-                    </div>
-                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Le reçu sera téléversé en une seule fois pour tous les membres payés via
+                    le bouton « Payer » sur la liste.
+                  </p>
                 </div>
 
                 <div className="flex justify-end gap-2">
@@ -801,19 +787,17 @@ const MemberDashboard = () => {
               </DialogHeader>
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  Vous allez marquer <strong>{selectedIds.length} membre(s)</strong> comme payés et
-                  les soumettre à la fédération avec un reçu commun.
+                  Vous allez attacher un reçu commun à <strong>{paidMembers.length} membre(s) payé(s)</strong>
+                  {" "}et les soumettre à la fédération.
                 </p>
                 <div className="max-h-40 overflow-y-auto border border-border rounded-md p-2 text-xs space-y-1">
-                  {myClubMembers
-                    .filter((m) => selectedIds.includes(m.id))
-                    .map((m) => {
+                  {paidMembers.map((m) => {
                       const docsOk = Object.values(m.documents).filter(Boolean).length >= 2;
                       return (
                         <div key={m.id} className="flex justify-between">
                           <span>{m.fullName}</span>
                           <span className={docsOk ? "text-green-700" : "text-yellow-700"}>
-                            {docsOk ? "Sera soumis" : "Payé seulement (docs incomplets)"}
+                            {docsOk ? "Sera soumis" : "Reçu seulement (docs incomplets)"}
                           </span>
                         </div>
                       );
