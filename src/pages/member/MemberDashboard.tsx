@@ -475,14 +475,42 @@ const MemberDashboard = () => {
                         Gestion des inscriptions, paiements et soumissions à la fédération
                       </p>
                     </div>
-                    <Button size="sm" onClick={openNewClubMember}>
-                      <Plus className="w-4 h-4 mr-2" /> Nouveau membre
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="default"
+                        disabled={selectedIds.length === 0}
+                        onClick={() => setBulkPayDialog(true)}
+                      >
+                        <Upload className="w-4 h-4 mr-2" />
+                        Payer la sélection ({selectedIds.length})
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={openNewClubMember}>
+                        <Plus className="w-4 h-4 mr-2" /> Nouveau membre
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent>
+                    <div className="bg-muted/40 border border-border rounded-lg p-3 mb-4 text-xs text-muted-foreground">
+                      Cochez les membres qui ont payé puis cliquez sur <strong>Payer la sélection</strong> pour
+                      téléverser un seul reçu commun. Les membres sélectionnés seront marqués payés et
+                      automatiquement soumis à la fédération (si leurs documents sont complets).
+                      Les membres non sélectionnés ne seront pas envoyés.
+                    </div>
                     <Table>
                       <TableHeader>
                         <TableRow>
+                          <TableHead className="w-10">
+                            <Checkbox
+                              checked={
+                                myClubMembers.length > 0 &&
+                                myClubMembers.every((m) => selectedIds.includes(m.id))
+                              }
+                              onCheckedChange={(c) =>
+                                setSelectedIds(c ? myClubMembers.map((m) => m.id) : [])
+                              }
+                            />
+                          </TableHead>
                           <TableHead>Nom</TableHead>
                           <TableHead>Âge</TableHead>
                           <TableHead>Discipline</TableHead>
@@ -499,6 +527,12 @@ const MemberDashboard = () => {
                           const required = minor ? 2 : 2;
                           return (
                             <TableRow key={m.id}>
+                              <TableCell>
+                                <Checkbox
+                                  checked={selectedIds.includes(m.id)}
+                                  onCheckedChange={() => toggleSelect(m.id)}
+                                />
+                              </TableCell>
                               <TableCell className="font-medium">
                                 {m.fullName}
                                 <div className="text-xs text-muted-foreground">{m.gender === "M" ? "Homme" : "Femme"}</div>
@@ -514,36 +548,26 @@ const MemberDashboard = () => {
                                 </span>
                               </TableCell>
                               <TableCell>
-                                <div className="flex items-center gap-2">
-                                  <Switch
-                                    checked={m.payment.status === "paid"}
-                                    onCheckedChange={(c) => togglePaymentStatus(m, c)}
-                                  />
-                                  <span className="text-xs">
+                                <div className="flex flex-col gap-0.5">
+                                  <span
+                                    className={`inline-flex w-fit px-2 py-0.5 rounded-full text-xs font-medium ${
+                                      m.payment.status === "paid"
+                                        ? "bg-green-100 text-green-700"
+                                        : "bg-red-100 text-red-700"
+                                    }`}
+                                  >
                                     {m.payment.status === "paid" ? "Payé" : "Non payé"}
                                   </span>
-                                  {m.payment.status === "paid" && (
-                                    <Button size="sm" variant="outline" className="h-7 px-2"
-                                      onClick={() => setReceiptDialog(m)}>
-                                      <Upload className="w-3 h-3 mr-1" />
-                                      {m.payment.receipt ? "Reçu ✓" : "Reçu"}
-                                    </Button>
+                                  {m.payment.receipt && (
+                                    <span className="text-[10px] text-muted-foreground truncate max-w-[140px]">
+                                      Reçu : {m.payment.receipt.name}
+                                    </span>
                                   )}
                                 </div>
                               </TableCell>
                               <TableCell>{approvalBadge(m.approval.status)}</TableCell>
                               <TableCell className="text-right">
                                 <div className="flex justify-end gap-1">
-                                  {m.approval.status !== "accepted" && (
-                                    <Button
-                                      variant="ghost" size="icon"
-                                      title="Soumettre à la fédération"
-                                      disabled={docsCount < required || m.payment.status !== "paid"}
-                                      onClick={() => submitToFederation(m)}
-                                    >
-                                      <Send className="w-4 h-4 text-primary" />
-                                    </Button>
-                                  )}
                                   <Button variant="ghost" size="icon" onClick={() => openEditClubMember(m)}>
                                     <Pencil className="w-4 h-4" />
                                   </Button>
@@ -561,10 +585,6 @@ const MemberDashboard = () => {
                     {myClubMembers.length === 0 && (
                       <p className="text-center text-muted-foreground py-8">Aucun membre enregistré</p>
                     )}
-                    <p className="text-xs text-muted-foreground mt-4">
-                      Pour soumettre un membre à la fédération, tous les documents requis doivent être fournis
-                      et le paiement marqué comme payé.
-                    </p>
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -773,27 +793,47 @@ const MemberDashboard = () => {
             </DialogContent>
           </Dialog>
 
-          {/* Receipt upload dialog */}
-          <Dialog open={!!receiptDialog} onOpenChange={(o) => !o && setReceiptDialog(null)}>
+          {/* Bulk payment dialog */}
+          <Dialog open={bulkPayDialog} onOpenChange={setBulkPayDialog}>
             <DialogContent>
-              <DialogHeader><DialogTitle>Téléverser le reçu de paiement</DialogTitle></DialogHeader>
-              {receiptDialog && (
-                <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">Membre : <strong>{receiptDialog.fullName}</strong></p>
-                  {receiptDialog.payment.receipt && (
-                    <p className="text-xs text-green-700">
-                      Reçu actuel : {receiptDialog.payment.receipt.name}
-                    </p>
-                  )}
+              <DialogHeader>
+                <DialogTitle>Reçu de paiement groupé</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Vous allez marquer <strong>{selectedIds.length} membre(s)</strong> comme payés et
+                  les soumettre à la fédération avec un reçu commun.
+                </p>
+                <div className="max-h-40 overflow-y-auto border border-border rounded-md p-2 text-xs space-y-1">
+                  {myClubMembers
+                    .filter((m) => selectedIds.includes(m.id))
+                    .map((m) => {
+                      const docsOk = Object.values(m.documents).filter(Boolean).length >= 2;
+                      return (
+                        <div key={m.id} className="flex justify-between">
+                          <span>{m.fullName}</span>
+                          <span className={docsOk ? "text-green-700" : "text-yellow-700"}>
+                            {docsOk ? "Sera soumis" : "Payé seulement (docs incomplets)"}
+                          </span>
+                        </div>
+                      );
+                    })}
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Reçu de paiement (PDF ou image) *</Label>
                   <Input
-                    type="file" accept=".pdf,.jpg,.jpeg,.png"
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
                     onChange={(e) => {
                       const f = e.target.files?.[0];
-                      if (f && receiptDialog) uploadReceipt(receiptDialog, f);
+                      if (f) handleBulkPayment(f);
                     }}
                   />
                 </div>
-              )}
+                <div className="flex justify-end">
+                  <Button variant="outline" onClick={() => setBulkPayDialog(false)}>Annuler</Button>
+                </div>
+              </div>
             </DialogContent>
           </Dialog>
         </div>
