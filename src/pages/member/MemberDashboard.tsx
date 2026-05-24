@@ -304,7 +304,7 @@ const MemberDashboard = () => {
             <div className="bg-gradient-to-r from-primary to-primary/80 h-28" />
             <CardContent className="pt-0 pb-6">
               <div className="-mt-12 mb-4">
-                <div className="w-24 h-24 shrink-0 rounded-full bg-card border-4 border-card shadow-lg flex items-center justify-center">
+                <div className="w-24 h-24 shrink-0 rounded-full bg-card border-4 border-card shadow-lg flex-col flex items-center justify-center">
                   {isClub ? <Building2 className="w-10 h-10 text-primary" /> : <User className="w-10 h-10 text-primary" />}
                 </div>
               </div>
