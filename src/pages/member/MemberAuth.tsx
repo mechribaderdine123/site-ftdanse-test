@@ -65,6 +65,7 @@ const MemberAuth = () => {
       avatarUrl: avatar || undefined,
     };
     localStorage.setItem("ftdap_member", JSON.stringify(session));
+    window.dispatchEvent(new Event("ftdap-auth-change"));
     toast({
       title: "Demande envoyée",
       description: "Votre compte est créé. La licence sera validée sous 48h.",
@@ -94,6 +95,7 @@ const MemberAuth = () => {
       avatarUrl: demoKind === "club" ? "" : undefined,
     };
     localStorage.setItem("ftdap_member", JSON.stringify(session));
+    window.dispatchEvent(new Event("ftdap-auth-change"));
     toast({ title: "Connexion réussie" });
     navigate("/member");
   };

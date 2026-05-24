@@ -1,13 +1,42 @@
-import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Menu, X, Building2, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLang } from "@/contexts/LangContext";
 import logoFtdap from "@/assets/logo-ftdap.png";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 
+interface MemberSession {
+  kind: "individual" | "club";
+  fullName: string;
+  avatarUrl?: string;
+}
+
 const Navbar = () => {
   const [open, setOpen] = useState(false);
+  const [session, setSession] = useState<MemberSession | null>(null);
   const { t } = useLang();
+
+  useEffect(() => {
+    const check = () => {
+      const raw = localStorage.getItem("ftdap_member");
+      if (raw) {
+        try {
+          setSession(JSON.parse(raw));
+        } catch {
+          setSession(null);
+        }
+      } else {
+        setSession(null);
+      }
+    };
+    check();
+    window.addEventListener("ftdap-auth-change", check);
+    window.addEventListener("storage", check);
+    return () => {
+      window.removeEventListener("ftdap-auth-change", check);
+      window.removeEventListener("storage", check);
+    };
+  }, []);
 
   const navLinks = [
     { label: t("nav.home"), href: "/" },
@@ -39,9 +68,27 @@ const Navbar = () => {
           ))}
         </div>
         <div className="hidden lg:flex items-center gap-3">
-          <Link to="/member/login" className="btn-primary text-sm py-2 px-4">
-            {t("nav.join")}
-          </Link>
+          {session ? (
+            <Link
+              to="/member"
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-muted/60 px-3 py-1.5 text-sm font-medium text-primary hover:bg-muted transition-colors"
+            >
+              {session.kind === "club" ? (
+                session.avatarUrl ? (
+                  <img src={session.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover" />
+                ) : (
+                  <Building2 className="w-4 h-4 text-violet-600" />
+                )
+              ) : (
+                <User className="w-4 h-4 text-blue-600" />
+              )}
+              <span className="max-w-[120px] truncate">{session.fullName}</span>
+            </Link>
+          ) : (
+            <Link to="/member/login" className="btn-primary text-sm py-2 px-4">
+              {t("nav.join")}
+            </Link>
+          )}
         </div>
 
         <button
@@ -73,13 +120,32 @@ const Navbar = () => {
             ))}
           </nav>
           <div className="p-4 border-t border-border">
-            <Link
-              to="/member/login"
-              className="btn-primary text-sm py-3 px-4 block text-center rounded-xl"
-              onClick={() => setOpen(false)}
-            >
-              {t("nav.join")}
-            </Link>
+            {session ? (
+              <Link
+                to="/member"
+                className="inline-flex items-center justify-center gap-2 w-full rounded-xl border border-border bg-muted/60 px-4 py-3 text-sm font-medium text-primary hover:bg-muted transition-colors"
+                onClick={() => setOpen(false)}
+              >
+                {session.kind === "club" ? (
+                  session.avatarUrl ? (
+                    <img src={session.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover" />
+                  ) : (
+                    <Building2 className="w-4 h-4 text-violet-600" />
+                  )
+                ) : (
+                  <User className="w-4 h-4 text-blue-600" />
+                )}
+                <span className="truncate">{session.fullName}</span>
+              </Link>
+            ) : (
+              <Link
+                to="/member/login"
+                className="btn-primary text-sm py-3 px-4 block text-center rounded-xl"
+                onClick={() => setOpen(false)}
+              >
+                {t("nav.join")}
+              </Link>
+            )}
           </div>
         </SheetContent>
       </Sheet>

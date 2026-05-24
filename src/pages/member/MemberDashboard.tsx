@@ -105,6 +105,7 @@ const MemberDashboard = () => {
 
   const logout = () => {
     localStorage.removeItem("ftdap_member");
+    window.dispatchEvent(new Event("ftdap-auth-change"));
     navigate("/");
   };
 
