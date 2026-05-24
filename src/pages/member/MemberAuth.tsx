@@ -26,6 +26,7 @@ interface MemberSession {
   city: string;
   discipline: string;
   clubName?: string;
+  avatarUrl?: string;
 }
 
 const MemberAuth = () => {
@@ -40,6 +41,7 @@ const MemberAuth = () => {
     fullName: "", email: "", password: "", phone: "",
     city: "", discipline: "", clubName: "",
   });
+  const [avatar, setAvatar] = useState<string>("");
   const [docs, setDocs] = useState<{ name: string; size: string }[]>([]);
 
   const handleFiles = (files: FileList | null) => {
@@ -60,11 +62,12 @@ const MemberAuth = () => {
       city: form.city,
       discipline: form.discipline,
       clubName: form.clubName,
+      avatarUrl: avatar || undefined,
     };
     localStorage.setItem("ftdap_member", JSON.stringify(session));
     toast({
       title: "Demande envoyée",
-      description: "Votre compte est créé. La fédération validera vos documents sous 48h.",
+      description: "Votre compte est créé. La licence sera validée sous 48h.",
     });
     navigate("/member");
   };
@@ -88,6 +91,7 @@ const MemberAuth = () => {
       city: "Tunis",
       discipline: "Hip-Hop",
       clubName: demoKind === "club" ? "Club Elite Dance" : "Club Tunis Danse",
+      avatarUrl: demoKind === "club" ? "" : undefined,
     };
     localStorage.setItem("ftdap_member", JSON.stringify(session));
     toast({ title: "Connexion réussie" });
