@@ -243,6 +243,38 @@ const MemberAuth = () => {
                             <Input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} />
                           </div>
                         )}
+                        {kind === "club" && (
+                          <div className="space-y-2">
+                            <Label>Logo du club</Label>
+                            <div className="flex items-center gap-4">
+                              <div className="w-16 h-16 rounded-full bg-muted border border-border flex items-center justify-center overflow-hidden">
+                                {avatar ? (
+                                  <img src={avatar} alt="Logo" className="w-full h-full object-cover" />
+                                ) : (
+                                  <Building2 className="w-6 h-6 text-muted-foreground" />
+                                )}
+                              </div>
+                              <label className="cursor-pointer">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      const reader = new FileReader();
+                                      reader.onload = (ev) => setAvatar(ev.target?.result as string);
+                                      reader.readAsDataURL(file);
+                                    }
+                                  }}
+                                />
+                                <Button type="button" variant="outline" size="sm" asChild>
+                                  <span><Upload className="w-3.5 h-3.5 mr-1" /> Choisir une image</span>
+                                </Button>
+                              </label>
+                            </div>
+                          </div>
+                        )}
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <Label>Email *</Label>
