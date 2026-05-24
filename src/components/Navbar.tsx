@@ -17,14 +17,25 @@ const Navbar = () => {
   const { t } = useLang();
 
   useEffect(() => {
-    const raw = localStorage.getItem("ftdap_member");
-    if (raw) {
-      try {
-        setSession(JSON.parse(raw));
-      } catch {
+    const check = () => {
+      const raw = localStorage.getItem("ftdap_member");
+      if (raw) {
+        try {
+          setSession(JSON.parse(raw));
+        } catch {
+          setSession(null);
+        }
+      } else {
         setSession(null);
       }
-    }
+    };
+    check();
+    window.addEventListener("ftdap-auth-change", check);
+    window.addEventListener("storage", check);
+    return () => {
+      window.removeEventListener("ftdap-auth-change", check);
+      window.removeEventListener("storage", check);
+    };
   }, []);
 
   const navLinks = [
