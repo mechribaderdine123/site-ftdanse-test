@@ -17,6 +17,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import {
+  ClubMember, UploadedDoc, loadClubMembers, upsertClubMember,
+  removeClubMember, computeAge,
+} from "@/data/clubMembersStore";
+import { Switch } from "@/components/ui/switch";
+import { Upload, Send, FileCheck2, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 
 type AccountKind = "individual" | "club";
 type IndividualRole = "athlete" | "coach" | "referee";
@@ -77,10 +83,20 @@ const MemberDashboard = () => {
   const [editDancer, setEditDancer] = useState<Dancer | null>(null);
   const [badgeRequested, setBadgeRequested] = useState(false);
 
+  // Club member management state
+  const [clubMembers, setClubMembers] = useState<ClubMember[]>([]);
+  const [cmDialog, setCmDialog] = useState(false);
+  const [editCm, setEditCm] = useState<ClubMember | null>(null);
+  const [cmBirth, setCmBirth] = useState<string>("");
+  const [cmDocs, setCmDocs] = useState<ClubMember["documents"]>({});
+  const [cmPayment, setCmPayment] = useState<ClubMember["payment"]>({ status: "unpaid" });
+  const [receiptDialog, setReceiptDialog] = useState<ClubMember | null>(null);
+
   useEffect(() => {
     const raw = localStorage.getItem("ftdap_member");
     if (!raw) { navigate("/member/login"); return; }
     setSession(JSON.parse(raw));
+    setClubMembers(loadClubMembers());
   }, [navigate]);
 
   if (!session) return null;
@@ -125,6 +141,126 @@ const MemberDashboard = () => {
   const isAthlete = session.role === "athlete";
   const isCoach = session.role === "coach";
   const isReferee = session.role === "referee";
+
+  // ---------- Club helpers ----------
+  const myClubMembers = clubMembers.filter((m) => m.clubName === session.fullName);
+
+  const openNewClubMember = () => {
+    setEditCm(null);
+    setCmBirth("");
+    setCmDocs({});
+    setCmPayment({ status: "unpaid" });
+    setCmDialog(true);
+  };
+  const openEditClubMember = (m: ClubMember) => {
+    setEditCm(m);
+    setCmBirth(m.birthDate);
+    setCmDocs(m.documents);
+    setCmPayment(m.payment);
+    setCmDialog(true);
+  };
+
+  const fakeUpload = (file: File): UploadedDoc => ({
+    name: file.name, uploadedAt: new Date().toISOString(), size: file.size,
+  });
+
+  const handleDocChange = (key: keyof ClubMember["documents"]) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const f = e.target.files?.[0];
+      if (!f) return;
+      setCmDocs((prev) => ({ ...prev, [key]: fakeUpload(f) }));
+    };
+
+  const age = computeAge(cmBirth);
+  const isMinor = cmBirth && age < 18;
+  const requiredDocsOk = cmBirth
+    ? isMinor
+      ? !!cmDocs.birthExtract && !!cmDocs.parentalAuth
+      : !!cmDocs.birthExtract && !!cmDocs.cin
+    : false;
+
+  const saveClubMember = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!requiredDocsOk) {
+      toast({ title: "Documents requis manquants", variant: "destructive" });
+      return;
+    }
+    const data = new FormData(e.currentTarget);
+    const m: ClubMember = {
+      id: editCm?.id || `cm_${Date.now()}`,
+      clubName: session.fullName,
+      fullName: data.get("fullName") as string,
+      birthDate: cmBirth,
+      age,
+      gender: (data.get("gender") as "M" | "F") || "M",
+      discipline: data.get("discipline") as string,
+      phone: (data.get("phone") as string) || undefined,
+      email: (data.get("email") as string) || undefined,
+      documents: cmDocs,
+      payment: cmPayment,
+      approval: editCm?.approval || { status: "pending" },
+      createdAt: editCm?.createdAt || new Date().toISOString(),
+    };
+    upsertClubMember(m);
+    setClubMembers(loadClubMembers());
+    setCmDialog(false);
+    toast({ title: editCm ? "Membre modifié" : "Membre ajouté" });
+  };
+
+  const deleteClubMember = (id: string) => {
+    removeClubMember(id);
+    setClubMembers(loadClubMembers());
+    toast({ title: "Membre supprimé" });
+  };
+
+  const togglePaymentStatus = (m: ClubMember, checked: boolean) => {
+    const updated: ClubMember = {
+      ...m,
+      payment: {
+        ...m.payment,
+        status: checked ? "paid" : "unpaid",
+        updatedAt: new Date().toISOString(),
+        receipt: checked ? m.payment.receipt : undefined,
+      },
+    };
+    upsertClubMember(updated);
+    setClubMembers(loadClubMembers());
+  };
+
+  const uploadReceipt = (m: ClubMember, file: File) => {
+    const updated: ClubMember = {
+      ...m,
+      payment: { ...m.payment, receipt: fakeUpload(file), updatedAt: new Date().toISOString() },
+    };
+    upsertClubMember(updated);
+    setClubMembers(loadClubMembers());
+    toast({ title: "Reçu téléchargé" });
+    setReceiptDialog(null);
+  };
+
+  const submitToFederation = (m: ClubMember) => {
+    const updated: ClubMember = {
+      ...m,
+      approval: { status: "pending", submittedAt: new Date().toISOString() },
+    };
+    upsertClubMember(updated);
+    setClubMembers(loadClubMembers());
+    toast({ title: "Demande envoyée à la fédération", description: "En attente d'approbation." });
+  };
+
+  const approvalBadge = (status: ClubMember["approval"]["status"]) => {
+    const m = {
+      pending: { label: "En attente", cls: "bg-yellow-100 text-yellow-700", icon: AlertCircle },
+      accepted: { label: "Acceptée", cls: "bg-green-100 text-green-700", icon: CheckCircle2 },
+      rejected: { label: "Refusée", cls: "bg-red-100 text-red-700", icon: XCircle },
+    }[status];
+    const Icon = m.icon;
+    return (
+      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${m.cls}`}>
+        <Icon className="w-3 h-3" /> {m.label}
+      </span>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -171,7 +307,7 @@ const MemberDashboard = () => {
               {isAthlete && <TabsTrigger value="badge">Ma licence</TabsTrigger>}
               {isAthlete && <TabsTrigger value="results">Mes résultats</TabsTrigger>}
               {isCoach && <TabsTrigger value="dancers">Mes danseurs</TabsTrigger>}
-              {isClub && <TabsTrigger value="dancers">Membres du club</TabsTrigger>}
+              {isClub && <TabsTrigger value="club-members">Membres du club</TabsTrigger>}
               {isReferee && <TabsTrigger value="missions">Mes missions</TabsTrigger>}
               <TabsTrigger value="documents">Documents</TabsTrigger>
             </TabsList>
@@ -276,12 +412,12 @@ const MemberDashboard = () => {
               </TabsContent>
             )}
 
-            {/* COACH / CLUB DANCERS */}
-            {(isCoach || isClub) && (
+            {/* COACH DANCERS (simple) */}
+            {isCoach && (
               <TabsContent value="dancers">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle>{isClub ? "Membres du club" : "Mes danseurs"}</CardTitle>
+                    <CardTitle>Mes danseurs</CardTitle>
                     <Button size="sm" onClick={() => { setEditDancer(null); setDancerDialog(true); }}>
                       <Plus className="w-4 h-4 mr-2" /> Ajouter un danseur
                     </Button>
@@ -316,6 +452,112 @@ const MemberDashboard = () => {
                       </TableBody>
                     </Table>
                     {dancers.length === 0 && <p className="text-center text-muted-foreground py-8">Aucun danseur enregistré</p>}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
+
+            {/* CLUB MEMBERS — full management */}
+            {isClub && (
+              <TabsContent value="club-members">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle>Membres du club</CardTitle>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Gestion des inscriptions, paiements et soumissions à la fédération
+                      </p>
+                    </div>
+                    <Button size="sm" onClick={openNewClubMember}>
+                      <Plus className="w-4 h-4 mr-2" /> Nouveau membre
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Nom</TableHead>
+                          <TableHead>Âge</TableHead>
+                          <TableHead>Discipline</TableHead>
+                          <TableHead>Documents</TableHead>
+                          <TableHead>Paiement</TableHead>
+                          <TableHead>Fédération</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {myClubMembers.map((m) => {
+                          const minor = m.age < 18;
+                          const docsCount = Object.values(m.documents).filter(Boolean).length;
+                          const required = minor ? 2 : 2;
+                          return (
+                            <TableRow key={m.id}>
+                              <TableCell className="font-medium">
+                                {m.fullName}
+                                <div className="text-xs text-muted-foreground">{m.gender === "M" ? "Homme" : "Femme"}</div>
+                              </TableCell>
+                              <TableCell>
+                                {m.age} ans
+                                {minor && <Badge variant="outline" className="ml-1 text-[10px]">Mineur</Badge>}
+                              </TableCell>
+                              <TableCell>{m.discipline}</TableCell>
+                              <TableCell>
+                                <span className={`text-xs ${docsCount >= required ? "text-green-700" : "text-yellow-700"}`}>
+                                  {docsCount}/{required} fournis
+                                </span>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <Switch
+                                    checked={m.payment.status === "paid"}
+                                    onCheckedChange={(c) => togglePaymentStatus(m, c)}
+                                  />
+                                  <span className="text-xs">
+                                    {m.payment.status === "paid" ? "Payé" : "Non payé"}
+                                  </span>
+                                  {m.payment.status === "paid" && (
+                                    <Button size="sm" variant="outline" className="h-7 px-2"
+                                      onClick={() => setReceiptDialog(m)}>
+                                      <Upload className="w-3 h-3 mr-1" />
+                                      {m.payment.receipt ? "Reçu ✓" : "Reçu"}
+                                    </Button>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell>{approvalBadge(m.approval.status)}</TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end gap-1">
+                                  {m.approval.status !== "accepted" && (
+                                    <Button
+                                      variant="ghost" size="icon"
+                                      title="Soumettre à la fédération"
+                                      disabled={docsCount < required || m.payment.status !== "paid"}
+                                      onClick={() => submitToFederation(m)}
+                                    >
+                                      <Send className="w-4 h-4 text-primary" />
+                                    </Button>
+                                  )}
+                                  <Button variant="ghost" size="icon" onClick={() => openEditClubMember(m)}>
+                                    <Pencil className="w-4 h-4" />
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="text-destructive"
+                                    onClick={() => deleteClubMember(m.id)}>
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                    {myClubMembers.length === 0 && (
+                      <p className="text-center text-muted-foreground py-8">Aucun membre enregistré</p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-4">
+                      Pour soumettre un membre à la fédération, tous les documents requis doivent être fournis
+                      et le paiement marqué comme payé.
+                    </p>
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -398,6 +640,153 @@ const MemberDashboard = () => {
                   <Button type="submit">Enregistrer</Button>
                 </div>
               </form>
+            </DialogContent>
+          </Dialog>
+
+          {/* Club member dialog */}
+          <Dialog open={cmDialog} onOpenChange={setCmDialog}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>{editCm ? "Modifier le membre" : "Nouveau membre du club"}</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={saveClubMember} className="space-y-4">
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Nom complet *</Label>
+                    <Input name="fullName" defaultValue={editCm?.fullName} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Date de naissance *</Label>
+                    <Input type="date" value={cmBirth} onChange={(e) => setCmBirth(e.target.value)} required />
+                    {cmBirth && (
+                      <p className="text-xs text-muted-foreground">
+                        {age} ans · {isMinor ? "Mineur (< 18 ans)" : "Adulte (≥ 18 ans)"}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Genre</Label>
+                    <select name="gender" defaultValue={editCm?.gender || "M"}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                      <option value="M">Homme</option>
+                      <option value="F">Femme</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Discipline *</Label>
+                    <Input name="discipline" defaultValue={editCm?.discipline} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Téléphone</Label>
+                    <Input name="phone" defaultValue={editCm?.phone} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Email</Label>
+                    <Input name="email" type="email" defaultValue={editCm?.email} />
+                  </div>
+                </div>
+
+                {/* Documents section */}
+                <div className="border border-border rounded-lg p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <FileCheck2 className="w-4 h-4 text-primary" />
+                    <h4 className="font-semibold text-sm">
+                      Documents requis {cmBirth && (isMinor ? "(Mineur)" : "(Adulte)")}
+                    </h4>
+                  </div>
+                  {!cmBirth && (
+                    <p className="text-xs text-muted-foreground">
+                      Saisissez la date de naissance pour afficher les documents requis.
+                    </p>
+                  )}
+
+                  {cmBirth && !isMinor && (
+                    <>
+                      <div className="space-y-1">
+                        <Label className="text-xs">CIN (Carte d'identité nationale) *</Label>
+                        <Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleDocChange("cin")} />
+                        {cmDocs.cin && <p className="text-xs text-green-700">✓ {cmDocs.cin.name}</p>}
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">مضمون (Extrait de naissance) *</Label>
+                        <Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleDocChange("birthExtract")} />
+                        {cmDocs.birthExtract && <p className="text-xs text-green-700">✓ {cmDocs.birthExtract.name}</p>}
+                      </div>
+                    </>
+                  )}
+
+                  {cmBirth && isMinor && (
+                    <>
+                      <div className="space-y-1">
+                        <Label className="text-xs">مضمون (Extrait de naissance) *</Label>
+                        <Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleDocChange("birthExtract")} />
+                        {cmDocs.birthExtract && <p className="text-xs text-green-700">✓ {cmDocs.birthExtract.name}</p>}
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">ترخيص أبوي (Autorisation parentale) *</Label>
+                        <Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleDocChange("parentalAuth")} />
+                        {cmDocs.parentalAuth && <p className="text-xs text-green-700">✓ {cmDocs.parentalAuth.name}</p>}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Payment section */}
+                <div className="border border-border rounded-lg p-4 space-y-3">
+                  <h4 className="font-semibold text-sm">Paiement</h4>
+                  <div className="flex items-center gap-3">
+                    <Switch
+                      checked={cmPayment.status === "paid"}
+                      onCheckedChange={(c) =>
+                        setCmPayment((p) => ({ ...p, status: c ? "paid" : "unpaid" }))
+                      }
+                    />
+                    <span className="text-sm">{cmPayment.status === "paid" ? "Payé" : "Non payé"}</span>
+                  </div>
+                  {cmPayment.status === "paid" && (
+                    <div className="space-y-1">
+                      <Label className="text-xs">Reçu de paiement</Label>
+                      <Input
+                        type="file" accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) setCmPayment((p) => ({ ...p, receipt: fakeUpload(f) }));
+                        }}
+                      />
+                      {cmPayment.receipt && <p className="text-xs text-green-700">✓ {cmPayment.receipt.name}</p>}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={() => setCmDialog(false)}>Annuler</Button>
+                  <Button type="submit" disabled={!requiredDocsOk}>Enregistrer</Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+
+          {/* Receipt upload dialog */}
+          <Dialog open={!!receiptDialog} onOpenChange={(o) => !o && setReceiptDialog(null)}>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Téléverser le reçu de paiement</DialogTitle></DialogHeader>
+              {receiptDialog && (
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">Membre : <strong>{receiptDialog.fullName}</strong></p>
+                  {receiptDialog.payment.receipt && (
+                    <p className="text-xs text-green-700">
+                      Reçu actuel : {receiptDialog.payment.receipt.name}
+                    </p>
+                  )}
+                  <Input
+                    type="file" accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f && receiptDialog) uploadReceipt(receiptDialog, f);
+                    }}
+                  />
+                </div>
+              )}
             </DialogContent>
           </Dialog>
         </div>
