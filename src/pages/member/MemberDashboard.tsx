@@ -93,6 +93,11 @@ const MemberDashboard = () => {
   const [cmDocs, setCmDocs] = useState<ClubMember["documents"]>({});
   const [cmPayment, setCmPayment] = useState<ClubMember["payment"]>({ status: "unpaid" });
   const [bulkPayDialog, setBulkPayDialog] = useState(false);
+  const [joinedComps, setJoinedComps] = useState<number[]>(() => {
+    try { return JSON.parse(localStorage.getItem("ftdap_joined_comps") || "[]"); } catch { return []; }
+  });
+  const [joinDialog, setJoinDialog] = useState<null | { id: number; title: string }>(null);
+  const [joinSelection, setJoinSelection] = useState<string[]>([]);
 
   useEffect(() => {
     const raw = localStorage.getItem("ftdap_member");
