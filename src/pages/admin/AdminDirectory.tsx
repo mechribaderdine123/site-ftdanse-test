@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,9 +12,11 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Plus, Pencil, Trash2, Search, User, Building2, Mail, Phone,
   Check, X, Eye, Inbox, GraduationCap, Users as UsersIcon, Trophy,
+  FileText, Receipt, ShieldCheck,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/admin/PageHeader";
+import { ClubMember, loadClubMembers, upsertClubMember } from "@/data/clubMembersStore";
 
 type AccountType = "athlete" | "club" | "coach" | "trainer";
 type RequestStatus = "pending" | "approved" | "rejected";
@@ -119,6 +121,51 @@ const AdminDirectory = () => {
 
   const { toast } = useToast();
 
+  // Club member submissions (from clubs portal)
+  const [clubMembers, setClubMembers] = useState<ClubMember[]>([]);
+  const [cmStatusFilter, setCmStatusFilter] = useState<"pending" | "accepted" | "rejected" | "all">("pending");
+  const [activeClubMember, setActiveClubMember] = useState<ClubMember | null>(null);
+  const [rejectNote, setRejectNote] = useState("");
+
+  useEffect(() => {
+    setClubMembers(loadClubMembers());
+    const onStorage = () => setClubMembers(loadClubMembers());
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  const filteredClubMembers = clubMembers.filter(
+    (m) => cmStatusFilter === "all" || m.approval.status === cmStatusFilter,
+  );
+  const pendingClubMembersCount = clubMembers.filter((m) => m.approval.status === "pending").length;
+
+  const approveClubMember = (m: ClubMember) => {
+    const updated: ClubMember = {
+      ...m,
+      approval: { ...m.approval, status: "accepted", reviewedAt: new Date().toISOString() },
+    };
+    upsertClubMember(updated);
+    setClubMembers(loadClubMembers());
+    setActiveClubMember(null);
+    toast({ title: "Membre approuvé", description: `${m.fullName} (${m.clubName}) a été accepté(e).` });
+  };
+
+  const rejectClubMember = (m: ClubMember) => {
+    const updated: ClubMember = {
+      ...m,
+      approval: {
+        ...m.approval, status: "rejected",
+        reviewedAt: new Date().toISOString(),
+        reviewerNote: rejectNote || undefined,
+      },
+    };
+    upsertClubMember(updated);
+    setClubMembers(loadClubMembers());
+    setActiveClubMember(null);
+    setRejectNote("");
+    toast({ title: "Membre refusé", variant: "destructive" });
+  };
+
   const filtered = items.filter((e) =>
     e.name.toLowerCase().includes(search.toLowerCase()) ||
     e.city.toLowerCase().includes(search.toLowerCase())
@@ -197,6 +244,12 @@ const AdminDirectory = () => {
             <Inbox className="mr-2 h-4 w-4" /> Demandes d'inscription
             {pendingCount > 0 && (
               <Badge className="ml-2 bg-yellow-500 hover:bg-yellow-500 text-white">{pendingCount}</Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="club-members" className="relative">
+            <ShieldCheck className="mr-2 h-4 w-4" /> Membres clubs
+            {pendingClubMembersCount > 0 && (
+              <Badge className="ml-2 bg-yellow-500 hover:bg-yellow-500 text-white">{pendingClubMembersCount}</Badge>
             )}
           </TabsTrigger>
           <TabsTrigger value="directory">
@@ -304,6 +357,106 @@ const AdminDirectory = () => {
               </Table>
               {filteredRequests.length === 0 && (
                 <p className="text-center text-muted-foreground py-8">Aucune demande</p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* === MEMBRES SOUMIS PAR LES CLUBS === */}
+        <TabsContent value="club-members" className="space-y-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Statut</Label>
+                  <Select value={cmStatusFilter} onValueChange={(v) => setCmStatusFilter(v as any)}>
+                    <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tous</SelectItem>
+                      <SelectItem value="pending">En attente</SelectItem>
+                      <SelectItem value="accepted">Acceptés</SelectItem>
+                      <SelectItem value="rejected">Refusés</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Club</TableHead>
+                    <TableHead>Membre</TableHead>
+                    <TableHead>Âge</TableHead>
+                    <TableHead>Discipline</TableHead>
+                    <TableHead>Documents</TableHead>
+                    <TableHead>Paiement</TableHead>
+                    <TableHead>Statut</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredClubMembers.map((m) => {
+                    const docsCount = Object.values(m.documents).filter(Boolean).length;
+                    const required = 2;
+                    const stMeta = {
+                      pending: { label: "En attente", color: "bg-yellow-100 text-yellow-700 border-yellow-300" },
+                      accepted: { label: "Accepté", color: "bg-green-100 text-green-700 border-green-300" },
+                      rejected: { label: "Refusé", color: "bg-red-100 text-red-700 border-red-300" },
+                    }[m.approval.status];
+                    return (
+                      <TableRow key={m.id}>
+                        <TableCell className="font-medium">{m.clubName}</TableCell>
+                        <TableCell>
+                          {m.fullName}
+                          <div className="text-xs text-muted-foreground">{m.gender === "M" ? "Homme" : "Femme"}</div>
+                        </TableCell>
+                        <TableCell>
+                          {m.age} ans
+                          {m.age < 18 && <Badge variant="outline" className="ml-1 text-[10px]">Mineur</Badge>}
+                        </TableCell>
+                        <TableCell>{m.discipline}</TableCell>
+                        <TableCell>
+                          <span className={`text-xs ${docsCount >= required ? "text-green-700" : "text-yellow-700"}`}>
+                            {docsCount}/{required}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${m.payment.status === "paid" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                            {m.payment.status === "paid" ? "Payé" : "Non payé"}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${stMeta.color}`}>
+                            {stMeta.label}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button variant="ghost" size="icon" onClick={() => setActiveClubMember(m)}>
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            {m.approval.status === "pending" && (
+                              <>
+                                <Button variant="ghost" size="icon" className="text-green-600" onClick={() => approveClubMember(m)}>
+                                  <Check className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="text-destructive" onClick={() => rejectClubMember(m)}>
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+              {filteredClubMembers.length === 0 && (
+                <p className="text-center text-muted-foreground py-8">
+                  Aucune soumission de membre {cmStatusFilter !== "all" ? `(${cmStatusFilter})` : ""}
+                </p>
               )}
             </CardContent>
           </Card>
@@ -441,6 +594,86 @@ const AdminDirectory = () => {
                   <Button onClick={() => approveRequest(activeRequest)}>
                     <Check className="mr-2 h-4 w-4" /> Approuver et créer le compte
                   </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Club member detail dialog */}
+      <Dialog open={!!activeClubMember} onOpenChange={(o) => !o && setActiveClubMember(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Dossier du membre</DialogTitle>
+          </DialogHeader>
+          {activeClubMember && (
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div><Label className="text-xs text-muted-foreground">Club</Label><p className="font-medium">{activeClubMember.clubName}</p></div>
+                <div><Label className="text-xs text-muted-foreground">Nom complet</Label><p className="font-medium">{activeClubMember.fullName}</p></div>
+                <div><Label className="text-xs text-muted-foreground">Date de naissance</Label><p>{activeClubMember.birthDate} ({activeClubMember.age} ans)</p></div>
+                <div><Label className="text-xs text-muted-foreground">Genre</Label><p>{activeClubMember.gender === "M" ? "Homme" : "Femme"}</p></div>
+                <div><Label className="text-xs text-muted-foreground">Discipline</Label><p>{activeClubMember.discipline}</p></div>
+                <div><Label className="text-xs text-muted-foreground">Téléphone</Label><p>{activeClubMember.phone || "—"}</p></div>
+                <div className="col-span-2"><Label className="text-xs text-muted-foreground">Email</Label><p>{activeClubMember.email || "—"}</p></div>
+              </div>
+
+              <div className="border border-border rounded-lg p-3 space-y-2">
+                <h4 className="font-semibold text-sm flex items-center gap-2"><FileText className="w-4 h-4" /> Documents</h4>
+                {Object.entries(activeClubMember.documents).map(([k, v]) =>
+                  v ? (
+                    <div key={k} className="flex items-center justify-between text-sm">
+                      <span>
+                        {k === "cin" && "CIN"}
+                        {k === "birthExtract" && "مضمون (Extrait de naissance)"}
+                        {k === "parentalAuth" && "ترخيص أبوي (Autorisation parentale)"}
+                        : <span className="text-muted-foreground">{v.name}</span>
+                      </span>
+                      <Button size="sm" variant="ghost">Voir</Button>
+                    </div>
+                  ) : null,
+                )}
+                {Object.values(activeClubMember.documents).filter(Boolean).length === 0 && (
+                  <p className="text-xs text-muted-foreground">Aucun document fourni</p>
+                )}
+              </div>
+
+              <div className="border border-border rounded-lg p-3 space-y-2">
+                <h4 className="font-semibold text-sm flex items-center gap-2"><Receipt className="w-4 h-4" /> Paiement</h4>
+                <p className="text-sm">
+                  Statut :{" "}
+                  <span className={`px-2 py-0.5 rounded-full text-xs ${activeClubMember.payment.status === "paid" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                    {activeClubMember.payment.status === "paid" ? "Payé" : "Non payé"}
+                  </span>
+                </p>
+                {activeClubMember.payment.receipt && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Reçu : <span className="text-muted-foreground">{activeClubMember.payment.receipt.name}</span></span>
+                    <Button size="sm" variant="ghost">Voir</Button>
+                  </div>
+                )}
+              </div>
+
+              {activeClubMember.approval.reviewerNote && (
+                <div>
+                  <Label className="text-xs text-muted-foreground">Note de l'examinateur</Label>
+                  <p className="text-sm">{activeClubMember.approval.reviewerNote}</p>
+                </div>
+              )}
+
+              {activeClubMember.approval.status === "pending" && (
+                <div className="space-y-2 pt-2 border-t">
+                  <Label className="text-xs">Note (optionnel, en cas de refus)</Label>
+                  <Textarea value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} placeholder="Motif du refus..." />
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => rejectClubMember(activeClubMember)}>
+                      <X className="mr-2 h-4 w-4" /> Refuser
+                    </Button>
+                    <Button onClick={() => approveClubMember(activeClubMember)}>
+                      <Check className="mr-2 h-4 w-4" /> Approuver
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
