@@ -796,7 +796,6 @@ const MemberDashboard = () => {
               <DialogHeader>
                 <DialogTitle>{editCm ? "Modifier le membre" : "Nouveau membre du club"}</DialogTitle>
               </DialogHeader>
-              {/* Join competition dialog placeholder rendered below */}
               <form onSubmit={saveClubMember} className="space-y-4">
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
