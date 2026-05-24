@@ -1,13 +1,31 @@
-import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Menu, X, Building2, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLang } from "@/contexts/LangContext";
 import logoFtdap from "@/assets/logo-ftdap.png";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 
+interface MemberSession {
+  kind: "individual" | "club";
+  fullName: string;
+  avatarUrl?: string;
+}
+
 const Navbar = () => {
   const [open, setOpen] = useState(false);
+  const [session, setSession] = useState<MemberSession | null>(null);
   const { t } = useLang();
+
+  useEffect(() => {
+    const raw = localStorage.getItem("ftdap_member");
+    if (raw) {
+      try {
+        setSession(JSON.parse(raw));
+      } catch {
+        setSession(null);
+      }
+    }
+  }, []);
 
   const navLinks = [
     { label: t("nav.home"), href: "/" },
