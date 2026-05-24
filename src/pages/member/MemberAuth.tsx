@@ -298,9 +298,13 @@ const MemberAuth = () => {
                           <ul className="text-xs text-muted-foreground mt-2 space-y-1 list-disc list-inside">
                             {kind === "club" ? (
                               <>
-                                <li>Statuts du club</li>
-                                <li>Récépissé de dépôt légal</li>
+                                <li>Statuts du club (PDF)</li>
+                                <li>Récépissé de dépôt légal / Journal Officiel</li>
                                 <li>Pièce d'identité du président</li>
+                                <li>Procès-verbal de la dernière AG</li>
+                                <li>Liste des membres du bureau</li>
+                                <li>RIB du club</li>
+                                <li>Attestation d'assurance</li>
                               </>
                             ) : (
                               <>
