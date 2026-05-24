@@ -93,11 +93,6 @@ const MemberDashboard = () => {
   const [cmDocs, setCmDocs] = useState<ClubMember["documents"]>({});
   const [cmPayment, setCmPayment] = useState<ClubMember["payment"]>({ status: "unpaid" });
   const [bulkPayDialog, setBulkPayDialog] = useState(false);
-  const [joinedComps, setJoinedComps] = useState<number[]>(() => {
-    try { return JSON.parse(localStorage.getItem("ftdap_joined_comps") || "[]"); } catch { return []; }
-  });
-  const [joinDialog, setJoinDialog] = useState<null | { id: number; title: string }>(null);
-  const [joinSelection, setJoinSelection] = useState<string[]>([]);
 
   useEffect(() => {
     const raw = localStorage.getItem("ftdap_member");
@@ -341,7 +336,6 @@ const MemberDashboard = () => {
               {isAthlete && <TabsTrigger value="results">Mes résultats</TabsTrigger>}
               {isCoach && <TabsTrigger value="dancers">Mes danseurs</TabsTrigger>}
               {isClub && <TabsTrigger value="club-members">Membres du club</TabsTrigger>}
-              {isClub && <TabsTrigger value="club-competitions">Compétitions</TabsTrigger>}
               {isReferee && <TabsTrigger value="missions">Mes missions</TabsTrigger>}
               <TabsTrigger value="documents">Documents</TabsTrigger>
             </TabsList>
@@ -636,81 +630,6 @@ const MemberDashboard = () => {
             )}
 
             {/* REFEREE MISSIONS */}
-            {isClub && (
-              <TabsContent value="club-competitions">
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between gap-2">
-                      <CardTitle>Compétitions à venir</CardTitle>
-                      <Button asChild variant="outline" size="sm">
-                        <Link to="/competitions">Voir toutes</Link>
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="bg-muted/40 border border-border rounded-lg p-3 mb-4 text-xs text-muted-foreground">
-                      Inscrivez votre club en sélectionnant les membres qui participeront. Seuls les
-                      membres avec une licence acceptée peuvent être engagés.
-                    </div>
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      {[
-                        { id: 1, title: "Championnat National FTDAP 2026", date: "15 MARS 2026", venue: "Tunis", discipline: "Toutes disciplines" },
-                        { id: 2, title: "Open de Sousse", date: "28 AVR 2026", venue: "Sousse", discipline: "Hip-Hop & Breakdance" },
-                        { id: 3, title: "Coupe d'Hammamet", date: "12 MAI 2026", venue: "Nabeul", discipline: "Danse Sportive" },
-                        { id: 4, title: "Tournoi de Sfax", date: "08 JUN 2026", venue: "Sfax", discipline: "Toutes disciplines" },
-                      ].map((c) => {
-                        const joined = joinedComps.includes(c.id);
-                        return (
-                          <div key={c.id} className="border border-border rounded-xl p-4 flex flex-col">
-                            <div className="flex items-start justify-between mb-2 gap-2">
-                              <h4 className="font-semibold text-foreground">{c.title}</h4>
-                              {joined && (
-                                <Badge className="bg-green-100 text-green-700 hover:bg-green-100 gap-1">
-                                  <CheckCircle2 className="w-3 h-3" /> Inscrit
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="text-xs text-muted-foreground space-y-1 mb-4">
-                              <p className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {c.date}</p>
-                              <p className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {c.venue}</p>
-                              <p className="flex items-center gap-1"><Trophy className="w-3 h-3" /> {c.discipline}</p>
-                            </div>
-                            <div className="mt-auto flex gap-2">
-                              <Button
-                                size="sm"
-                                className="flex-1"
-                                disabled={joined}
-                                onClick={() => {
-                                  setJoinSelection([]);
-                                  setJoinDialog({ id: c.id, title: c.title });
-                                }}
-                              >
-                                {joined ? "Déjà inscrit" : "Rejoindre"}
-                              </Button>
-                              {joined && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    const next = joinedComps.filter((x) => x !== c.id);
-                                    setJoinedComps(next);
-                                    localStorage.setItem("ftdap_joined_comps", JSON.stringify(next));
-                                    toast({ title: "Inscription annulée" });
-                                  }}
-                                >
-                                  Annuler
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            )}
-
             {isReferee && (
               <TabsContent value="missions">
                 <Card>
@@ -946,70 +865,6 @@ const MemberDashboard = () => {
             </DialogContent>
           </Dialog>
 
-          {/* Join competition dialog */}
-          <Dialog open={!!joinDialog} onOpenChange={(o) => !o && setJoinDialog(null)}>
-            <DialogContent className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Rejoindre : {joinDialog?.title}</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Sélectionnez les membres du club à engager dans cette compétition.
-                </p>
-                <div className="max-h-60 overflow-y-auto border border-border rounded-md p-2 space-y-1">
-                  {myClubMembers.length === 0 && (
-                    <p className="text-xs text-muted-foreground text-center py-4">
-                      Aucun membre. Ajoutez d'abord des membres dans l'onglet "Membres du club".
-                    </p>
-                  )}
-                  {myClubMembers.map((m) => {
-                    const eligible = m.approval.status === "accepted";
-                    const checked = joinSelection.includes(m.id);
-                    return (
-                      <label
-                        key={m.id}
-                        className={`flex items-center gap-2 p-2 rounded ${eligible ? "hover:bg-muted cursor-pointer" : "opacity-60"}`}
-                      >
-                        <Checkbox
-                          checked={checked}
-                          disabled={!eligible}
-                          onCheckedChange={(c) => {
-                            setJoinSelection((prev) =>
-                              c ? [...prev, m.id] : prev.filter((x) => x !== m.id),
-                            );
-                          }}
-                        />
-                        <span className="flex-1 text-sm">{m.fullName}</span>
-                        <span className="text-xs text-muted-foreground">{m.discipline}</span>
-                        {!eligible && (
-                          <Badge variant="outline" className="text-[10px]">Licence requise</Badge>
-                        )}
-                      </label>
-                    );
-                  })}
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setJoinDialog(null)}>Annuler</Button>
-                  <Button
-                    disabled={joinSelection.length === 0}
-                    onClick={() => {
-                      if (!joinDialog) return;
-                      const next = [...joinedComps, joinDialog.id];
-                      setJoinedComps(next);
-                      localStorage.setItem("ftdap_joined_comps", JSON.stringify(next));
-                      toast({
-                        title: "Inscription envoyée",
-                        description: `${joinSelection.length} membre(s) engagé(s) pour ${joinDialog.title}.`,
-                      });
-                      setJoinDialog(null);
-                    }}
-                  >
-                    Confirmer l'inscription
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
         </div>
       </section>
 
