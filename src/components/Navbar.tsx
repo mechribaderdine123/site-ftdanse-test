@@ -57,9 +57,27 @@ const Navbar = () => {
           ))}
         </div>
         <div className="hidden lg:flex items-center gap-3">
-          <Link to="/member/login" className="btn-primary text-sm py-2 px-4">
-            {t("nav.join")}
-          </Link>
+          {session ? (
+            <Link
+              to="/member"
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-muted/60 px-3 py-1.5 text-sm font-medium text-primary hover:bg-muted transition-colors"
+            >
+              {session.kind === "club" ? (
+                session.avatarUrl ? (
+                  <img src={session.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover" />
+                ) : (
+                  <Building2 className="w-4 h-4 text-violet-600" />
+                )
+              ) : (
+                <User className="w-4 h-4 text-blue-600" />
+              )}
+              <span className="max-w-[120px] truncate">{session.fullName}</span>
+            </Link>
+          ) : (
+            <Link to="/member/login" className="btn-primary text-sm py-2 px-4">
+              {t("nav.join")}
+            </Link>
+          )}
         </div>
 
         <button
