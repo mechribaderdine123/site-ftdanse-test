@@ -21,6 +21,7 @@ export interface ClubMember {
     cin?: UploadedDoc;            // Adults only
     birthExtract?: UploadedDoc;   // Both (مضمون)
     parentalAuth?: UploadedDoc;   // Minors only (ترخيص أبوي)
+    photo?: UploadedDoc;          // Minors only (الصورة)
   };
   payment: {
     status: PaymentStatus;
