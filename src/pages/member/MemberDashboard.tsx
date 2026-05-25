@@ -178,8 +178,8 @@ const MemberDashboard = () => {
   const isMinor = cmBirth && age < 18;
   const requiredDocsOk = cmBirth
     ? isMinor
-      ? !!cmDocs.birthExtract && !!cmDocs.parentalAuth
-      : !!cmDocs.birthExtract && !!cmDocs.cin
+      ? !!cmDocs.parentalAuth && !!cmDocs.photo
+      : !!cmDocs.cin
     : false;
 
   const saveClubMember = (e: React.FormEvent<HTMLFormElement>) => {
@@ -667,7 +667,7 @@ const MemberDashboard = () => {
                         {myClubMembers.map((m) => {
                           const minor = m.age < 18;
                           const docsCount = Object.values(m.documents).filter(Boolean).length;
-                          const required = minor ? 2 : 2;
+                          const required = minor ? 2 : 1;
                           return (
                             <TableRow key={m.id}>
                               <TableCell className="font-medium">
@@ -869,11 +869,6 @@ const MemberDashboard = () => {
                         <Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleDocChange("cin")} />
                         {cmDocs.cin && <p className="text-xs text-green-700">✓ {cmDocs.cin.name}</p>}
                       </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">مضمون (Extrait de naissance) *</Label>
-                        <Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleDocChange("birthExtract")} />
-                        {cmDocs.birthExtract && <p className="text-xs text-green-700">✓ {cmDocs.birthExtract.name}</p>}
-                      </div>
                     </>
                   )}
 
@@ -890,11 +885,6 @@ const MemberDashboard = () => {
                         </div>
                       </div>
 
-                      <div className="space-y-1">
-                        <Label className="text-xs">مضمون (Extrait de naissance) *</Label>
-                        <Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleDocChange("birthExtract")} />
-                        {cmDocs.birthExtract && <p className="text-xs text-green-700">✓ {cmDocs.birthExtract.name}</p>}
-                      </div>
                       <div className="space-y-1">
                         <Label className="text-xs">ترخيص أبوي (Autorisation parentale) *</Label>
                         <Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleDocChange("parentalAuth")} />
@@ -944,23 +934,6 @@ const MemberDashboard = () => {
                   )}
                 </div>
 
-                {/* Payment section */}
-                <div className="border border-border rounded-lg p-4 space-y-3">
-                  <h4 className="font-semibold text-sm">Statut de paiement</h4>
-                  <div className="flex items-center gap-3">
-                    <Switch
-                      checked={cmPayment.status === "paid"}
-                      onCheckedChange={(c) =>
-                        setCmPayment((p) => ({ ...p, status: c ? "paid" : "unpaid" }))
-                      }
-                    />
-                    <span className="text-sm">{cmPayment.status === "paid" ? "Payé" : "Non payé"}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Le reçu sera téléversé en une seule fois pour tous les membres payés via
-                    le bouton « Payer » sur la liste.
-                  </p>
-                </div>
 
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={() => setCmDialog(false)}>Annuler</Button>
