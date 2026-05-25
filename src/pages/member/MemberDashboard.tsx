@@ -393,6 +393,101 @@ const MemberDashboard = () => {
                   {!isClub && session.clubName && (
                     <div className="space-y-2"><Label>Club d'appartenance</Label><Input defaultValue={session.clubName} /></div>
                   )}
+                  {isClub && (
+                    <>
+                      <div className="space-y-2">
+                        <Label>Type d'organisme</Label>
+                        <Input defaultValue="Association" placeholder="Institution / Association / Organisme privé" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Nom de l'organisme</Label>
+                        <Input placeholder="Ex. Ministère de la Jeunesse" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Date de fondation</Label>
+                        <Input type="date" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Numéro d'affiliation FTDAP</Label>
+                        <Input placeholder="FTDAP-CLB-0000" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Téléphone principal</Label>
+                        <Input type="tel" placeholder="+216 .. ... ..." />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Téléphone secondaire</Label>
+                        <Input type="tel" placeholder="+216 .. ... ..." />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Adresse complète</Label>
+                        <Input placeholder="Rue, quartier" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Code postal</Label>
+                        <Input placeholder="1000" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Gouvernorat</Label>
+                        <Input placeholder="Tunis" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Localisation (Google Maps)</Label>
+                        <Input placeholder="https://maps.google.com/..." />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Président / Représentant légal</Label>
+                        <Input placeholder="Nom complet" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Email du président</Label>
+                        <Input type="email" placeholder="president@club.tn" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Site web</Label>
+                        <Input placeholder="https://monclub.tn" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Facebook</Label>
+                        <Input placeholder="https://facebook.com/monclub" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Instagram</Label>
+                        <Input placeholder="@monclub" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>TikTok</Label>
+                        <Input placeholder="@monclub" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>YouTube</Label>
+                        <Input placeholder="https://youtube.com/@monclub" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>WhatsApp</Label>
+                        <Input placeholder="+216 .. ... ..." />
+                      </div>
+                      <div className="sm:col-span-2 space-y-2">
+                        <Label>Disciplines enseignées</Label>
+                        <Input placeholder="Hip-Hop, Breakdance, Salsa..." />
+                      </div>
+                      <div className="sm:col-span-2 space-y-2">
+                        <Label>Description du club</Label>
+                        <textarea
+                          className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          placeholder="Présentez votre club, son histoire, sa mission..."
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Horaires d'ouverture</Label>
+                        <Input placeholder="Lun-Ven 9h-20h, Sam 9h-13h" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Capacité d'accueil</Label>
+                        <Input type="number" placeholder="Nombre de danseurs" />
+                      </div>
+                    </>
+                  )}
                   <div className="sm:col-span-2 flex justify-end">
                     <Button onClick={() => toast({ title: "Profil mis à jour" })}>Enregistrer</Button>
                   </div>
