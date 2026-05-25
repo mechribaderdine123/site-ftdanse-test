@@ -879,6 +879,17 @@ const MemberDashboard = () => {
 
                   {cmBirth && isMinor && (
                     <>
+                      <div className="grid sm:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Année (السنة) *</Label>
+                          <Input name="actYear" type="number" min="1900" max="2100" placeholder="Ex. 2012" required />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">N° d'acte (رقم العقد) *</Label>
+                          <Input name="actNumber" placeholder="Ex. 12345" required />
+                        </div>
+                      </div>
+
                       <div className="space-y-1">
                         <Label className="text-xs">مضمون (Extrait de naissance) *</Label>
                         <Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleDocChange("birthExtract")} />
@@ -888,6 +899,46 @@ const MemberDashboard = () => {
                         <Label className="text-xs">ترخيص أبوي (Autorisation parentale) *</Label>
                         <Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleDocChange("parentalAuth")} />
                         {cmDocs.parentalAuth && <p className="text-xs text-green-700">✓ {cmDocs.parentalAuth.name}</p>}
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">الصورة (Photo d'identité) *</Label>
+                        <Input type="file" accept=".jpg,.jpeg,.png" onChange={handleDocChange("photo")} />
+                        {cmDocs.photo && <p className="text-xs text-green-700">✓ {cmDocs.photo.name}</p>}
+                      </div>
+
+                      <div className="border-t border-border pt-3 space-y-3">
+                        <h5 className="text-xs font-semibold">
+                          Contact d'urgence — Parent (obligatoire pour les mineurs)
+                        </h5>
+                        <div className="grid sm:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Lien de parenté *</Label>
+                            <select
+                              name="emergencyRelation"
+                              required
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                            >
+                              <option value="father">Père (الأب)</option>
+                              <option value="mother">Mère (الأم)</option>
+                            </select>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Nom complet du parent *</Label>
+                            <Input name="emergencyName" required />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Téléphone *</Label>
+                            <Input name="emergencyPhone" type="tel" required placeholder="+216 .. ... ..." />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">CIN du parent</Label>
+                            <Input name="emergencyCin" placeholder="Numéro CIN" />
+                          </div>
+                          <div className="sm:col-span-2 space-y-1">
+                            <Label className="text-xs">Email du parent</Label>
+                            <Input name="emergencyEmail" type="email" />
+                          </div>
+                        </div>
                       </div>
                     </>
                   )}
