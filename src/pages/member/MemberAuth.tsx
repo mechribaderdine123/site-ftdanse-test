@@ -40,6 +40,7 @@ const MemberAuth = () => {
   const [form, setForm] = useState({
     fullName: "", email: "", password: "", phone: "",
     city: "", discipline: "", clubName: "",
+    clubType: "", orgName: "",
   });
   const [avatar, setAvatar] = useState<string>("");
   const [docs, setDocs] = useState<{ name: string; size: string }[]>([]);
@@ -235,10 +236,27 @@ const MemberAuth = () => {
                       <div className="space-y-4">
                         <h3 className="font-semibold">Vos informations</h3>
                         {kind === "club" ? (
-                          <div className="space-y-2">
-                            <Label>Nom du club *</Label>
-                            <Input value={form.clubName} onChange={(e) => setForm({ ...form, clubName: e.target.value })} />
-                          </div>
+                          <>
+                            <div className="space-y-2">
+                              <Label>Type du club *</Label>
+                              <Select value={form.clubType} onValueChange={(v) => setForm({ ...form, clubType: v })}>
+                                <SelectTrigger><SelectValue placeholder="Choisir le type..." /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="institution">Institution</SelectItem>
+                                  <SelectItem value="association">Association</SelectItem>
+                                  <SelectItem value="organisme-prive">Organisme privé</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Nom de l'organisme *</Label>
+                              <Input value={form.orgName} onChange={(e) => setForm({ ...form, orgName: e.target.value })} />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Nom du club *</Label>
+                              <Input value={form.clubName} onChange={(e) => setForm({ ...form, clubName: e.target.value })} />
+                            </div>
+                          </>
                         ) : (
                           <div className="space-y-2">
                             <Label>Nom complet *</Label>
