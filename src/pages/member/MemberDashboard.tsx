@@ -153,9 +153,11 @@ const MemberDashboard = () => {
   const availableSeasons = Array.from(
     new Set(myClubMembers.map((m) => m.season).filter(Boolean) as string[])
   ).sort().reverse();
-  const filteredClubMembers = seasonFilter === "all"
-    ? myClubMembers
-    : myClubMembers.filter((m) => (m.season || "—") === seasonFilter);
+  const filteredClubMembers = myClubMembers.filter((m) => {
+    const matchSeason = seasonFilter === "all" || (m.season || "—") === seasonFilter;
+    const matchId = searchId.trim() === "" || m.id.toLowerCase().includes(searchId.trim().toLowerCase());
+    return matchSeason && matchId;
+  });
 
   const openNewClubMember = () => {
     setEditCm(null);
