@@ -5,6 +5,7 @@ export interface UploadedDoc {
   name: string;
   uploadedAt: string;
   size?: number;
+  dataUrl?: string; // base64 image data for preview
 }
 
 export interface ClubMember {

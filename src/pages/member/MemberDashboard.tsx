@@ -163,15 +163,21 @@ const MemberDashboard = () => {
     setCmDialog(true);
   };
 
-  const fakeUpload = (file: File): UploadedDoc => ({
-    name: file.name, uploadedAt: new Date().toISOString(), size: file.size,
-  });
+  const fakeUpload = async (file: File): Promise<UploadedDoc> => {
+    const dataUrl = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(file);
+    });
+    return { name: file.name, uploadedAt: new Date().toISOString(), size: file.size, dataUrl };
+  };
 
   const handleDocChange = (key: keyof ClubMember["documents"]) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
       const f = e.target.files?.[0];
       if (!f) return;
-      setCmDocs((prev) => ({ ...prev, [key]: fakeUpload(f) }));
+      const doc = await fakeUpload(f);
+      setCmDocs((prev) => ({ ...prev, [key]: doc }));
     };
 
   const age = computeAge(cmBirth);
@@ -237,9 +243,9 @@ const MemberDashboard = () => {
 
   const paidMembers = myClubMembers.filter((m) => m.payment.status === "paid");
 
-  const handleBulkPayment = (file: File) => {
+  const handleBulkPayment = async (file: File) => {
     if (paidMembers.length === 0) return;
-    const receipt = fakeUpload(file);
+    const receipt = await fakeUpload(file);
     const now = new Date().toISOString();
     const all = loadClubMembers();
     const paidIds = paidMembers.map((p) => p.id);
@@ -654,8 +660,9 @@ const MemberDashboard = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
+                          <TableHead>Photo</TableHead>
                           <TableHead>Nom</TableHead>
-                            <TableHead>ID Athlète</TableHead>
+                          <TableHead>ID Athlète</TableHead>
                           <TableHead>Âge</TableHead>
                           <TableHead>Discipline</TableHead>
                           <TableHead>Documents</TableHead>
@@ -671,6 +678,15 @@ const MemberDashboard = () => {
                           const required = minor ? 2 : 1;
                           return (
                             <TableRow key={m.id}>
+                              <TableCell>
+                                <div className="w-10 h-10 rounded-full bg-muted border border-border overflow-hidden flex items-center justify-center">
+                                  {m.documents.photo?.dataUrl ? (
+                                    <img src={m.documents.photo.dataUrl} alt={m.fullName} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <User className="w-5 h-5 text-muted-foreground" />
+                                  )}
+                                </div>
+                              </TableCell>
                               <TableCell className="font-medium">
                                 {m.fullName}
                                 <div className="text-xs text-muted-foreground">{m.gender === "M" ? "Homme" : "Femme"}</div>
@@ -699,7 +715,7 @@ const MemberDashboard = () => {
                                   </span>
                                   {m.payment.receipt && (
                                     <span className="text-[10px] text-muted-foreground truncate max-w-[100px]" title={m.payment.receipt.name}>
-                                      📄 {m.payment.receipt.name}
+                                      {m.payment.receipt.name}
                                     </span>
                                   )}
                                 </div>
@@ -981,9 +997,9 @@ const MemberDashboard = () => {
                   <Input
                     type="file"
                     accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const f = e.target.files?.[0];
-                      if (f) handleBulkPayment(f);
+                      if (f) await handleBulkPayment(f);
                     }}
                   />
                 </div>
