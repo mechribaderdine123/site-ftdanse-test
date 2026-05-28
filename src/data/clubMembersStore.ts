@@ -18,6 +18,8 @@ export interface ClubMember {
   discipline: string;
   phone?: string;
   email?: string;
+  season?: string; // e.g. "2024-2025"
+  quality?: string; // Qualité (Athlète, Élite...)
   documents: {
     cin?: UploadedDoc;            // Adults only
     birthExtract?: UploadedDoc;   // Both (مضمون)
