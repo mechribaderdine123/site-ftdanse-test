@@ -954,6 +954,24 @@ const MemberDashboard = () => {
                     <Label>Email</Label>
                     <Input name="email" type="email" defaultValue={editCm?.email} />
                   </div>
+                  <div className="space-y-2">
+                    <Label>Saison *</Label>
+                    <Input name="season" defaultValue={editCm?.season || "2024-2025"} placeholder="Ex. 2024-2025" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Qualité</Label>
+                    <select
+                      name="quality"
+                      defaultValue={editCm?.quality || "Athlète"}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    >
+                      <option value="Athlète">Athlète</option>
+                      <option value="Junior">Junior</option>
+                      <option value="Senior">Senior</option>
+                      <option value="Élite">Élite</option>
+                      <option value="Coach">Coach</option>
+                    </select>
+                  </div>
                   {cmBirth && isMinor && (
                     <>
                       <div className="space-y-2">
