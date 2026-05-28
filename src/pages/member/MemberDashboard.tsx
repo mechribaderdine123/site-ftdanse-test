@@ -710,6 +710,22 @@ const MemberDashboard = () => {
                     </div>
                   </CardHeader>
                   <CardContent>
+                    <div className="flex flex-wrap items-center gap-2 mb-4">
+                      <Label className="text-xs text-muted-foreground">Filtrer par saison :</Label>
+                      <select
+                        value={seasonFilter}
+                        onChange={(e) => setSeasonFilter(e.target.value)}
+                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                      >
+                        <option value="all">Toutes les saisons</option>
+                        {availableSeasons.map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                      <span className="text-xs text-muted-foreground">
+                        {filteredClubMembers.length} membre(s)
+                      </span>
+                    </div>
                     <div className="bg-muted/40 border border-border rounded-lg p-3 mb-4 text-xs text-muted-foreground">
                       Activez le statut <strong>Payé</strong> pour les membres qui ont réglé, puis cliquez
                       sur <strong>Payer</strong> pour téléverser un seul reçu commun. Tous les membres
@@ -724,6 +740,7 @@ const MemberDashboard = () => {
                           <TableHead>ID Athlète</TableHead>
                           <TableHead>Âge</TableHead>
                           <TableHead>Discipline</TableHead>
+                          <TableHead>Saison</TableHead>
                           <TableHead>Documents</TableHead>
                           <TableHead>Paiement</TableHead>
                           <TableHead>Licence</TableHead>
@@ -731,7 +748,7 @@ const MemberDashboard = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {myClubMembers.map((m) => {
+                        {filteredClubMembers.map((m) => {
                           const minor = m.age < 18;
                           const docsCount = Object.values(m.documents).filter(Boolean).length;
                           const required = minor ? 2 : 1;
@@ -758,6 +775,7 @@ const MemberDashboard = () => {
                                 {minor && <Badge variant="outline" className="ml-1 text-[10px]">Mineur</Badge>}
                               </TableCell>
                               <TableCell>{m.discipline}</TableCell>
+                              <TableCell className="text-xs">{m.season || "—"}</TableCell>
                               <TableCell>
                                 <span className={`text-xs ${docsCount >= required ? "text-green-700" : "text-yellow-700"}`}>
                                   {docsCount}/{required} fournis
@@ -782,6 +800,9 @@ const MemberDashboard = () => {
                               <TableCell>{approvalBadge(m.approval.status)}</TableCell>
                               <TableCell className="text-right">
                                 <div className="flex justify-end gap-1">
+                                  <Button variant="ghost" size="icon" title="Imprimer la licence" onClick={() => printLicense(m)}>
+                                    <Printer className="w-4 h-4" />
+                                  </Button>
                                   <Button variant="ghost" size="icon" onClick={() => openEditClubMember(m)}>
                                     <Pencil className="w-4 h-4" />
                                   </Button>
