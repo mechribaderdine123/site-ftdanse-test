@@ -660,8 +660,9 @@ const MemberDashboard = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
+                          <TableHead>Photo</TableHead>
                           <TableHead>Nom</TableHead>
-                            <TableHead>ID Athlète</TableHead>
+                          <TableHead>ID Athlète</TableHead>
                           <TableHead>Âge</TableHead>
                           <TableHead>Discipline</TableHead>
                           <TableHead>Documents</TableHead>
@@ -677,6 +678,15 @@ const MemberDashboard = () => {
                           const required = minor ? 2 : 1;
                           return (
                             <TableRow key={m.id}>
+                              <TableCell>
+                                <div className="w-10 h-10 rounded-full bg-muted border border-border overflow-hidden flex items-center justify-center">
+                                  {m.documents.photo?.dataUrl ? (
+                                    <img src={m.documents.photo.dataUrl} alt={m.fullName} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <User className="w-5 h-5 text-muted-foreground" />
+                                  )}
+                                </div>
+                              </TableCell>
                               <TableCell className="font-medium">
                                 {m.fullName}
                                 <div className="text-xs text-muted-foreground">{m.gender === "M" ? "Homme" : "Femme"}</div>
@@ -705,7 +715,7 @@ const MemberDashboard = () => {
                                   </span>
                                   {m.payment.receipt && (
                                     <span className="text-[10px] text-muted-foreground truncate max-w-[100px]" title={m.payment.receipt.name}>
-                                      📄 {m.payment.receipt.name}
+                                      {m.payment.receipt.name}
                                     </span>
                                   )}
                                 </div>
