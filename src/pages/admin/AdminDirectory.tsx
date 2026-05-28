@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Plus, Pencil, Trash2, Search, User, Building2, Mail, Phone,
   Check, X, Eye, Inbox, GraduationCap, Users as UsersIcon, Trophy,
-  FileText, Receipt, ShieldCheck,
+  FileText, Receipt, ShieldCheck, ArrowLeft, UserRound,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/admin/PageHeader";
@@ -127,6 +127,10 @@ const AdminDirectory = () => {
   const [activeClubMember, setActiveClubMember] = useState<ClubMember | null>(null);
   const [rejectNote, setRejectNote] = useState("");
 
+  // Main view: choose between Clubs and Individuels
+  const [mainView, setMainView] = useState<"select" | "clubs" | "individuels">("select");
+  const [selectedClub, setSelectedClub] = useState<string | null>(null);
+
   useEffect(() => {
     setClubMembers(loadClubMembers());
     const onStorage = () => setClubMembers(loadClubMembers());
@@ -178,6 +182,29 @@ const AdminDirectory = () => {
   });
 
   const pendingCount = requests.filter((r) => r.status === "pending").length;
+
+  // Build clubs list: union of directory clubs + clubs that appear in clubMembers store
+  const clubsFromDirectory = items.filter((i) => i.type === "club");
+  const clubNameSet = new Set<string>([
+    ...clubsFromDirectory.map((c) => c.name),
+    ...clubMembers.map((m) => m.clubName),
+  ]);
+  const clubsList = Array.from(clubNameSet).map((name) => {
+    const dirEntry = clubsFromDirectory.find((c) => c.name === name);
+    const members = clubMembers.filter((m) => m.clubName === name);
+    return {
+      name,
+      city: dirEntry?.city ?? members[0]?.clubName ?? "—",
+      discipline: dirEntry?.discipline ?? "Multi-disciplines",
+      membersCount: members.length || dirEntry?.memberCount || 0,
+      pendingCount: members.filter((m) => m.approval.status === "pending").length,
+    };
+  });
+
+  const individualMembers = items.filter((i) => i.type === "member");
+  const clubMembersForSelected = selectedClub
+    ? clubMembers.filter((m) => m.clubName === selectedClub)
+    : [];
 
   const handleDelete = (id: number) => {
     setItems((prev) => prev.filter((e) => e.id !== id));
@@ -237,6 +264,253 @@ const AdminDirectory = () => {
           </Button>
         }
       />
+
+      {/* === MAIN VIEW SELECTOR === */}
+      {mainView === "select" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <button
+            type="button"
+            onClick={() => setMainView("clubs")}
+            className="group relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-violet-50 to-white p-10 text-left shadow-sm transition hover:shadow-lg hover:-translate-y-0.5"
+          >
+            <div className="flex items-center gap-5">
+              <div className="rounded-2xl bg-violet-600 p-5 text-white shadow-md">
+                <Building2 className="h-10 w-10" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-violet-900">Clubs</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Gérer tous les clubs et leurs membres
+                </p>
+                <p className="text-xs text-violet-700 mt-2 font-medium">
+                  {clubsList.length} club{clubsList.length > 1 ? "s" : ""} enregistré{clubsList.length > 1 ? "s" : ""}
+                </p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setMainView("individuels")}
+            className="group relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-blue-50 to-white p-10 text-left shadow-sm transition hover:shadow-lg hover:-translate-y-0.5"
+          >
+            <div className="flex items-center gap-5">
+              <div className="rounded-2xl bg-blue-600 p-5 text-white shadow-md">
+                <UserRound className="h-10 w-10" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-blue-900">Individuels</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Athlètes, coachs, entraîneurs indépendants
+                </p>
+                <p className="text-xs text-blue-700 mt-2 font-medium">
+                  {individualMembers.length} membre{individualMembers.length > 1 ? "s" : ""}
+                </p>
+              </div>
+            </div>
+          </button>
+        </div>
+      )}
+
+      {/* === CLUBS VIEW === */}
+      {mainView === "clubs" && !selectedClub && (
+        <Card>
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <Button variant="ghost" size="sm" onClick={() => setMainView("select")}>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Retour
+            </Button>
+            <h3 className="text-lg font-semibold">Tous les clubs</h3>
+            <div />
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {clubsList.map((club) => (
+                <button
+                  key={club.name}
+                  type="button"
+                  onClick={() => setSelectedClub(club.name)}
+                  className="text-left rounded-xl border border-border p-5 bg-card hover:shadow-md hover:border-violet-300 transition"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="rounded-lg bg-violet-100 p-3 text-violet-700">
+                      <Building2 className="h-6 w-6" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold truncate">{club.name}</h4>
+                      <p className="text-xs text-muted-foreground">{club.city}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{club.discipline}</p>
+                      <div className="flex items-center gap-2 mt-3">
+                        <Badge variant="secondary">{club.membersCount} membres</Badge>
+                        {club.pendingCount > 0 && (
+                          <Badge className="bg-yellow-500 hover:bg-yellow-500 text-white">
+                            {club.pendingCount} en attente
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+            {clubsList.length === 0 && (
+              <p className="text-center text-muted-foreground py-8">Aucun club</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* === SELECTED CLUB MEMBERS === */}
+      {mainView === "clubs" && selectedClub && (
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <Button variant="ghost" size="sm" onClick={() => setSelectedClub(null)}>
+                <ArrowLeft className="mr-2 h-4 w-4" /> Tous les clubs
+              </Button>
+              <div className="text-right">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Building2 className="h-5 w-5 text-violet-600" />
+                  {selectedClub}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {clubMembersForSelected.length} membre{clubMembersForSelected.length > 1 ? "s" : ""}
+                </p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Membre</TableHead>
+                  <TableHead>Âge</TableHead>
+                  <TableHead>Discipline</TableHead>
+                  <TableHead>Documents</TableHead>
+                  <TableHead>Paiement</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {clubMembersForSelected.map((m) => {
+                  const docsCount = Object.values(m.documents).filter(Boolean).length;
+                  const stMeta = {
+                    pending: { label: "En attente", color: "bg-yellow-100 text-yellow-700 border-yellow-300" },
+                    accepted: { label: "Accepté", color: "bg-green-100 text-green-700 border-green-300" },
+                    rejected: { label: "Refusé", color: "bg-red-100 text-red-700 border-red-300" },
+                  }[m.approval.status];
+                  return (
+                    <TableRow key={m.id}>
+                      <TableCell className="font-medium">
+                        {m.fullName}
+                        <div className="text-xs text-muted-foreground">{m.gender === "M" ? "Homme" : "Femme"}</div>
+                      </TableCell>
+                      <TableCell>
+                        {m.age} ans
+                        {m.age < 18 && <Badge variant="outline" className="ml-1 text-[10px]">Mineur</Badge>}
+                      </TableCell>
+                      <TableCell>{m.discipline}</TableCell>
+                      <TableCell>
+                        <span className={`text-xs ${docsCount >= 2 ? "text-green-700" : "text-yellow-700"}`}>
+                          {docsCount}/2
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${m.payment.status === "paid" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                          {m.payment.status === "paid" ? "Payé" : "Non payé"}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${stMeta.color}`}>
+                          {stMeta.label}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => setActiveClubMember(m)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          {m.approval.status === "pending" && (
+                            <>
+                              <Button variant="ghost" size="icon" className="text-green-600" onClick={() => approveClubMember(m)}>
+                                <Check className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="text-destructive" onClick={() => rejectClubMember(m)}>
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+            {clubMembersForSelected.length === 0 && (
+              <p className="text-center text-muted-foreground py-8">Aucun membre dans ce club</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* === INDIVIDUELS VIEW === */}
+      {mainView === "individuels" && (
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between gap-3">
+              <Button variant="ghost" size="sm" onClick={() => setMainView("select")}>
+                <ArrowLeft className="mr-2 h-4 w-4" /> Retour
+              </Button>
+              <div className="relative w-full max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="Rechercher..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nom</TableHead>
+                  <TableHead>Ville</TableHead>
+                  <TableHead>Discipline</TableHead>
+                  <TableHead>Rôle</TableHead>
+                  <TableHead>Licence</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {individualMembers
+                  .filter((e) =>
+                    e.name.toLowerCase().includes(search.toLowerCase()) ||
+                    e.city.toLowerCase().includes(search.toLowerCase()),
+                  )
+                  .map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-medium">{item.name}</TableCell>
+                      <TableCell>{item.city}</TableCell>
+                      <TableCell>{item.discipline}</TableCell>
+                      <TableCell>{item.role}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${item.licenseActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                          {item.licenseActive ? "Active" : "Inactive"}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => { setEditItem(item); setDialogOpen(true); }}><Pencil className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+            {individualMembers.length === 0 && <p className="text-center text-muted-foreground py-8">Aucun individuel</p>}
+          </CardContent>
+        </Card>
+      )}
 
       <Tabs defaultValue="requests" className="w-full">
         <TabsList>
