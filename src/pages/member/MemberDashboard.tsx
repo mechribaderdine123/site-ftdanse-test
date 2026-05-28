@@ -243,9 +243,9 @@ const MemberDashboard = () => {
 
   const paidMembers = myClubMembers.filter((m) => m.payment.status === "paid");
 
-  const handleBulkPayment = (file: File) => {
+  const handleBulkPayment = async (file: File) => {
     if (paidMembers.length === 0) return;
-    const receipt = fakeUpload(file);
+    const receipt = await fakeUpload(file);
     const now = new Date().toISOString();
     const all = loadClubMembers();
     const paidIds = paidMembers.map((p) => p.id);
