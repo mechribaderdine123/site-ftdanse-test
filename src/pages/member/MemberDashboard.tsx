@@ -174,12 +174,39 @@ const MemberDashboard = () => {
     setCmDialog(true);
   };
 
-  const fakeUpload = async (file: File): Promise<UploadedDoc> => {
-    const dataUrl = await new Promise<string>((resolve) => {
+  const compressImage = (file: File, maxSize = 600, quality = 0.7): Promise<string> =>
+    new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error("image load failed"));
+        img.onload = () => {
+          const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+          const w = Math.round(img.width * scale);
+          const h = Math.round(img.height * scale);
+          const canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return reject(new Error("no ctx"));
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        };
+        img.src = reader.result as string;
+      };
       reader.readAsDataURL(file);
     });
+
+  const fakeUpload = async (file: File): Promise<UploadedDoc> => {
+    let dataUrl: string | undefined;
+    if (file.type.startsWith("image/")) {
+      try {
+        dataUrl = await compressImage(file);
+      } catch {
+        dataUrl = undefined;
+      }
+    }
     return { name: file.name, uploadedAt: new Date().toISOString(), size: file.size, dataUrl };
   };
 
@@ -223,10 +250,35 @@ const MemberDashboard = () => {
       approval: editCm?.approval || { status: "pending" },
       createdAt: editCm?.createdAt || new Date().toISOString(),
     };
-    upsertClubMember(m);
-    setClubMembers(loadClubMembers());
-    setCmDialog(false);
-    toast({ title: editCm ? "Membre modifié" : "Membre ajouté" });
+    try {
+      upsertClubMember(m);
+      setClubMembers(loadClubMembers());
+      setCmDialog(false);
+      toast({ title: editCm ? "Membre modifié" : "Membre ajouté" });
+    } catch (err) {
+      // Quota likely exceeded — retry without dataUrls
+      const slim: ClubMember = {
+        ...m,
+        documents: Object.fromEntries(
+          Object.entries(m.documents).map(([k, v]) => [k, v ? { ...v, dataUrl: undefined } : v])
+        ) as ClubMember["documents"],
+      };
+      try {
+        upsertClubMember(slim);
+        setClubMembers(loadClubMembers());
+        setCmDialog(false);
+        toast({
+          title: "Membre enregistré",
+          description: "Aperçu des images désactivé (stockage local plein).",
+        });
+      } catch {
+        toast({
+          title: "Stockage plein",
+          description: "Supprimez d'anciens membres pour libérer de l'espace.",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   const deleteClubMember = (id: string) => {
