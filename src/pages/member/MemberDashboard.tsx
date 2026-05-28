@@ -392,8 +392,16 @@ const MemberDashboard = () => {
       <div class="row"><span class="lbl">Club :</span><span class="val">${m.clubName || "—"}</span></div>
     </div>
   </div>
-  <div class="toolbar"><button onclick="window.print()">Imprimer la licence</button></div>
-  <script>window.addEventListener('load', () => setTimeout(() => window.print(), 400));</script>
+  <script>
+    (function(){
+      var imgs = Array.from(document.images);
+      var bg = new Image(); bg.src = '${licenseTemplate}'; imgs.push(bg);
+      var pending = imgs.filter(function(i){ return !i.complete; }).length;
+      function go(){ window.focus(); window.print(); setTimeout(function(){ window.close(); }, 200); }
+      if (pending === 0) { go(); return; }
+      imgs.forEach(function(i){ i.addEventListener('load', function(){ if(--pending<=0) go(); }); i.addEventListener('error', function(){ if(--pending<=0) go(); }); });
+    })();
+  </script>
 </body></html>`;
     const w = window.open("", "_blank", "width=720,height=560");
     if (!w) {
