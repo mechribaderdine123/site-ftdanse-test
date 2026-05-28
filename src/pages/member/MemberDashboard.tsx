@@ -397,20 +397,67 @@ const MemberDashboard = () => {
       var imgs = Array.from(document.images);
       var bg = new Image(); bg.src = '${licenseTemplate}'; imgs.push(bg);
       var pending = imgs.filter(function(i){ return !i.complete; }).length;
-      function go(){ window.focus(); window.print(); setTimeout(function(){ window.close(); }, 200); }
+      function done(){
+        try { window.parent.postMessage({ type: 'ftdap-license-print-done' }, '*'); } catch (e) {}
+      }
+      function go(){
+        window.focus();
+        setTimeout(function(){
+          window.print();
+          setTimeout(done, 1200);
+        }, 60);
+      }
+      window.addEventListener('afterprint', done);
       if (pending === 0) { go(); return; }
       imgs.forEach(function(i){ i.addEventListener('load', function(){ if(--pending<=0) go(); }); i.addEventListener('error', function(){ if(--pending<=0) go(); }); });
     })();
   </script>
 </body></html>`;
-    const w = window.open("", "_blank", "width=720,height=560");
-    if (!w) {
-      toast({ title: "Pop-up bloquée", description: "Autorisez les fenêtres pop-up pour imprimer la licence.", variant: "destructive" });
+
+    document
+      .querySelectorAll('iframe[data-license-print-frame="true"]')
+      .forEach((node) => node.remove());
+
+    const iframe = document.createElement("iframe");
+    iframe.setAttribute("data-license-print-frame", "true");
+    iframe.setAttribute("aria-hidden", "true");
+    iframe.style.position = "fixed";
+    iframe.style.width = "1px";
+    iframe.style.height = "1px";
+    iframe.style.opacity = "0";
+    iframe.style.pointerEvents = "none";
+    iframe.style.border = "0";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+
+    const cleanup = () => {
+      window.removeEventListener("message", handleMessage);
+      iframe.remove();
+    };
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === "ftdap-license-print-done") {
+        cleanup();
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document;
+    if (!doc) {
+      cleanup();
+      toast({
+        title: "Impression impossible",
+        description: "Le document de licence n'a pas pu être généré.",
+        variant: "destructive",
+      });
       return;
     }
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
+
+    doc.open();
+    doc.write(html);
+    doc.close();
   };
 
   return (
