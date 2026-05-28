@@ -163,15 +163,21 @@ const MemberDashboard = () => {
     setCmDialog(true);
   };
 
-  const fakeUpload = (file: File): UploadedDoc => ({
-    name: file.name, uploadedAt: new Date().toISOString(), size: file.size,
-  });
+  const fakeUpload = async (file: File): Promise<UploadedDoc> => {
+    const dataUrl = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(file);
+    });
+    return { name: file.name, uploadedAt: new Date().toISOString(), size: file.size, dataUrl };
+  };
 
   const handleDocChange = (key: keyof ClubMember["documents"]) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
       const f = e.target.files?.[0];
       if (!f) return;
-      setCmDocs((prev) => ({ ...prev, [key]: fakeUpload(f) }));
+      const doc = await fakeUpload(f);
+      setCmDocs((prev) => ({ ...prev, [key]: doc }));
     };
 
   const age = computeAge(cmBirth);
