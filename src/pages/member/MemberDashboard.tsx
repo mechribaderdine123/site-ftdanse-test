@@ -987,9 +987,9 @@ const MemberDashboard = () => {
                   <Input
                     type="file"
                     accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const f = e.target.files?.[0];
-                      if (f) handleBulkPayment(f);
+                      if (f) await handleBulkPayment(f);
                     }}
                   />
                 </div>
