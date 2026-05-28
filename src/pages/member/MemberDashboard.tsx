@@ -655,6 +655,7 @@ const MemberDashboard = () => {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Nom</TableHead>
+                            <TableHead>ID Athlète</TableHead>
                           <TableHead>Âge</TableHead>
                           <TableHead>Discipline</TableHead>
                           <TableHead>Documents</TableHead>
@@ -673,6 +674,9 @@ const MemberDashboard = () => {
                               <TableCell className="font-medium">
                                 {m.fullName}
                                 <div className="text-xs text-muted-foreground">{m.gender === "M" ? "Homme" : "Femme"}</div>
+                              </TableCell>
+                              <TableCell>
+                                <span className="font-mono text-xs">{m.id}</span>
                               </TableCell>
                               <TableCell>
                                 {m.age} ans
