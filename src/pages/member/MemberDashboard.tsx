@@ -95,6 +95,7 @@ const MemberDashboard = () => {
   const [cmPayment, setCmPayment] = useState<ClubMember["payment"]>({ status: "unpaid" });
   const [bulkPayDialog, setBulkPayDialog] = useState(false);
   const [seasonFilter, setSeasonFilter] = useState<string>("all");
+  const [searchId, setSearchId] = useState<string>("");
 
   useEffect(() => {
     const raw = localStorage.getItem("ftdap_member");
@@ -152,9 +153,11 @@ const MemberDashboard = () => {
   const availableSeasons = Array.from(
     new Set(myClubMembers.map((m) => m.season).filter(Boolean) as string[])
   ).sort().reverse();
-  const filteredClubMembers = seasonFilter === "all"
-    ? myClubMembers
-    : myClubMembers.filter((m) => (m.season || "—") === seasonFilter);
+  const filteredClubMembers = myClubMembers.filter((m) => {
+    const matchSeason = seasonFilter === "all" || (m.season || "—") === seasonFilter;
+    const matchId = searchId.trim() === "" || m.id.toLowerCase().includes(searchId.trim().toLowerCase());
+    return matchSeason && matchId;
+  });
 
   const openNewClubMember = () => {
     setEditCm(null);
@@ -710,18 +713,30 @@ const MemberDashboard = () => {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex flex-wrap items-center gap-2 mb-4">
-                      <Label className="text-xs text-muted-foreground">Filtrer par saison :</Label>
-                      <select
-                        value={seasonFilter}
-                        onChange={(e) => setSeasonFilter(e.target.value)}
-                        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                      >
-                        <option value="all">Toutes les saisons</option>
-                        {availableSeasons.map((s) => (
-                          <option key={s} value={s}>{s}</option>
-                        ))}
-                      </select>
+                    <div className="flex flex-wrap items-center gap-3 mb-4">
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs text-muted-foreground whitespace-nowrap">Filtrer par saison :</Label>
+                        <select
+                          value={seasonFilter}
+                          onChange={(e) => setSeasonFilter(e.target.value)}
+                          className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                        >
+                          <option value="all">Toutes les saisons</option>
+                          {availableSeasons.map((s) => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs text-muted-foreground whitespace-nowrap">Rechercher par ID :</Label>
+                        <Input
+                          type="text"
+                          placeholder="Ex: ATH-123456"
+                          value={searchId}
+                          onChange={(e) => setSearchId(e.target.value)}
+                          className="h-9 w-48"
+                        />
+                      </div>
                       <span className="text-xs text-muted-foreground">
                         {filteredClubMembers.length} membre(s)
                       </span>
