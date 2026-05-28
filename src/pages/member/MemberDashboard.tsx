@@ -190,7 +190,7 @@ const MemberDashboard = () => {
     }
     const data = new FormData(e.currentTarget);
     const m: ClubMember = {
-      id: editCm?.id || `cm_${Date.now()}`,
+      id: editCm?.id || `ATH-${Date.now().toString().slice(-6)}`,
       clubName: session.fullName,
       fullName: data.get("fullName") as string,
       birthDate: cmBirth,
