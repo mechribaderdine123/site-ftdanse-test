@@ -301,6 +301,55 @@ const MemberDashboard = () => {
     );
   };
 
+  const printLicense = (m: ClubMember) => {
+    const [first, ...rest] = (m.fullName || "").split(" ");
+    const prenom = rest.join(" ") || first;
+    const nom = rest.length ? first : "";
+    const photo = m.documents.photo?.dataUrl || "";
+    const html = `<!doctype html><html><head><meta charset="utf-8"/><title>Licence ${m.id}</title>
+<style>
+  @page { size: A6 landscape; margin: 0; }
+  body { margin: 0; font-family: 'Inter', Arial, sans-serif; background:#f3f4f6; }
+  .card { position: relative; width: 620px; height: 400px; margin: 16px auto; background-image:url('${licenseTemplate}'); background-size: cover; background-position: center; }
+  .fields { position:absolute; left: 38px; top: 168px; font-size: 14px; color:#0a3d8f; line-height: 1.55; font-weight:600; }
+  .fields .row { display:flex; gap:6px; }
+  .fields .lbl { width: 130px; color:#7a1d1d; }
+  .fields .val { border-bottom:1px dotted #94a3b8; min-width:220px; padding:0 4px; }
+  .lic { position:absolute; left: 230px; top: 118px; font-size: 15px; font-weight:700; color:#0a3d8f; }
+  .photo { position:absolute; right: 24px; top: 36px; width: 130px; height: 160px; border:2px solid #c2185b; background:#fff; object-fit: cover; }
+  .photo-ph { position:absolute; right: 24px; top: 36px; width: 130px; height: 160px; border:2px dashed #c2185b; background:#fff8; display:flex; align-items:center; justify-content:center; color:#c2185b; font-size:11px; }
+  .toolbar { text-align:center; padding: 12px; }
+  .toolbar button { padding:8px 16px; background:#0a3d8f; color:#fff; border:0; border-radius:6px; cursor:pointer; }
+  @media print { .toolbar { display:none; } body { background:#fff; } .card { margin:0; } }
+</style></head>
+<body>
+  <div class="card">
+    <div class="lic">${m.id}</div>
+    ${photo
+      ? `<img class="photo" src="${photo}" alt="photo" />`
+      : `<div class="photo-ph">Photo</div>`}
+    <div class="fields">
+      <div class="row"><span class="lbl">Nom :</span><span class="val">${nom || "—"}</span></div>
+      <div class="row"><span class="lbl">Prénom :</span><span class="val">${prenom || "—"}</span></div>
+      <div class="row"><span class="lbl">Date de Naissance :</span><span class="val">${m.birthDate || "—"}</span></div>
+      <div class="row"><span class="lbl">Saison :</span><span class="val">${m.season || "—"}</span></div>
+      <div class="row"><span class="lbl">Qualité :</span><span class="val">${m.quality || m.discipline || "—"}</span></div>
+      <div class="row"><span class="lbl">Club :</span><span class="val">${m.clubName || "—"}</span></div>
+    </div>
+  </div>
+  <div class="toolbar"><button onclick="window.print()">Imprimer la licence</button></div>
+  <script>window.addEventListener('load', () => setTimeout(() => window.print(), 400));</script>
+</body></html>`;
+    const w = window.open("", "_blank", "width=720,height=560");
+    if (!w) {
+      toast({ title: "Pop-up bloquée", description: "Autorisez les fenêtres pop-up pour imprimer la licence.", variant: "destructive" });
+      return;
+    }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+  };
+
   return (
     <div className="min-h-screen bg-muted/30">
       <TopBar />
