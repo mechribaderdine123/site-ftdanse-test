@@ -250,10 +250,35 @@ const MemberDashboard = () => {
       approval: editCm?.approval || { status: "pending" },
       createdAt: editCm?.createdAt || new Date().toISOString(),
     };
-    upsertClubMember(m);
-    setClubMembers(loadClubMembers());
-    setCmDialog(false);
-    toast({ title: editCm ? "Membre modifié" : "Membre ajouté" });
+    try {
+      upsertClubMember(m);
+      setClubMembers(loadClubMembers());
+      setCmDialog(false);
+      toast({ title: editCm ? "Membre modifié" : "Membre ajouté" });
+    } catch (err) {
+      // Quota likely exceeded — retry without dataUrls
+      const slim: ClubMember = {
+        ...m,
+        documents: Object.fromEntries(
+          Object.entries(m.documents).map(([k, v]) => [k, v ? { ...v, dataUrl: undefined } : v])
+        ) as ClubMember["documents"],
+      };
+      try {
+        upsertClubMember(slim);
+        setClubMembers(loadClubMembers());
+        setCmDialog(false);
+        toast({
+          title: "Membre enregistré",
+          description: "Aperçu des images désactivé (stockage local plein).",
+        });
+      } catch {
+        toast({
+          title: "Stockage plein",
+          description: "Supprimez d'anciens membres pour libérer de l'espace.",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   const deleteClubMember = (id: string) => {
