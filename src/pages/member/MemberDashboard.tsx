@@ -95,6 +95,7 @@ const MemberDashboard = () => {
   const [cmPayment, setCmPayment] = useState<ClubMember["payment"]>({ status: "unpaid" });
   const [bulkPayDialog, setBulkPayDialog] = useState(false);
   const [seasonFilter, setSeasonFilter] = useState<string>("all");
+  const [searchId, setSearchId] = useState<string>("");
 
   useEffect(() => {
     const raw = localStorage.getItem("ftdap_member");
