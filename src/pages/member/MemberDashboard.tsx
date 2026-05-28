@@ -196,7 +196,7 @@ const MemberDashboard = () => {
   const requiredDocsOk = cmBirth
     ? isMinor
       ? !!cmDocs.parentalAuth && !!cmDocs.photo
-      : !!cmDocs.cin
+      : !!cmDocs.cin && !!cmDocs.photo
     : false;
 
   const saveClubMember = (e: React.FormEvent<HTMLFormElement>) => {
@@ -987,7 +987,7 @@ const MemberDashboard = () => {
                       <option value="Coach">Coach</option>
                     </select>
                   </div>
-                  {cmBirth && isMinor && (
+                  {cmBirth && (
                     <>
                       <div className="space-y-2">
                         <Label>Année (السنة) *</Label>
@@ -1021,6 +1021,35 @@ const MemberDashboard = () => {
                         <Label className="text-xs">CIN (Carte d'identité nationale) *</Label>
                         <Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleDocChange("cin")} />
                         {cmDocs.cin && <p className="text-xs text-green-700">✓ {cmDocs.cin.name}</p>}
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Photo d'identité *</Label>
+                        <Input type="file" accept=".jpg,.jpeg,.png" onChange={handleDocChange("photo")} />
+                        {cmDocs.photo && <p className="text-xs text-green-700">✓ {cmDocs.photo.name}</p>}
+                      </div>
+
+                      <div className="border-t border-border pt-3 space-y-3">
+                        <h5 className="text-xs font-semibold">
+                          Contact en cas d'urgence
+                        </h5>
+                        <div className="grid sm:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Lien / Relation *</Label>
+                            <Input name="emergencyRelation" required placeholder="Ex. Conjoint, Ami, Frère..." />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Nom complet *</Label>
+                            <Input name="emergencyName" required />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Téléphone *</Label>
+                            <Input name="emergencyPhone" type="tel" required placeholder="+216 .. ... ..." />
+                          </div>
+                          <div className="sm:col-span-2 space-y-1">
+                            <Label className="text-xs">Email</Label>
+                            <Input name="emergencyEmail" type="email" />
+                          </div>
+                        </div>
                       </div>
                     </>
                   )}
