@@ -817,6 +817,14 @@ const MemberDashboard = () => {
               </DialogHeader>
               <form onSubmit={saveClubMember} className="space-y-4">
                 <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label>ID Athlète</Label>
+                    <Input
+                      value={editCm?.id || "Généré automatiquement à l'enregistrement"}
+                      readOnly
+                      className="font-mono bg-muted/50"
+                    />
+                  </div>
                   <div className="space-y-2">
                     <Label>Nom complet *</Label>
                     <Input name="fullName" defaultValue={editCm?.fullName} required />
@@ -850,6 +858,18 @@ const MemberDashboard = () => {
                     <Label>Email</Label>
                     <Input name="email" type="email" defaultValue={editCm?.email} />
                   </div>
+                  {cmBirth && isMinor && (
+                    <>
+                      <div className="space-y-2">
+                        <Label>Année (السنة) *</Label>
+                        <Input name="actYear" type="number" min="1900" max="2100" placeholder="Ex. 2012" required />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>N° d'acte (رقم العقد) *</Label>
+                        <Input name="actNumber" placeholder="Ex. 12345" required />
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Documents section */}
@@ -878,17 +898,6 @@ const MemberDashboard = () => {
 
                   {cmBirth && isMinor && (
                     <>
-                      <div className="grid sm:grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                          <Label className="text-xs">Année (السنة) *</Label>
-                          <Input name="actYear" type="number" min="1900" max="2100" placeholder="Ex. 2012" required />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs">N° d'acte (رقم العقد) *</Label>
-                          <Input name="actNumber" placeholder="Ex. 12345" required />
-                        </div>
-                      </div>
-
                       <div className="space-y-1">
                         <Label className="text-xs">ترخيص أبوي (Autorisation parentale) *</Label>
                         <Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleDocChange("parentalAuth")} />
@@ -923,10 +932,6 @@ const MemberDashboard = () => {
                           <div className="space-y-1">
                             <Label className="text-xs">Téléphone *</Label>
                             <Input name="emergencyPhone" type="tel" required placeholder="+216 .. ... ..." />
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs">CIN du parent</Label>
-                            <Input name="emergencyCin" placeholder="Numéro CIN" />
                           </div>
                           <div className="sm:col-span-2 space-y-1">
                             <Label className="text-xs">Email du parent</Label>
