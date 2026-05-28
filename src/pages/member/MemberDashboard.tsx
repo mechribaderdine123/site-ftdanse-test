@@ -22,8 +22,9 @@ import {
   removeClubMember, computeAge,
 } from "@/data/clubMembersStore";
 import { Switch } from "@/components/ui/switch";
-import { Upload, Send, FileCheck2, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { Upload, Send, FileCheck2, CheckCircle2, XCircle, AlertCircle, Printer } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import licenseTemplate from "@/assets/license-template.png";
 
 type AccountKind = "individual" | "club";
 type IndividualRole = "athlete" | "coach" | "referee";
@@ -93,6 +94,7 @@ const MemberDashboard = () => {
   const [cmDocs, setCmDocs] = useState<ClubMember["documents"]>({});
   const [cmPayment, setCmPayment] = useState<ClubMember["payment"]>({ status: "unpaid" });
   const [bulkPayDialog, setBulkPayDialog] = useState(false);
+  const [seasonFilter, setSeasonFilter] = useState<string>("all");
 
   useEffect(() => {
     const raw = localStorage.getItem("ftdap_member");
@@ -147,6 +149,12 @@ const MemberDashboard = () => {
 
   // ---------- Club helpers ----------
   const myClubMembers = clubMembers.filter((m) => m.clubName === session.fullName);
+  const availableSeasons = Array.from(
+    new Set(myClubMembers.map((m) => m.season).filter(Boolean) as string[])
+  ).sort().reverse();
+  const filteredClubMembers = seasonFilter === "all"
+    ? myClubMembers
+    : myClubMembers.filter((m) => (m.season || "—") === seasonFilter);
 
   const openNewClubMember = () => {
     setEditCm(null);
@@ -205,6 +213,8 @@ const MemberDashboard = () => {
       discipline: data.get("discipline") as string,
       phone: (data.get("phone") as string) || undefined,
       email: (data.get("email") as string) || undefined,
+      season: (data.get("season") as string) || editCm?.season,
+      quality: (data.get("quality") as string) || editCm?.quality,
       documents: cmDocs,
       payment: cmPayment,
       approval: editCm?.approval || { status: "pending" },
