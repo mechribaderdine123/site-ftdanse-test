@@ -374,13 +374,24 @@ const AdminDirectory = () => {
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {clubsList.map((club) => (
-                <button
+                <div
                   key={club.name}
-                  type="button"
-                  onClick={() => setSelectedClub(club.name)}
-                  className="text-left rounded-xl border border-border p-5 bg-card hover:shadow-md hover:border-violet-300 transition"
+                  className="relative text-left rounded-xl border border-border p-5 bg-card hover:shadow-md hover:border-violet-300 transition"
                 >
-                  <div className="flex items-start gap-3">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2 h-7 w-7"
+                    title="QR code du club"
+                    onClick={(e) => { e.stopPropagation(); openClubQR(club); }}
+                  >
+                    <QrCode className="h-4 w-4" />
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedClub(club.name)}
+                    className="flex items-start gap-3 w-full text-left"
+                  >
                     <div className="rounded-lg bg-violet-100 p-3 text-violet-700">
                       <Building2 className="h-6 w-6" />
                     </div>
@@ -397,8 +408,8 @@ const AdminDirectory = () => {
                         )}
                       </div>
                     </div>
-                  </div>
-                </button>
+                  </button>
+                </div>
               ))}
             </div>
             {clubsList.length === 0 && (
