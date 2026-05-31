@@ -1287,6 +1287,13 @@ const MemberDashboard = () => {
         </div>
       </section>
 
+      <MemberQRDialog
+        open={!!qrPayload}
+        onOpenChange={(o) => !o && setQrPayload(null)}
+        payload={qrPayload}
+        title="QR du membre"
+      />
+
       <Footer />
     </div>
   );
