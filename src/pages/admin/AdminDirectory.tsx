@@ -12,11 +12,12 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Plus, Pencil, Trash2, Search, User, Building2, Mail, Phone,
   Check, X, Eye, Inbox, GraduationCap, Users as UsersIcon, Trophy,
-  FileText, Receipt, ShieldCheck, ArrowLeft, UserRound,
+  FileText, Receipt, ShieldCheck, ArrowLeft, UserRound, QrCode,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { ClubMember, loadClubMembers, upsertClubMember } from "@/data/clubMembersStore";
+import MemberQRDialog, { MemberQRPayload } from "@/components/shared/MemberQRDialog";
 
 type AccountType = "athlete" | "club" | "coach" | "trainer";
 type RequestStatus = "pending" | "approved" | "rejected";
@@ -131,6 +132,53 @@ const AdminDirectory = () => {
   const [mainView, setMainView] = useState<"select" | "clubs" | "individuels">("select");
   const [selectedClub, setSelectedClub] = useState<string | null>(null);
   const [individualSubView, setIndividualSubView] = useState<"select" | "athlete" | "coach" | "referee">("select");
+
+  // QR dialog
+  const [qrPayload, setQrPayload] = useState<MemberQRPayload | null>(null);
+
+  const openClubMemberQR = (m: ClubMember) => {
+    setQrPayload({
+      kind: "athlete",
+      id: m.id,
+      name: m.fullName,
+      club: m.clubName,
+      birthDate: m.birthDate,
+      age: m.age,
+      gender: m.gender,
+      discipline: m.discipline,
+      season: m.season,
+      quality: m.quality,
+      phone: m.phone,
+      email: m.email,
+      payment: m.payment.status,
+      approval: m.approval.status,
+    });
+  };
+
+  const openClubQR = (club: { name: string; city: string; discipline: string; membersCount: number }) => {
+    setQrPayload({
+      kind: "club",
+      id: club.name,
+      name: club.name,
+      city: club.city,
+      discipline: club.discipline,
+      membersCount: club.membersCount,
+    });
+  };
+
+  const openIndividualQR = (item: DirectoryEntry) => {
+    setQrPayload({
+      kind: (item.accountType as MemberQRPayload["kind"]) || "member",
+      id: item.id,
+      name: item.name,
+      city: item.city,
+      discipline: item.discipline,
+      role: item.role,
+      email: item.email,
+      phone: item.phone,
+      licenseActive: item.licenseActive,
+    });
+  };
 
   useEffect(() => {
     setClubMembers(loadClubMembers());
