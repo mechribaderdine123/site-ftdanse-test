@@ -130,6 +130,7 @@ const AdminDirectory = () => {
   // Main view: choose between Clubs and Individuels
   const [mainView, setMainView] = useState<"select" | "clubs" | "individuels">("select");
   const [selectedClub, setSelectedClub] = useState<string | null>(null);
+  const [individualSubView, setIndividualSubView] = useState<"select" | "athlete" | "coach" | "referee">("select");
 
   useEffect(() => {
     setClubMembers(loadClubMembers());
