@@ -98,6 +98,26 @@ const MemberDashboard = () => {
   const [bulkPayDialog, setBulkPayDialog] = useState(false);
   const [seasonFilter, setSeasonFilter] = useState<string>("all");
   const [searchId, setSearchId] = useState<string>("");
+  const [qrPayload, setQrPayload] = useState<MemberQRPayload | null>(null);
+
+  const openMemberQR = (m: ClubMember) => {
+    setQrPayload({
+      kind: "athlete",
+      id: m.id,
+      name: m.fullName,
+      club: m.clubName,
+      birthDate: m.birthDate,
+      age: m.age,
+      gender: m.gender,
+      discipline: m.discipline,
+      season: m.season,
+      quality: m.quality,
+      phone: m.phone,
+      email: m.email,
+      payment: m.payment.status,
+      approval: m.approval.status,
+    });
+  };
 
   useEffect(() => {
     const raw = localStorage.getItem("ftdap_member");
