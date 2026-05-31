@@ -844,6 +844,13 @@ const AdminDirectory = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <MemberQRDialog
+        open={!!qrPayload}
+        onOpenChange={(o) => !o && setQrPayload(null)}
+        payload={qrPayload}
+        title={qrPayload?.kind === "club" ? "QR du club" : "QR du membre"}
+      />
     </div>
   );
 };
