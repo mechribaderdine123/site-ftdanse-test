@@ -130,6 +130,7 @@ const AdminDirectory = () => {
   // Main view: choose between Clubs and Individuels
   const [mainView, setMainView] = useState<"select" | "clubs" | "individuels">("select");
   const [selectedClub, setSelectedClub] = useState<string | null>(null);
+  const [individualSubView, setIndividualSubView] = useState<"select" | "athlete" | "coach" | "referee">("select");
 
   useEffect(() => {
     setClubMembers(loadClubMembers());
@@ -455,13 +456,81 @@ const AdminDirectory = () => {
       )}
 
       {/* === INDIVIDUELS VIEW === */}
-      {mainView === "individuels" && (
+      {mainView === "individuels" && individualSubView === "select" && (
+        <div className="space-y-4">
+          <Button variant="ghost" size="sm" onClick={() => setMainView("select")}>
+            <ArrowLeft className="mr-2 h-4 w-4" /> Retour
+          </Button>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <button
+              type="button"
+              onClick={() => setIndividualSubView("athlete")}
+              className="group relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-blue-50 to-white p-8 text-left shadow-sm transition hover:shadow-lg hover:-translate-y-0.5"
+            >
+              <div className="flex items-center gap-4">
+                <div className="rounded-2xl bg-blue-600 p-4 text-white shadow-md">
+                  <Trophy className="h-8 w-8" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-blue-900">Athlètes</h3>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {individualMembers.filter((i) => i.accountType === "athlete" && i.role !== "Arbitre").length} enregistré(s)
+                  </p>
+                </div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIndividualSubView("coach")}
+              className="group relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-amber-50 to-white p-8 text-left shadow-sm transition hover:shadow-lg hover:-translate-y-0.5"
+            >
+              <div className="flex items-center gap-4">
+                <div className="rounded-2xl bg-amber-600 p-4 text-white shadow-md">
+                  <GraduationCap className="h-8 w-8" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-amber-900">Coachs</h3>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {individualMembers.filter((i) => i.accountType === "coach" || i.accountType === "trainer").length} enregistré(s)
+                  </p>
+                </div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIndividualSubView("referee")}
+              className="group relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-emerald-50 to-white p-8 text-left shadow-sm transition hover:shadow-lg hover:-translate-y-0.5"
+            >
+              <div className="flex items-center gap-4">
+                <div className="rounded-2xl bg-emerald-600 p-4 text-white shadow-md">
+                  <ShieldCheck className="h-8 w-8" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-emerald-900">Arbitres</h3>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {individualMembers.filter((i) => i.role === "Arbitre").length} enregistré(s)
+                  </p>
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {mainView === "individuels" && individualSubView !== "select" && (
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between gap-3">
-              <Button variant="ghost" size="sm" onClick={() => setMainView("select")}>
+              <Button variant="ghost" size="sm" onClick={() => setIndividualSubView("select")}>
                 <ArrowLeft className="mr-2 h-4 w-4" /> Retour
               </Button>
+              <h3 className="text-lg font-semibold">
+                {individualSubView === "athlete" && "Athlètes"}
+                {individualSubView === "coach" && "Coachs"}
+                {individualSubView === "referee" && "Arbitres"}
+              </h3>
               <div className="relative w-full max-w-sm">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input placeholder="Rechercher..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
@@ -482,10 +551,15 @@ const AdminDirectory = () => {
               </TableHeader>
               <TableBody>
                 {individualMembers
-                  .filter((e) =>
-                    e.name.toLowerCase().includes(search.toLowerCase()) ||
-                    e.city.toLowerCase().includes(search.toLowerCase()),
-                  )
+                  .filter((e) => {
+                    const matchSearch = e.name.toLowerCase().includes(search.toLowerCase()) ||
+                      e.city.toLowerCase().includes(search.toLowerCase());
+                    if (!matchSearch) return false;
+                    if (individualSubView === "athlete") return e.accountType === "athlete" && e.role !== "Arbitre";
+                    if (individualSubView === "coach") return e.accountType === "coach" || e.accountType === "trainer";
+                    if (individualSubView === "referee") return e.role === "Arbitre";
+                    return true;
+                  })
                   .map((item) => (
                     <TableRow key={item.id}>
                       <TableCell className="font-medium">{item.name}</TableCell>
@@ -507,7 +581,18 @@ const AdminDirectory = () => {
                   ))}
               </TableBody>
             </Table>
-            {individualMembers.length === 0 && <p className="text-center text-muted-foreground py-8">Aucun individuel</p>}
+            {(() => {
+              const count = individualMembers.filter((e) => {
+                if (individualSubView === "athlete") return e.accountType === "athlete" && e.role !== "Arbitre";
+                if (individualSubView === "coach") return e.accountType === "coach" || e.accountType === "trainer";
+                if (individualSubView === "referee") return e.role === "Arbitre";
+                return false;
+              }).filter((e) =>
+                e.name.toLowerCase().includes(search.toLowerCase()) ||
+                e.city.toLowerCase().includes(search.toLowerCase())
+              ).length;
+              return count === 0 ? <p className="text-center text-muted-foreground py-8">Aucun résultat</p> : null;
+            })()}
           </CardContent>
         </Card>
       )}
