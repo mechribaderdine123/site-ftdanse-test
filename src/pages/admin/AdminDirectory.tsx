@@ -12,11 +12,12 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Plus, Pencil, Trash2, Search, User, Building2, Mail, Phone,
   Check, X, Eye, Inbox, GraduationCap, Users as UsersIcon, Trophy,
-  FileText, Receipt, ShieldCheck, ArrowLeft, UserRound,
+  FileText, Receipt, ShieldCheck, ArrowLeft, UserRound, QrCode,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { ClubMember, loadClubMembers, upsertClubMember } from "@/data/clubMembersStore";
+import MemberQRDialog, { MemberQRPayload } from "@/components/shared/MemberQRDialog";
 
 type AccountType = "athlete" | "club" | "coach" | "trainer";
 type RequestStatus = "pending" | "approved" | "rejected";
@@ -131,6 +132,53 @@ const AdminDirectory = () => {
   const [mainView, setMainView] = useState<"select" | "clubs" | "individuels">("select");
   const [selectedClub, setSelectedClub] = useState<string | null>(null);
   const [individualSubView, setIndividualSubView] = useState<"select" | "athlete" | "coach" | "referee">("select");
+
+  // QR dialog
+  const [qrPayload, setQrPayload] = useState<MemberQRPayload | null>(null);
+
+  const openClubMemberQR = (m: ClubMember) => {
+    setQrPayload({
+      kind: "athlete",
+      id: m.id,
+      name: m.fullName,
+      club: m.clubName,
+      birthDate: m.birthDate,
+      age: m.age,
+      gender: m.gender,
+      discipline: m.discipline,
+      season: m.season,
+      quality: m.quality,
+      phone: m.phone,
+      email: m.email,
+      payment: m.payment.status,
+      approval: m.approval.status,
+    });
+  };
+
+  const openClubQR = (club: { name: string; city: string; discipline: string; membersCount: number }) => {
+    setQrPayload({
+      kind: "club",
+      id: club.name,
+      name: club.name,
+      city: club.city,
+      discipline: club.discipline,
+      membersCount: club.membersCount,
+    });
+  };
+
+  const openIndividualQR = (item: DirectoryEntry) => {
+    setQrPayload({
+      kind: (item.accountType as MemberQRPayload["kind"]) || "member",
+      id: item.id,
+      name: item.name,
+      city: item.city,
+      discipline: item.discipline,
+      role: item.role,
+      email: item.email,
+      phone: item.phone,
+      licenseActive: item.licenseActive,
+    });
+  };
 
   useEffect(() => {
     setClubMembers(loadClubMembers());
@@ -326,13 +374,24 @@ const AdminDirectory = () => {
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {clubsList.map((club) => (
-                <button
+                <div
                   key={club.name}
-                  type="button"
-                  onClick={() => setSelectedClub(club.name)}
-                  className="text-left rounded-xl border border-border p-5 bg-card hover:shadow-md hover:border-violet-300 transition"
+                  className="relative text-left rounded-xl border border-border p-5 bg-card hover:shadow-md hover:border-violet-300 transition"
                 >
-                  <div className="flex items-start gap-3">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2 h-7 w-7"
+                    title="QR code du club"
+                    onClick={(e) => { e.stopPropagation(); openClubQR(club); }}
+                  >
+                    <QrCode className="h-4 w-4" />
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedClub(club.name)}
+                    className="flex items-start gap-3 w-full text-left"
+                  >
                     <div className="rounded-lg bg-violet-100 p-3 text-violet-700">
                       <Building2 className="h-6 w-6" />
                     </div>
@@ -349,8 +408,8 @@ const AdminDirectory = () => {
                         )}
                       </div>
                     </div>
-                  </div>
-                </button>
+                  </button>
+                </div>
               ))}
             </div>
             {clubsList.length === 0 && (
@@ -383,9 +442,12 @@ const AdminDirectory = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Photo</TableHead>
                   <TableHead>Membre</TableHead>
+                  <TableHead>ID Athlète</TableHead>
                   <TableHead>Âge</TableHead>
                   <TableHead>Discipline</TableHead>
+                  <TableHead>Saison</TableHead>
                   <TableHead>Documents</TableHead>
                   <TableHead>Paiement</TableHead>
                   <TableHead>Statut</TableHead>
@@ -395,6 +457,8 @@ const AdminDirectory = () => {
               <TableBody>
                 {clubMembersForSelected.map((m) => {
                   const docsCount = Object.values(m.documents).filter(Boolean).length;
+                  const minor = m.age < 18;
+                  const required = minor ? 2 : 1;
                   const stMeta = {
                     pending: { label: "En attente", color: "bg-yellow-100 text-yellow-700 border-yellow-300" },
                     accepted: { label: "Accepté", color: "bg-green-100 text-green-700 border-green-300" },
@@ -402,18 +466,29 @@ const AdminDirectory = () => {
                   }[m.approval.status];
                   return (
                     <TableRow key={m.id}>
+                      <TableCell>
+                        <div className="w-10 h-10 rounded-full bg-muted border border-border overflow-hidden flex items-center justify-center">
+                          {m.documents.photo?.dataUrl ? (
+                            <img src={m.documents.photo.dataUrl} alt={m.fullName} className="w-full h-full object-cover" />
+                          ) : (
+                            <User className="w-5 h-5 text-muted-foreground" />
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell className="font-medium">
                         {m.fullName}
                         <div className="text-xs text-muted-foreground">{m.gender === "M" ? "Homme" : "Femme"}</div>
                       </TableCell>
+                      <TableCell><span className="font-mono text-xs">{m.id}</span></TableCell>
                       <TableCell>
                         {m.age} ans
-                        {m.age < 18 && <Badge variant="outline" className="ml-1 text-[10px]">Mineur</Badge>}
+                        {minor && <Badge variant="outline" className="ml-1 text-[10px]">Mineur</Badge>}
                       </TableCell>
                       <TableCell>{m.discipline}</TableCell>
+                      <TableCell className="text-xs">{m.season || "—"}</TableCell>
                       <TableCell>
-                        <span className={`text-xs ${docsCount >= 2 ? "text-green-700" : "text-yellow-700"}`}>
-                          {docsCount}/2
+                        <span className={`text-xs ${docsCount >= required ? "text-green-700" : "text-yellow-700"}`}>
+                          {docsCount}/{required}
                         </span>
                       </TableCell>
                       <TableCell>
@@ -428,6 +503,9 @@ const AdminDirectory = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="icon" title="QR code" onClick={() => openClubMemberQR(m)}>
+                            <QrCode className="h-4 w-4" />
+                          </Button>
                           <Button variant="ghost" size="icon" onClick={() => setActiveClubMember(m)}>
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -573,6 +651,9 @@ const AdminDirectory = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="icon" title="QR code" onClick={() => openIndividualQR(item)}>
+                            <QrCode className="h-4 w-4" />
+                          </Button>
                           <Button variant="ghost" size="icon" onClick={() => { setEditItem(item); setDialogOpen(true); }}><Pencil className="h-4 w-4" /></Button>
                           <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
                         </div>
@@ -763,6 +844,13 @@ const AdminDirectory = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <MemberQRDialog
+        open={!!qrPayload}
+        onOpenChange={(o) => !o && setQrPayload(null)}
+        payload={qrPayload}
+        title={qrPayload?.kind === "club" ? "QR du club" : "QR du membre"}
+      />
     </div>
   );
 };
