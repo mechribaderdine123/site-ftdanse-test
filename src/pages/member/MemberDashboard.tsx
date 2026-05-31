@@ -25,6 +25,8 @@ import { Switch } from "@/components/ui/switch";
 import { Upload, Send, FileCheck2, CheckCircle2, XCircle, AlertCircle, Printer } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import licenseTemplate from "@/assets/license-template.png";
+import MemberQRDialog, { MemberQRPayload } from "@/components/shared/MemberQRDialog";
+import { QrCode } from "lucide-react";
 
 type AccountKind = "individual" | "club";
 type IndividualRole = "athlete" | "coach" | "referee";
