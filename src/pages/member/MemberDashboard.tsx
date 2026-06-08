@@ -25,8 +25,7 @@ import { Switch } from "@/components/ui/switch";
 import { Upload, Send, FileCheck2, CheckCircle2, XCircle, AlertCircle, Printer } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import licenseTemplate from "@/assets/license-template.png";
-import MemberQRDialog, { MemberQRPayload } from "@/components/shared/MemberQRDialog";
-import { QrCode } from "lucide-react";
+import QRCode from "qrcode";
 
 type AccountKind = "individual" | "club";
 type IndividualRole = "athlete" | "coach" | "referee";
@@ -98,26 +97,6 @@ const MemberDashboard = () => {
   const [bulkPayDialog, setBulkPayDialog] = useState(false);
   const [seasonFilter, setSeasonFilter] = useState<string>("all");
   const [searchId, setSearchId] = useState<string>("");
-  const [qrPayload, setQrPayload] = useState<MemberQRPayload | null>(null);
-
-  const openMemberQR = (m: ClubMember) => {
-    setQrPayload({
-      kind: "athlete",
-      id: m.id,
-      name: m.fullName,
-      club: m.clubName,
-      birthDate: m.birthDate,
-      age: m.age,
-      gender: m.gender,
-      discipline: m.discipline,
-      season: m.season,
-      quality: m.quality,
-      phone: m.phone,
-      email: m.email,
-      payment: m.payment.status,
-      approval: m.approval.status,
-    });
-  };
 
   useEffect(() => {
     const raw = localStorage.getItem("ftdap_member");
@@ -378,11 +357,29 @@ const MemberDashboard = () => {
     );
   };
 
-  const printLicense = (m: ClubMember) => {
+  const printLicense = async (m: ClubMember) => {
     const [first, ...rest] = (m.fullName || "").split(" ");
     const prenom = rest.join(" ") || first;
     const nom = rest.length ? first : "";
     const photo = m.documents.photo?.dataUrl || "";
+    const qrData = JSON.stringify({
+      kind: "athlete",
+      id: m.id,
+      name: m.fullName,
+      club: m.clubName,
+      birthDate: m.birthDate,
+      age: m.age,
+      gender: m.gender,
+      discipline: m.discipline,
+      season: m.season,
+      quality: m.quality,
+      phone: m.phone,
+      email: m.email,
+    });
+    let qrUrl = "";
+    try {
+      qrUrl = await QRCode.toDataURL(qrData, { width: 220, margin: 1, errorCorrectionLevel: "M" });
+    } catch {}
     const html = `<!doctype html><html><head><meta charset="utf-8"/><title>Licence ${m.id}</title>
 <style>
   @page { size: A6 landscape; margin: 0; }
@@ -395,6 +392,7 @@ const MemberDashboard = () => {
   .lic { position:absolute; left: 230px; top: 118px; font-size: 15px; font-weight:700; color:#0a3d8f; }
   .photo { position:absolute; right: 24px; top: 36px; width: 130px; height: 160px; border:2px solid #c2185b; background:#fff; object-fit: cover; }
   .photo-ph { position:absolute; right: 24px; top: 36px; width: 130px; height: 160px; border:2px dashed #c2185b; background:#fff8; display:flex; align-items:center; justify-content:center; color:#c2185b; font-size:11px; }
+  .qr { position:absolute; right: 28px; bottom: 18px; width: 86px; height: 86px; background:#fff; padding:4px; border:1px solid #c2185b; border-radius:4px; }
   .toolbar { text-align:center; padding: 12px; }
   .toolbar button { padding:8px 16px; background:#0a3d8f; color:#fff; border:0; border-radius:6px; cursor:pointer; }
   @media print { .toolbar { display:none; } body { background:#fff; } .card { margin:0; } }
@@ -413,6 +411,7 @@ const MemberDashboard = () => {
       <div class="row"><span class="lbl">Qualité :</span><span class="val">${m.quality || m.discipline || "—"}</span></div>
       <div class="row"><span class="lbl">Club :</span><span class="val">${m.clubName || "—"}</span></div>
     </div>
+    ${qrUrl ? `<img class="qr" src="${qrUrl}" alt="QR" />` : ""}
   </div>
   <script>
     (function(){
@@ -947,9 +946,6 @@ const MemberDashboard = () => {
                                   <Button variant="ghost" size="icon" title="Imprimer la licence" onClick={() => printLicense(m)}>
                                     <Printer className="w-4 h-4" />
                                   </Button>
-                                  <Button variant="ghost" size="icon" title="QR code" onClick={() => openMemberQR(m)}>
-                                    <QrCode className="w-4 h-4" />
-                                  </Button>
                                   <Button variant="ghost" size="icon" onClick={() => openEditClubMember(m)}>
                                     <Pencil className="w-4 h-4" />
                                   </Button>
@@ -1286,13 +1282,6 @@ const MemberDashboard = () => {
 
         </div>
       </section>
-
-      <MemberQRDialog
-        open={!!qrPayload}
-        onOpenChange={(o) => !o && setQrPayload(null)}
-        payload={qrPayload}
-        title="QR du membre"
-      />
 
       <Footer />
     </div>
