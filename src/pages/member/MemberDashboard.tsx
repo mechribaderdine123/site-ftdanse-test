@@ -357,11 +357,29 @@ const MemberDashboard = () => {
     );
   };
 
-  const printLicense = (m: ClubMember) => {
+  const printLicense = async (m: ClubMember) => {
     const [first, ...rest] = (m.fullName || "").split(" ");
     const prenom = rest.join(" ") || first;
     const nom = rest.length ? first : "";
     const photo = m.documents.photo?.dataUrl || "";
+    const qrData = JSON.stringify({
+      kind: "athlete",
+      id: m.id,
+      name: m.fullName,
+      club: m.clubName,
+      birthDate: m.birthDate,
+      age: m.age,
+      gender: m.gender,
+      discipline: m.discipline,
+      season: m.season,
+      quality: m.quality,
+      phone: m.phone,
+      email: m.email,
+    });
+    let qrUrl = "";
+    try {
+      qrUrl = await QRCode.toDataURL(qrData, { width: 220, margin: 1, errorCorrectionLevel: "M" });
+    } catch {}
     const html = `<!doctype html><html><head><meta charset="utf-8"/><title>Licence ${m.id}</title>
 <style>
   @page { size: A6 landscape; margin: 0; }
@@ -374,6 +392,7 @@ const MemberDashboard = () => {
   .lic { position:absolute; left: 230px; top: 118px; font-size: 15px; font-weight:700; color:#0a3d8f; }
   .photo { position:absolute; right: 24px; top: 36px; width: 130px; height: 160px; border:2px solid #c2185b; background:#fff; object-fit: cover; }
   .photo-ph { position:absolute; right: 24px; top: 36px; width: 130px; height: 160px; border:2px dashed #c2185b; background:#fff8; display:flex; align-items:center; justify-content:center; color:#c2185b; font-size:11px; }
+  .qr { position:absolute; right: 28px; bottom: 18px; width: 86px; height: 86px; background:#fff; padding:4px; border:1px solid #c2185b; border-radius:4px; }
   .toolbar { text-align:center; padding: 12px; }
   .toolbar button { padding:8px 16px; background:#0a3d8f; color:#fff; border:0; border-radius:6px; cursor:pointer; }
   @media print { .toolbar { display:none; } body { background:#fff; } .card { margin:0; } }
@@ -392,6 +411,7 @@ const MemberDashboard = () => {
       <div class="row"><span class="lbl">Qualité :</span><span class="val">${m.quality || m.discipline || "—"}</span></div>
       <div class="row"><span class="lbl">Club :</span><span class="val">${m.clubName || "—"}</span></div>
     </div>
+    ${qrUrl ? `<img class="qr" src="${qrUrl}" alt="QR" />` : ""}
   </div>
   <script>
     (function(){
