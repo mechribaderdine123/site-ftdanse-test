@@ -926,9 +926,6 @@ const MemberDashboard = () => {
                                   <Button variant="ghost" size="icon" title="Imprimer la licence" onClick={() => printLicense(m)}>
                                     <Printer className="w-4 h-4" />
                                   </Button>
-                                  <Button variant="ghost" size="icon" title="QR code" onClick={() => openMemberQR(m)}>
-                                    <QrCode className="w-4 h-4" />
-                                  </Button>
                                   <Button variant="ghost" size="icon" onClick={() => openEditClubMember(m)}>
                                     <Pencil className="w-4 h-4" />
                                   </Button>
@@ -1265,13 +1262,6 @@ const MemberDashboard = () => {
 
         </div>
       </section>
-
-      <MemberQRDialog
-        open={!!qrPayload}
-        onOpenChange={(o) => !o && setQrPayload(null)}
-        payload={qrPayload}
-        title="QR du membre"
-      />
 
       <Footer />
     </div>
