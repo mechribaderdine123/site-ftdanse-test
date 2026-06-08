@@ -234,8 +234,18 @@ const MemberDashboard = () => {
       return;
     }
     const data = new FormData(e.currentTarget);
+    const generateMemberId = () => {
+      const yy = new Date().getFullYear().toString().slice(-2);
+      const all = loadClubMembers();
+      const sameYear = all.filter((x) => /^\d{3}-\d{2}$/.test(x.id) && x.id.endsWith(`-${yy}`));
+      const maxSeq = sameYear.reduce((acc, x) => {
+        const n = parseInt(x.id.split("-")[0], 10);
+        return isNaN(n) ? acc : Math.max(acc, n);
+      }, 0);
+      return `${String(maxSeq + 1).padStart(3, "0")}-${yy}`;
+    };
     const m: ClubMember = {
-      id: editCm?.id || `ATH-${Date.now().toString().slice(-6)}`,
+      id: editCm?.id || generateMemberId(),
       clubName: session.fullName,
       fullName: data.get("fullName") as string,
       birthDate: cmBirth,
