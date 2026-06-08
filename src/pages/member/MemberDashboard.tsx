@@ -25,8 +25,7 @@ import { Switch } from "@/components/ui/switch";
 import { Upload, Send, FileCheck2, CheckCircle2, XCircle, AlertCircle, Printer } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import licenseTemplate from "@/assets/license-template.png";
-import MemberQRDialog, { MemberQRPayload } from "@/components/shared/MemberQRDialog";
-import { QrCode } from "lucide-react";
+import QRCode from "qrcode";
 
 type AccountKind = "individual" | "club";
 type IndividualRole = "athlete" | "coach" | "referee";
@@ -98,26 +97,6 @@ const MemberDashboard = () => {
   const [bulkPayDialog, setBulkPayDialog] = useState(false);
   const [seasonFilter, setSeasonFilter] = useState<string>("all");
   const [searchId, setSearchId] = useState<string>("");
-  const [qrPayload, setQrPayload] = useState<MemberQRPayload | null>(null);
-
-  const openMemberQR = (m: ClubMember) => {
-    setQrPayload({
-      kind: "athlete",
-      id: m.id,
-      name: m.fullName,
-      club: m.clubName,
-      birthDate: m.birthDate,
-      age: m.age,
-      gender: m.gender,
-      discipline: m.discipline,
-      season: m.season,
-      quality: m.quality,
-      phone: m.phone,
-      email: m.email,
-      payment: m.payment.status,
-      approval: m.approval.status,
-    });
-  };
 
   useEffect(() => {
     const raw = localStorage.getItem("ftdap_member");
