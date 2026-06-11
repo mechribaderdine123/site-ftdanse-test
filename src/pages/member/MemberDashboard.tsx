@@ -1294,6 +1294,116 @@ const MemberDashboard = () => {
             </DialogContent>
           </Dialog>
 
+          {/* Member profile view */}
+          <Dialog open={!!viewMember} onOpenChange={(o) => !o && setViewMember(null)}>
+            <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Profil du membre</DialogTitle>
+              </DialogHeader>
+              {viewMember && (() => {
+                const m = viewMember;
+                const minor = m.age < 18;
+                const Row = ({ label, value }: { label: string; value: React.ReactNode }) => (
+                  <div className="grid grid-cols-3 gap-2 py-2 border-b border-border/60 text-sm">
+                    <div className="text-muted-foreground">{label}</div>
+                    <div className="col-span-2 font-medium break-words">{value || "—"}</div>
+                  </div>
+                );
+                const DocItem = ({ label, doc }: { label: string; doc?: UploadedDoc }) => (
+                  <div className="flex items-center justify-between gap-2 py-2 border-b border-border/60 text-sm">
+                    <span className="text-muted-foreground">{label}</span>
+                    {doc ? (
+                      doc.dataUrl ? (
+                        <a href={doc.dataUrl} target="_blank" rel="noreferrer" className="text-primary underline truncate max-w-[60%]">{doc.name}</a>
+                      ) : (
+                        <span className="truncate max-w-[60%]">{doc.name}</span>
+                      )
+                    ) : (
+                      <span className="text-yellow-700 text-xs">Non fourni</span>
+                    )}
+                  </div>
+                );
+                return (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-20 h-20 rounded-full bg-muted border border-border overflow-hidden flex items-center justify-center">
+                        {m.documents.photo?.dataUrl ? (
+                          <img src={m.documents.photo.dataUrl} alt={m.fullName} className="w-full h-full object-cover" />
+                        ) : (
+                          <User className="w-8 h-8 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="text-lg font-semibold">{m.fullName}</div>
+                        <div className="text-xs text-muted-foreground font-mono">{m.id}</div>
+                        <div className="mt-1">{approvalBadge(m.approval.status)}</div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="font-semibold mb-1">Informations personnelles</h4>
+                      <Row label="Nom complet" value={m.fullName} />
+                      <Row label="Genre" value={m.gender === "M" ? "Homme" : "Femme"} />
+                      <Row label="Date de naissance" value={m.birthDate} />
+                      <Row label="Âge" value={`${m.age} ans${minor ? " (Mineur)" : ""}`} />
+                      <Row label="Téléphone" value={m.phone} />
+                      <Row label="Email" value={m.email} />
+                    </div>
+
+                    <div>
+                      <h4 className="font-semibold mb-1">Sportif</h4>
+                      <Row label="Club" value={m.clubName} />
+                      <Row label="Discipline" value={m.discipline} />
+                      <Row label="Qualité" value={m.quality} />
+                      <Row label="Saison" value={m.season} />
+                    </div>
+
+                    <div>
+                      <h4 className="font-semibold mb-1">Documents</h4>
+                      {minor ? (
+                        <>
+                          <DocItem label="Extrait de naissance" doc={m.documents.birthExtract} />
+                          <DocItem label="Autorisation parentale" doc={m.documents.parentalAuth} />
+                          <DocItem label="Photo" doc={m.documents.photo} />
+                        </>
+                      ) : (
+                        <>
+                          <DocItem label="CIN" doc={m.documents.cin} />
+                          <DocItem label="Extrait de naissance" doc={m.documents.birthExtract} />
+                        </>
+                      )}
+                    </div>
+
+                    <div>
+                      <h4 className="font-semibold mb-1">Paiement</h4>
+                      <Row label="Statut" value={m.payment.status === "paid" ? "Payé" : "Non payé"} />
+                      <Row label="Montant" value={m.payment.amount ? `${m.payment.amount} DT` : "—"} />
+                      <Row label="Mis à jour" value={m.payment.updatedAt ? new Date(m.payment.updatedAt).toLocaleString() : "—"} />
+                      <DocItem label="Reçu" doc={m.payment.receipt} />
+                    </div>
+
+                    <div>
+                      <h4 className="font-semibold mb-1">Licence</h4>
+                      <Row label="Statut" value={approvalBadge(m.approval.status)} />
+                      <Row label="Soumis le" value={m.approval.submittedAt ? new Date(m.approval.submittedAt).toLocaleString() : "—"} />
+                      <Row label="Revu le" value={m.approval.reviewedAt ? new Date(m.approval.reviewedAt).toLocaleString() : "—"} />
+                      <Row label="Note du réviseur" value={m.approval.reviewerNote} />
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-2">
+                      <Button variant="outline" onClick={() => { setViewMember(null); openEditClubMember(m); }}>
+                        <Pencil className="w-4 h-4 mr-1" /> Modifier
+                      </Button>
+                      <Button onClick={() => printLicense(m)}>
+                        <Printer className="w-4 h-4 mr-1" /> Licence
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })()}
+            </DialogContent>
+          </Dialog>
+
         </div>
       </section>
 
