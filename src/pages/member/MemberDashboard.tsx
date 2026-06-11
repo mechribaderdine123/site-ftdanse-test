@@ -245,6 +245,10 @@ const MemberDashboard = () => {
       }, 0);
       return `${String(maxSeq + 1).padStart(3, "0")}-${yy}`;
     };
+    const emRel = data.get("emergencyRelation") as string;
+    const emName = data.get("emergencyName") as string;
+    const emPhone = data.get("emergencyPhone") as string;
+    const emEmail = data.get("emergencyEmail") as string;
     const m: ClubMember = {
       id: editCm?.id || generateMemberId(),
       clubName: session.fullName,
@@ -257,6 +261,10 @@ const MemberDashboard = () => {
       email: (data.get("email") as string) || undefined,
       season: (data.get("season") as string) || editCm?.season,
       quality: (data.get("quality") as string) || editCm?.quality,
+      emergencyContact:
+        emRel && emName && emPhone
+          ? { relation: emRel, name: emName, phone: emPhone, email: emEmail || undefined }
+          : editCm?.emergencyContact,
       documents: cmDocs,
       payment: cmPayment,
       approval: editCm?.approval || { status: "pending" },
