@@ -18,6 +18,8 @@ import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { ClubMember, loadClubMembers, upsertClubMember } from "@/data/clubMembersStore";
 import MemberQRDialog, { MemberQRPayload } from "@/components/shared/MemberQRDialog";
+import { printMemberLicense } from "@/lib/printLicense";
+import { Printer } from "lucide-react";
 
 type AccountType = "athlete" | "club" | "coach" | "trainer";
 type RequestStatus = "pending" | "approved" | "rejected";
@@ -135,6 +137,10 @@ const AdminDirectory = () => {
 
   // QR dialog
   const [qrPayload, setQrPayload] = useState<MemberQRPayload | null>(null);
+
+  // View dialogs
+  const [viewIndividual, setViewIndividual] = useState<DirectoryEntry | null>(null);
+  const [viewClub, setViewClub] = useState<{ name: string; city: string; discipline: string; membersCount: number } | null>(null);
 
   const openClubMemberQR = (m: ClubMember) => {
     setQrPayload({
