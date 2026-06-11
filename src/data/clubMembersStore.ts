@@ -20,6 +20,12 @@ export interface ClubMember {
   email?: string;
   season?: string; // e.g. "2024-2025"
   quality?: string; // Qualité (Athlète, Élite...)
+  emergencyContact?: {
+    relation: string;
+    name: string;
+    phone: string;
+    email?: string;
+  };
   documents: {
     cin?: UploadedDoc;            // Adults only
     birthExtract?: UploadedDoc;   // Both (مضمون)
