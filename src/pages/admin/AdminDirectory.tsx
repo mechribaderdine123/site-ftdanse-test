@@ -18,6 +18,8 @@ import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { ClubMember, loadClubMembers, upsertClubMember } from "@/data/clubMembersStore";
 import MemberQRDialog, { MemberQRPayload } from "@/components/shared/MemberQRDialog";
+import { printMemberLicense } from "@/lib/printLicense";
+import { Printer } from "lucide-react";
 
 type AccountType = "athlete" | "club" | "coach" | "trainer";
 type RequestStatus = "pending" | "approved" | "rejected";
@@ -135,6 +137,10 @@ const AdminDirectory = () => {
 
   // QR dialog
   const [qrPayload, setQrPayload] = useState<MemberQRPayload | null>(null);
+
+  // View dialogs
+  const [viewIndividual, setViewIndividual] = useState<DirectoryEntry | null>(null);
+  const [viewClub, setViewClub] = useState<{ name: string; city: string; discipline: string; membersCount: number } | null>(null);
 
   const openClubMemberQR = (m: ClubMember) => {
     setQrPayload({
@@ -378,15 +384,26 @@ const AdminDirectory = () => {
                   key={club.name}
                   className="relative text-left rounded-xl border border-border p-5 bg-card hover:shadow-md hover:border-violet-300 transition"
                 >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-2 right-2 h-7 w-7"
-                    title="QR code du club"
-                    onClick={(e) => { e.stopPropagation(); openClubQR(club); }}
-                  >
-                    <QrCode className="h-4 w-4" />
-                  </Button>
+                  <div className="absolute top-2 right-2 flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      title="Voir les informations du club"
+                      onClick={(e) => { e.stopPropagation(); setViewClub(club); }}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      title="QR code du club"
+                      onClick={(e) => { e.stopPropagation(); openClubQR(club); }}
+                    >
+                      <QrCode className="h-4 w-4" />
+                    </Button>
+                  </div>
                   <button
                     type="button"
                     onClick={() => setSelectedClub(club.name)}
@@ -648,6 +665,8 @@ const AdminDirectory = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="icon" title="Voir le profil" onClick={() => setViewIndividual(item)}><Eye className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" title="QR code" onClick={() => openIndividualQR(item)}><QrCode className="h-4 w-4" /></Button>
                           <Button variant="ghost" size="icon" onClick={() => { setEditItem(item); setDialogOpen(true); }}><Pencil className="h-4 w-4" /></Button>
                           <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
                         </div>
@@ -767,12 +786,25 @@ const AdminDirectory = () => {
           </DialogHeader>
           {activeClubMember && (
             <div className="space-y-4 py-2">
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b">
+                <div className="text-xs font-mono text-muted-foreground">ID: {activeClubMember.id}</div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => openClubMemberQR(activeClubMember)}>
+                    <QrCode className="mr-2 h-4 w-4" /> QR
+                  </Button>
+                  <Button size="sm" onClick={() => printMemberLicense(activeClubMember)}>
+                    <Printer className="mr-2 h-4 w-4" /> Imprimer la licence
+                  </Button>
+                </div>
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div><Label className="text-xs text-muted-foreground">Club</Label><p className="font-medium">{activeClubMember.clubName}</p></div>
                 <div><Label className="text-xs text-muted-foreground">Nom complet</Label><p className="font-medium">{activeClubMember.fullName}</p></div>
                 <div><Label className="text-xs text-muted-foreground">Date de naissance</Label><p>{activeClubMember.birthDate} ({activeClubMember.age} ans)</p></div>
                 <div><Label className="text-xs text-muted-foreground">Genre</Label><p>{activeClubMember.gender === "M" ? "Homme" : "Femme"}</p></div>
                 <div><Label className="text-xs text-muted-foreground">Discipline</Label><p>{activeClubMember.discipline}</p></div>
+                <div><Label className="text-xs text-muted-foreground">Qualité</Label><p>{activeClubMember.quality || "—"}</p></div>
+                <div><Label className="text-xs text-muted-foreground">Saison</Label><p>{activeClubMember.season || "—"}</p></div>
                 <div><Label className="text-xs text-muted-foreground">Téléphone</Label><p>{activeClubMember.phone || "—"}</p></div>
                 <div className="col-span-2"><Label className="text-xs text-muted-foreground">Email</Label><p>{activeClubMember.email || "—"}</p></div>
               </div>
@@ -859,6 +891,105 @@ const AdminDirectory = () => {
         payload={qrPayload}
         title={qrPayload?.kind === "club" ? "QR du club" : "QR du membre"}
       />
+
+      {/* Individual member detail dialog */}
+      <Dialog open={!!viewIndividual} onOpenChange={(o) => !o && setViewIndividual(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Coordonnées du membre</DialogTitle></DialogHeader>
+          {viewIndividual && (
+            <div className="space-y-3 py-2">
+              <div className="flex items-center gap-3">
+                <div className="w-14 h-14 rounded-full bg-muted border flex items-center justify-center">
+                  <User className="w-7 h-7 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="font-semibold">{viewIndividual.name}</p>
+                  <p className="text-xs text-muted-foreground">{viewIndividual.role || accountTypeMeta[viewIndividual.accountType || "athlete"].label}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div><Label className="text-xs text-muted-foreground">Ville</Label><p>{viewIndividual.city || "—"}</p></div>
+                <div><Label className="text-xs text-muted-foreground">Discipline</Label><p>{viewIndividual.discipline || "—"}</p></div>
+                <div><Label className="text-xs text-muted-foreground">Email</Label><p className="break-all">{viewIndividual.email || "—"}</p></div>
+                <div><Label className="text-xs text-muted-foreground">Téléphone</Label><p>{viewIndividual.phone || "—"}</p></div>
+                <div><Label className="text-xs text-muted-foreground">Licence</Label>
+                  <p><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${viewIndividual.licenseActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                    {viewIndividual.licenseActive ? "Active" : "Inactive"}
+                  </span></p>
+                </div>
+                <div><Label className="text-xs text-muted-foreground">ID</Label><p className="font-mono text-xs">{viewIndividual.id}</p></div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2 border-t">
+                <Button variant="outline" onClick={() => openIndividualQR(viewIndividual)}>
+                  <QrCode className="mr-2 h-4 w-4" /> QR Code
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Club info dialog */}
+      <Dialog open={!!viewClub} onOpenChange={(o) => !o && setViewClub(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Informations du club</DialogTitle></DialogHeader>
+          {viewClub && (() => {
+            const members = clubMembers.filter((m) => m.clubName === viewClub.name);
+            const dir = clubsFromDirectory.find((c) => c.name === viewClub.name);
+            return (
+              <div className="space-y-4 py-2">
+                <div className="flex items-center gap-3">
+                  <div className="rounded-lg bg-violet-100 p-3 text-violet-700"><Building2 className="h-7 w-7" /></div>
+                  <div>
+                    <p className="font-semibold text-lg">{viewClub.name}</p>
+                    <p className="text-xs text-muted-foreground">{viewClub.city} • {viewClub.discipline}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div><Label className="text-xs text-muted-foreground">Email</Label><p className="break-all">{dir?.email || members[0]?.email || "—"}</p></div>
+                  <div><Label className="text-xs text-muted-foreground">Téléphone</Label><p>{dir?.phone || members[0]?.phone || "—"}</p></div>
+                  <div><Label className="text-xs text-muted-foreground">Membres</Label><p>{viewClub.membersCount}</p></div>
+                  <div><Label className="text-xs text-muted-foreground">Licence</Label>
+                    <p><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${dir?.licenseActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                      {dir?.licenseActive ? "Active" : "Inactive"}
+                    </span></p>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-sm mb-2">Membres ({members.length})</h4>
+                  {members.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">Aucun membre enregistré.</p>
+                  ) : (
+                    <div className="border rounded-lg divide-y">
+                      {members.map((m) => (
+                        <div key={m.id} className="flex items-center justify-between p-2 text-sm">
+                          <div className="min-w-0">
+                            <p className="font-medium truncate">{m.fullName}</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {m.discipline} • {m.phone || "—"} • {m.email || "—"}
+                            </p>
+                          </div>
+                          <Button variant="ghost" size="icon" title="Voir" onClick={() => { setViewClub(null); setActiveClubMember(m); }}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="flex justify-end gap-2 pt-2 border-t">
+                  <Button variant="outline" onClick={() => openClubQR(viewClub)}>
+                    <QrCode className="mr-2 h-4 w-4" /> QR Code
+                  </Button>
+                  <Button onClick={() => { const name = viewClub.name; setViewClub(null); setSelectedClub(name); }}>
+                    Ouvrir le club
+                  </Button>
+                </div>
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
