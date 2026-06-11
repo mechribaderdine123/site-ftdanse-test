@@ -1357,6 +1357,17 @@ const MemberDashboard = () => {
                       <Row label="Âge" value={`${m.age} ans${minor ? " (Mineur)" : ""}`} />
                       <Row label="Téléphone" value={m.phone} />
                       <Row label="Email" value={m.email} />
+                      {m.emergencyContact && (
+                        <>
+                          <div className="pt-2 mt-1 border-t border-border/40">
+                            <h5 className="text-xs font-semibold text-muted-foreground mb-1">Contact en cas d'urgence</h5>
+                          </div>
+                          <Row label="Relation" value={m.emergencyContact.relation} />
+                          <Row label="Nom" value={m.emergencyContact.name} />
+                          <Row label="Téléphone" value={m.emergencyContact.phone} />
+                          <Row label="Email" value={m.emergencyContact.email} />
+                        </>
+                      )}
                     </div>
 
                     <div>
