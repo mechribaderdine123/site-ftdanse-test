@@ -1098,24 +1098,31 @@ const MemberDashboard = () => {
 
             {/* DOCUMENTS */}
             <TabsContent value="documents">
-              <Card>
-                <CardHeader><CardTitle>Mes documents</CardTitle></CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {["CIN.pdf", "Photo identité.jpg", isClub ? "Statuts club.pdf" : "Certificat médical.pdf"].map((doc, i) => (
-                      <div key={i} className="flex items-center gap-3 p-3 border border-border rounded-lg">
-                        <FileText className="w-5 h-5 text-accent" />
-                        <span className="flex-1 text-sm font-medium">{doc}</span>
-                        <Badge variant="outline" className="gap-1"><Clock className="w-3 h-3" /> Validé</Badge>
-                        <Button variant="ghost" size="sm">Télécharger</Button>
-                      </div>
-                    ))}
-                  </div>
-                  <Button variant="outline" className="mt-4">
-                    <Plus className="w-4 h-4 mr-2" /> Ajouter un document
-                  </Button>
-                </CardContent>
-              </Card>
+              {isClub ? (
+                <DocumentsTabs
+                  clubMembers={clubMembers}
+                  onViewMember={(m) => setViewMember(m)}
+                />
+              ) : (
+                <Card>
+                  <CardHeader><CardTitle>Mes documents</CardTitle></CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {["CIN.pdf", "Photo identité.jpg", "Certificat médical.pdf"].map((doc, i) => (
+                        <div key={i} className="flex items-center gap-3 p-3 border border-border rounded-lg">
+                          <FileText className="w-5 h-5 text-accent" />
+                          <span className="flex-1 text-sm font-medium">{doc}</span>
+                          <Badge variant="outline" className="gap-1"><Clock className="w-3 h-3" /> Validé</Badge>
+                          <Button variant="ghost" size="sm">Télécharger</Button>
+                        </div>
+                      ))}
+                    </div>
+                    <Button variant="outline" className="mt-4">
+                      <Plus className="w-4 h-4 mr-2" /> Ajouter un document
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
           </Tabs>
 
@@ -1508,3 +1515,151 @@ const MemberDashboard = () => {
 };
 
 export default MemberDashboard;
+
+// ============================================================
+// DocumentsTabs (club account): Club docs vs Members docs
+// ============================================================
+const DocumentsTabs = ({
+  clubMembers,
+  onViewMember,
+}: {
+  clubMembers: ClubMember[];
+  onViewMember: (m: ClubMember) => void;
+}) => {
+  const [tab, setTab] = useState<"club" | "members">("club");
+  const [q, setQ] = useState("");
+  const [season, setSeason] = useState<string>("all");
+
+  const seasons = Array.from(
+    new Set(clubMembers.map((m) => m.season).filter(Boolean) as string[])
+  ).sort();
+
+  const filtered = clubMembers.filter((m) => {
+    const term = q.trim().toLowerCase();
+    const matchTerm =
+      !term ||
+      m.fullName.toLowerCase().includes(term) ||
+      m.id.toLowerCase().includes(term);
+    const matchSeason = season === "all" || m.season === season;
+    return matchTerm && matchSeason;
+  });
+
+  const clubDocs = [
+    { name: "Statuts du club.pdf", status: "Validé" },
+    { name: "Récépissé de dépôt.pdf", status: "Validé" },
+    { name: "Liste des dirigeants.pdf", status: "Validé" },
+    { name: "PV de l'AG.pdf", status: "En attente" },
+  ];
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Documents</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex gap-2 mb-4">
+          <Button
+            variant={tab === "club" ? "default" : "outline"}
+            onClick={() => setTab("club")}
+            size="sm"
+          >
+            <Building2 className="w-4 h-4 mr-2" /> Documents du club
+          </Button>
+          <Button
+            variant={tab === "members" ? "default" : "outline"}
+            onClick={() => setTab("members")}
+            size="sm"
+          >
+            <Users className="w-4 h-4 mr-2" /> Documents des membres
+          </Button>
+        </div>
+
+        {tab === "club" ? (
+          <div className="space-y-2">
+            {clubDocs.map((doc, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-3 p-3 border border-border rounded-lg"
+              >
+                <FileText className="w-5 h-5 text-accent" />
+                <span className="flex-1 text-sm font-medium">{doc.name}</span>
+                <Badge variant="outline" className="gap-1">
+                  <Clock className="w-3 h-3" /> {doc.status}
+                </Badge>
+                <Button variant="ghost" size="sm">Télécharger</Button>
+              </div>
+            ))}
+            <Button variant="outline" className="mt-4">
+              <Plus className="w-4 h-4 mr-2" /> Ajouter un document
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex flex-col md:flex-row gap-2">
+              <Input
+                placeholder="Rechercher par ID ou nom..."
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                className="md:max-w-sm"
+              />
+              <select
+                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                value={season}
+                onChange={(e) => setSeason(e.target.value)}
+              >
+                <option value="all">Toutes les saisons</option>
+                {seasons.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+
+            {filtered.length === 0 ? (
+              <div className="text-sm text-muted-foreground py-8 text-center">
+                Aucun membre trouvé.
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Nom</TableHead>
+                    <TableHead>Saison</TableHead>
+                    <TableHead>Documents</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((m) => {
+                    const count = Object.values(m.documents).filter(Boolean).length;
+                    return (
+                      <TableRow key={m.id}>
+                        <TableCell className="font-mono text-xs">{m.id}</TableCell>
+                        <TableCell className="font-medium">{m.fullName}</TableCell>
+                        <TableCell>{m.season || "—"}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="gap-1">
+                            <FileText className="w-3 h-3" /> {count}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onViewMember(m)}
+                          >
+                            <Eye className="w-4 h-4 mr-1" /> Voir
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
