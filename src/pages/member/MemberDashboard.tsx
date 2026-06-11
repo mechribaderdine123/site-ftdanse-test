@@ -1099,10 +1099,7 @@ const MemberDashboard = () => {
             {/* DOCUMENTS */}
             <TabsContent value="documents">
               {isClub ? (
-                <DocumentsTabs
-                  clubMembers={clubMembers}
-                  onViewMember={(m) => setViewMember(m)}
-                />
+                <DocumentsTabs clubMembers={clubMembers} />
               ) : (
                 <Card>
                   <CardHeader><CardTitle>Mes documents</CardTitle></CardHeader>
