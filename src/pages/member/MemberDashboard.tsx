@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import {
   User, Building2, Trophy, GraduationCap, Award, LogOut, BadgeCheck,
   Calendar, MapPin, Mail, Phone, Plus, Pencil, Trash2, Users, FileText,
-  TrendingUp, Medal, ShieldCheck, Clock, ArrowLeft,
+  TrendingUp, Medal, ShieldCheck, Clock, ArrowLeft, Eye,
 } from "lucide-react";
 import TopBar from "@/components/TopBar";
 import Navbar from "@/components/Navbar";
@@ -97,6 +97,7 @@ const MemberDashboard = () => {
   const [bulkPayDialog, setBulkPayDialog] = useState(false);
   const [seasonFilter, setSeasonFilter] = useState<string>("all");
   const [searchId, setSearchId] = useState<string>("");
+  const [viewMember, setViewMember] = useState<ClubMember | null>(null);
 
   useEffect(() => {
     const raw = localStorage.getItem("ftdap_member");
