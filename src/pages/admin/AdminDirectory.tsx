@@ -665,6 +665,8 @@ const AdminDirectory = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="icon" title="Voir le profil" onClick={() => setViewIndividual(item)}><Eye className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" title="QR code" onClick={() => openIndividualQR(item)}><QrCode className="h-4 w-4" /></Button>
                           <Button variant="ghost" size="icon" onClick={() => { setEditItem(item); setDialogOpen(true); }}><Pencil className="h-4 w-4" /></Button>
                           <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
                         </div>
