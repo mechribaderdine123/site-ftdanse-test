@@ -384,15 +384,26 @@ const AdminDirectory = () => {
                   key={club.name}
                   className="relative text-left rounded-xl border border-border p-5 bg-card hover:shadow-md hover:border-violet-300 transition"
                 >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-2 right-2 h-7 w-7"
-                    title="QR code du club"
-                    onClick={(e) => { e.stopPropagation(); openClubQR(club); }}
-                  >
-                    <QrCode className="h-4 w-4" />
-                  </Button>
+                  <div className="absolute top-2 right-2 flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      title="Voir les informations du club"
+                      onClick={(e) => { e.stopPropagation(); setViewClub(club); }}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      title="QR code du club"
+                      onClick={(e) => { e.stopPropagation(); openClubQR(club); }}
+                    >
+                      <QrCode className="h-4 w-4" />
+                    </Button>
+                  </div>
                   <button
                     type="button"
                     onClick={() => setSelectedClub(club.name)}
