@@ -954,6 +954,9 @@ const MemberDashboard = () => {
                               <TableCell>{approvalBadge(m.approval.status)}</TableCell>
                               <TableCell className="text-right">
                                 <div className="flex justify-end gap-1">
+                                  <Button variant="ghost" size="icon" title="Voir profil" onClick={() => setViewMember(m)}>
+                                    <Eye className="w-4 h-4" />
+                                  </Button>
                                   <Button variant="ghost" size="icon" title="Imprimer la licence" onClick={() => printLicense(m)}>
                                     <Printer className="w-4 h-4" />
                                   </Button>
