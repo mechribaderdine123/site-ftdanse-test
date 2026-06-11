@@ -1227,6 +1227,7 @@ const MemberDashboard = () => {
                             <select
                               name="emergencyRelation"
                               required
+                              defaultValue={editCm?.emergencyContact?.relation || "father"}
                               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                             >
                               <option value="father">Père (الأب)</option>
@@ -1235,15 +1236,15 @@ const MemberDashboard = () => {
                           </div>
                           <div className="space-y-1">
                             <Label className="text-xs">Nom complet du parent *</Label>
-                            <Input name="emergencyName" required />
+                            <Input name="emergencyName" defaultValue={editCm?.emergencyContact?.name} required />
                           </div>
                           <div className="space-y-1">
                             <Label className="text-xs">Téléphone *</Label>
-                            <Input name="emergencyPhone" type="tel" required placeholder="+216 .. ... ..." />
+                            <Input name="emergencyPhone" type="tel" defaultValue={editCm?.emergencyContact?.phone} required placeholder="+216 .. ... ..." />
                           </div>
                           <div className="sm:col-span-2 space-y-1">
                             <Label className="text-xs">Email du parent</Label>
-                            <Input name="emergencyEmail" type="email" />
+                            <Input name="emergencyEmail" type="email" defaultValue={editCm?.emergencyContact?.email} />
                           </div>
                         </div>
                       </div>
