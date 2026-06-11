@@ -26,6 +26,7 @@ import { Upload, Send, FileCheck2, CheckCircle2, XCircle, AlertCircle, Printer }
 import { Checkbox } from "@/components/ui/checkbox";
 import licenseTemplate from "@/assets/license-template.png";
 import QRCode from "qrcode";
+import { printClubLicense } from "@/lib/printLicense";
 
 type AccountKind = "individual" | "club";
 type IndividualRole = "athlete" | "coach" | "referee";
@@ -988,6 +989,72 @@ const MemberDashboard = () => {
                     )}
                   </CardContent>
                 </Card>
+              </TabsContent>
+            )}
+
+            {/* CLUB LICENSE */}
+            {isClub && (
+              <TabsContent value="club-license">
+                {(() => {
+                  const yy = String(new Date().getFullYear()).slice(-2);
+                  const key = `ftdap_club_license_${session.fullName}`;
+                  let clubLicenseId = localStorage.getItem(key) || "";
+                  if (!clubLicenseId) {
+                    clubLicenseId = `CLUB-001-${yy}`;
+                    localStorage.setItem(key, clubLicenseId);
+                  }
+                  const data = {
+                    id: clubLicenseId,
+                    name: session.fullName,
+                    city: session.city,
+                    discipline: session.discipline,
+                    email: session.email,
+                    phone: (session as any).phone,
+                    season: `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`,
+                    avatarUrl: session.avatarUrl,
+                  };
+                  return (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Licence du club</CardTitle>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Aperçu et impression de la licence officielle du club avec QR code.
+                        </p>
+                      </CardHeader>
+                      <CardContent className="space-y-6">
+                        <div className="rounded-2xl border border-border bg-gradient-to-br from-primary/90 to-primary text-primary-foreground p-6 max-w-xl">
+                          <div className="flex items-start justify-between mb-4">
+                            <div>
+                              <p className="text-xs opacity-80">Licence n°</p>
+                              <p className="font-mono text-lg font-bold">{data.id}</p>
+                            </div>
+                            <div className="w-14 h-14 rounded-full bg-white/10 border border-white/30 flex items-center justify-center overflow-hidden">
+                              {data.avatarUrl ? (
+                                <img src={data.avatarUrl} alt="logo" className="w-full h-full object-cover" />
+                              ) : (
+                                <Building2 className="w-7 h-7" />
+                              )}
+                            </div>
+                          </div>
+                          <p className="font-bold text-xl">{data.name}</p>
+                          <p className="text-sm opacity-90">{data.discipline} · {data.city}</p>
+                          <div className="mt-4 pt-3 border-t border-white/20 grid grid-cols-2 gap-2 text-xs">
+                            <span className="opacity-80">Email</span>
+                            <span className="text-right break-all">{data.email || "—"}</span>
+                            <span className="opacity-80">Saison</span>
+                            <span className="text-right">{data.season}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-3">
+                          <Button onClick={() => printClubLicense(data)}>
+                            <Printer className="w-4 h-4 mr-2" /> Imprimer la licence
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })()}
               </TabsContent>
             )}
 
