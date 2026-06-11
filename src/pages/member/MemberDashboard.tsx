@@ -1357,17 +1357,24 @@ const MemberDashboard = () => {
                       <Row label="Âge" value={`${m.age} ans${minor ? " (Mineur)" : ""}`} />
                       <Row label="Téléphone" value={m.phone} />
                       <Row label="Email" value={m.email} />
-                      {m.emergencyContact && (
-                        <>
-                          <div className="pt-2 mt-1 border-t border-border/40">
-                            <h5 className="text-xs font-semibold text-muted-foreground mb-1">Contact en cas d'urgence</h5>
-                          </div>
-                          <Row label="Relation" value={m.emergencyContact.relation} />
-                          <Row label="Nom" value={m.emergencyContact.name} />
-                          <Row label="Téléphone" value={m.emergencyContact.phone} />
-                          <Row label="Email" value={m.emergencyContact.email} />
-                        </>
-                      )}
+                      <div className="pt-3 mt-2 border-t border-border/40">
+                        <h5 className="text-xs font-semibold text-muted-foreground mb-1">
+                          {minor ? "Contact d'urgence — Parent" : "Contact en cas d'urgence"}
+                        </h5>
+                      </div>
+                      <Row
+                        label={minor ? "Lien de parenté" : "Relation"}
+                        value={
+                          m.emergencyContact?.relation === "father"
+                            ? "Père (الأب)"
+                            : m.emergencyContact?.relation === "mother"
+                            ? "Mère (الأم)"
+                            : m.emergencyContact?.relation
+                        }
+                      />
+                      <Row label={minor ? "Nom complet du parent" : "Nom"} value={m.emergencyContact?.name} />
+                      <Row label="Téléphone" value={m.emergencyContact?.phone} />
+                      <Row label={minor ? "Email du parent" : "Email"} value={m.emergencyContact?.email} />
                     </div>
 
                     <div>
