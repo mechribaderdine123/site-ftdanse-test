@@ -1185,19 +1185,19 @@ const MemberDashboard = () => {
                         <div className="grid sm:grid-cols-2 gap-3">
                           <div className="space-y-1">
                             <Label className="text-xs">Lien / Relation *</Label>
-                            <Input name="emergencyRelation" required placeholder="Ex. Conjoint, Ami, Frère..." />
+                            <Input name="emergencyRelation" defaultValue={editCm?.emergencyContact?.relation} required placeholder="Ex. Conjoint, Ami, Frère..." />
                           </div>
                           <div className="space-y-1">
                             <Label className="text-xs">Nom complet *</Label>
-                            <Input name="emergencyName" required />
+                            <Input name="emergencyName" defaultValue={editCm?.emergencyContact?.name} required />
                           </div>
                           <div className="space-y-1">
                             <Label className="text-xs">Téléphone *</Label>
-                            <Input name="emergencyPhone" type="tel" required placeholder="+216 .. ... ..." />
+                            <Input name="emergencyPhone" type="tel" defaultValue={editCm?.emergencyContact?.phone} required placeholder="+216 .. ... ..." />
                           </div>
                           <div className="sm:col-span-2 space-y-1">
                             <Label className="text-xs">Email</Label>
-                            <Input name="emergencyEmail" type="email" />
+                            <Input name="emergencyEmail" type="email" defaultValue={editCm?.emergencyContact?.email} />
                           </div>
                         </div>
                       </div>
