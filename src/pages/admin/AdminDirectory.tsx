@@ -777,6 +777,20 @@ const AdminDirectory = () => {
                 <div className="col-span-2"><Label className="text-xs text-muted-foreground">Email</Label><p>{activeClubMember.email || "—"}</p></div>
               </div>
 
+              {activeClubMember.emergencyContact && (
+                <div className="border border-border rounded-lg p-3 space-y-2">
+                  <h4 className="font-semibold text-sm">Contact en cas d'urgence</h4>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div><span className="text-muted-foreground text-xs">Relation</span><p>{activeClubMember.emergencyContact.relation}</p></div>
+                    <div><span className="text-muted-foreground text-xs">Nom</span><p>{activeClubMember.emergencyContact.name}</p></div>
+                    <div><span className="text-muted-foreground text-xs">Téléphone</span><p>{activeClubMember.emergencyContact.phone}</p></div>
+                    {activeClubMember.emergencyContact.email && (
+                      <div><span className="text-muted-foreground text-xs">Email</span><p>{activeClubMember.emergencyContact.email}</p></div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div className="border border-border rounded-lg p-3 space-y-2">
                 <h4 className="font-semibold text-sm flex items-center gap-2"><FileText className="w-4 h-4" /> Documents</h4>
                 {Object.entries(activeClubMember.documents).map(([k, v]) =>
