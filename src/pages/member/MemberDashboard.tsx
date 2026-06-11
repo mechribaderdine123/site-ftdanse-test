@@ -1098,24 +1098,31 @@ const MemberDashboard = () => {
 
             {/* DOCUMENTS */}
             <TabsContent value="documents">
-              <Card>
-                <CardHeader><CardTitle>Mes documents</CardTitle></CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {["CIN.pdf", "Photo identité.jpg", isClub ? "Statuts club.pdf" : "Certificat médical.pdf"].map((doc, i) => (
-                      <div key={i} className="flex items-center gap-3 p-3 border border-border rounded-lg">
-                        <FileText className="w-5 h-5 text-accent" />
-                        <span className="flex-1 text-sm font-medium">{doc}</span>
-                        <Badge variant="outline" className="gap-1"><Clock className="w-3 h-3" /> Validé</Badge>
-                        <Button variant="ghost" size="sm">Télécharger</Button>
-                      </div>
-                    ))}
-                  </div>
-                  <Button variant="outline" className="mt-4">
-                    <Plus className="w-4 h-4 mr-2" /> Ajouter un document
-                  </Button>
-                </CardContent>
-              </Card>
+              {isClub ? (
+                <DocumentsTabs
+                  clubMembers={clubMembers}
+                  onViewMember={(m) => setViewMember(m)}
+                />
+              ) : (
+                <Card>
+                  <CardHeader><CardTitle>Mes documents</CardTitle></CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {["CIN.pdf", "Photo identité.jpg", "Certificat médical.pdf"].map((doc, i) => (
+                        <div key={i} className="flex items-center gap-3 p-3 border border-border rounded-lg">
+                          <FileText className="w-5 h-5 text-accent" />
+                          <span className="flex-1 text-sm font-medium">{doc}</span>
+                          <Badge variant="outline" className="gap-1"><Clock className="w-3 h-3" /> Validé</Badge>
+                          <Button variant="ghost" size="sm">Télécharger</Button>
+                        </div>
+                      ))}
+                    </div>
+                    <Button variant="outline" className="mt-4">
+                      <Plus className="w-4 h-4 mr-2" /> Ajouter un document
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
           </Tabs>
 
