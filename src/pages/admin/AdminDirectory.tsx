@@ -786,12 +786,25 @@ const AdminDirectory = () => {
           </DialogHeader>
           {activeClubMember && (
             <div className="space-y-4 py-2">
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b">
+                <div className="text-xs font-mono text-muted-foreground">ID: {activeClubMember.id}</div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => openClubMemberQR(activeClubMember)}>
+                    <QrCode className="mr-2 h-4 w-4" /> QR
+                  </Button>
+                  <Button size="sm" onClick={() => printMemberLicense(activeClubMember)}>
+                    <Printer className="mr-2 h-4 w-4" /> Imprimer la licence
+                  </Button>
+                </div>
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div><Label className="text-xs text-muted-foreground">Club</Label><p className="font-medium">{activeClubMember.clubName}</p></div>
                 <div><Label className="text-xs text-muted-foreground">Nom complet</Label><p className="font-medium">{activeClubMember.fullName}</p></div>
                 <div><Label className="text-xs text-muted-foreground">Date de naissance</Label><p>{activeClubMember.birthDate} ({activeClubMember.age} ans)</p></div>
                 <div><Label className="text-xs text-muted-foreground">Genre</Label><p>{activeClubMember.gender === "M" ? "Homme" : "Femme"}</p></div>
                 <div><Label className="text-xs text-muted-foreground">Discipline</Label><p>{activeClubMember.discipline}</p></div>
+                <div><Label className="text-xs text-muted-foreground">Qualité</Label><p>{activeClubMember.quality || "—"}</p></div>
+                <div><Label className="text-xs text-muted-foreground">Saison</Label><p>{activeClubMember.season || "—"}</p></div>
                 <div><Label className="text-xs text-muted-foreground">Téléphone</Label><p>{activeClubMember.phone || "—"}</p></div>
                 <div className="col-span-2"><Label className="text-xs text-muted-foreground">Email</Label><p>{activeClubMember.email || "—"}</p></div>
               </div>
