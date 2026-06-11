@@ -891,6 +891,105 @@ const AdminDirectory = () => {
         payload={qrPayload}
         title={qrPayload?.kind === "club" ? "QR du club" : "QR du membre"}
       />
+
+      {/* Individual member detail dialog */}
+      <Dialog open={!!viewIndividual} onOpenChange={(o) => !o && setViewIndividual(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Coordonnées du membre</DialogTitle></DialogHeader>
+          {viewIndividual && (
+            <div className="space-y-3 py-2">
+              <div className="flex items-center gap-3">
+                <div className="w-14 h-14 rounded-full bg-muted border flex items-center justify-center">
+                  <User className="w-7 h-7 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="font-semibold">{viewIndividual.name}</p>
+                  <p className="text-xs text-muted-foreground">{viewIndividual.role || accountTypeMeta[viewIndividual.accountType || "athlete"].label}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div><Label className="text-xs text-muted-foreground">Ville</Label><p>{viewIndividual.city || "—"}</p></div>
+                <div><Label className="text-xs text-muted-foreground">Discipline</Label><p>{viewIndividual.discipline || "—"}</p></div>
+                <div><Label className="text-xs text-muted-foreground">Email</Label><p className="break-all">{viewIndividual.email || "—"}</p></div>
+                <div><Label className="text-xs text-muted-foreground">Téléphone</Label><p>{viewIndividual.phone || "—"}</p></div>
+                <div><Label className="text-xs text-muted-foreground">Licence</Label>
+                  <p><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${viewIndividual.licenseActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                    {viewIndividual.licenseActive ? "Active" : "Inactive"}
+                  </span></p>
+                </div>
+                <div><Label className="text-xs text-muted-foreground">ID</Label><p className="font-mono text-xs">{viewIndividual.id}</p></div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2 border-t">
+                <Button variant="outline" onClick={() => openIndividualQR(viewIndividual)}>
+                  <QrCode className="mr-2 h-4 w-4" /> QR Code
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Club info dialog */}
+      <Dialog open={!!viewClub} onOpenChange={(o) => !o && setViewClub(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Informations du club</DialogTitle></DialogHeader>
+          {viewClub && (() => {
+            const members = clubMembers.filter((m) => m.clubName === viewClub.name);
+            const dir = clubsFromDirectory.find((c) => c.name === viewClub.name);
+            return (
+              <div className="space-y-4 py-2">
+                <div className="flex items-center gap-3">
+                  <div className="rounded-lg bg-violet-100 p-3 text-violet-700"><Building2 className="h-7 w-7" /></div>
+                  <div>
+                    <p className="font-semibold text-lg">{viewClub.name}</p>
+                    <p className="text-xs text-muted-foreground">{viewClub.city} • {viewClub.discipline}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div><Label className="text-xs text-muted-foreground">Email</Label><p className="break-all">{dir?.email || members[0]?.email || "—"}</p></div>
+                  <div><Label className="text-xs text-muted-foreground">Téléphone</Label><p>{dir?.phone || members[0]?.phone || "—"}</p></div>
+                  <div><Label className="text-xs text-muted-foreground">Membres</Label><p>{viewClub.membersCount}</p></div>
+                  <div><Label className="text-xs text-muted-foreground">Licence</Label>
+                    <p><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${dir?.licenseActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                      {dir?.licenseActive ? "Active" : "Inactive"}
+                    </span></p>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-sm mb-2">Membres ({members.length})</h4>
+                  {members.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">Aucun membre enregistré.</p>
+                  ) : (
+                    <div className="border rounded-lg divide-y">
+                      {members.map((m) => (
+                        <div key={m.id} className="flex items-center justify-between p-2 text-sm">
+                          <div className="min-w-0">
+                            <p className="font-medium truncate">{m.fullName}</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {m.discipline} • {m.phone || "—"} • {m.email || "—"}
+                            </p>
+                          </div>
+                          <Button variant="ghost" size="icon" title="Voir" onClick={() => { setViewClub(null); setActiveClubMember(m); }}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="flex justify-end gap-2 pt-2 border-t">
+                  <Button variant="outline" onClick={() => openClubQR(viewClub)}>
+                    <QrCode className="mr-2 h-4 w-4" /> QR Code
+                  </Button>
+                  <Button onClick={() => { const name = viewClub.name; setViewClub(null); setSelectedClub(name); }}>
+                    Ouvrir le club
+                  </Button>
+                </div>
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
