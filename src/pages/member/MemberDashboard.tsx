@@ -245,6 +245,10 @@ const MemberDashboard = () => {
       }, 0);
       return `${String(maxSeq + 1).padStart(3, "0")}-${yy}`;
     };
+    const emRel = data.get("emergencyRelation") as string;
+    const emName = data.get("emergencyName") as string;
+    const emPhone = data.get("emergencyPhone") as string;
+    const emEmail = data.get("emergencyEmail") as string;
     const m: ClubMember = {
       id: editCm?.id || generateMemberId(),
       clubName: session.fullName,
@@ -257,6 +261,10 @@ const MemberDashboard = () => {
       email: (data.get("email") as string) || undefined,
       season: (data.get("season") as string) || editCm?.season,
       quality: (data.get("quality") as string) || editCm?.quality,
+      emergencyContact:
+        emRel && emName && emPhone
+          ? { relation: emRel, name: emName, phone: emPhone, email: emEmail || undefined }
+          : editCm?.emergencyContact,
       documents: cmDocs,
       payment: cmPayment,
       approval: editCm?.approval || { status: "pending" },
@@ -1177,19 +1185,19 @@ const MemberDashboard = () => {
                         <div className="grid sm:grid-cols-2 gap-3">
                           <div className="space-y-1">
                             <Label className="text-xs">Lien / Relation *</Label>
-                            <Input name="emergencyRelation" required placeholder="Ex. Conjoint, Ami, Frère..." />
+                            <Input name="emergencyRelation" defaultValue={editCm?.emergencyContact?.relation} required placeholder="Ex. Conjoint, Ami, Frère..." />
                           </div>
                           <div className="space-y-1">
                             <Label className="text-xs">Nom complet *</Label>
-                            <Input name="emergencyName" required />
+                            <Input name="emergencyName" defaultValue={editCm?.emergencyContact?.name} required />
                           </div>
                           <div className="space-y-1">
                             <Label className="text-xs">Téléphone *</Label>
-                            <Input name="emergencyPhone" type="tel" required placeholder="+216 .. ... ..." />
+                            <Input name="emergencyPhone" type="tel" defaultValue={editCm?.emergencyContact?.phone} required placeholder="+216 .. ... ..." />
                           </div>
                           <div className="sm:col-span-2 space-y-1">
                             <Label className="text-xs">Email</Label>
-                            <Input name="emergencyEmail" type="email" />
+                            <Input name="emergencyEmail" type="email" defaultValue={editCm?.emergencyContact?.email} />
                           </div>
                         </div>
                       </div>
@@ -1219,6 +1227,7 @@ const MemberDashboard = () => {
                             <select
                               name="emergencyRelation"
                               required
+                              defaultValue={editCm?.emergencyContact?.relation || "father"}
                               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                             >
                               <option value="father">Père (الأب)</option>
@@ -1227,15 +1236,15 @@ const MemberDashboard = () => {
                           </div>
                           <div className="space-y-1">
                             <Label className="text-xs">Nom complet du parent *</Label>
-                            <Input name="emergencyName" required />
+                            <Input name="emergencyName" defaultValue={editCm?.emergencyContact?.name} required />
                           </div>
                           <div className="space-y-1">
                             <Label className="text-xs">Téléphone *</Label>
-                            <Input name="emergencyPhone" type="tel" required placeholder="+216 .. ... ..." />
+                            <Input name="emergencyPhone" type="tel" defaultValue={editCm?.emergencyContact?.phone} required placeholder="+216 .. ... ..." />
                           </div>
                           <div className="sm:col-span-2 space-y-1">
                             <Label className="text-xs">Email du parent</Label>
-                            <Input name="emergencyEmail" type="email" />
+                            <Input name="emergencyEmail" type="email" defaultValue={editCm?.emergencyContact?.email} />
                           </div>
                         </div>
                       </div>
@@ -1348,6 +1357,17 @@ const MemberDashboard = () => {
                       <Row label="Âge" value={`${m.age} ans${minor ? " (Mineur)" : ""}`} />
                       <Row label="Téléphone" value={m.phone} />
                       <Row label="Email" value={m.email} />
+                      {m.emergencyContact && (
+                        <>
+                          <div className="pt-2 mt-1 border-t border-border/40">
+                            <h5 className="text-xs font-semibold text-muted-foreground mb-1">Contact en cas d'urgence</h5>
+                          </div>
+                          <Row label="Relation" value={m.emergencyContact.relation} />
+                          <Row label="Nom" value={m.emergencyContact.name} />
+                          <Row label="Téléphone" value={m.emergencyContact.phone} />
+                          <Row label="Email" value={m.emergencyContact.email} />
+                        </>
+                      )}
                     </div>
 
                     <div>
