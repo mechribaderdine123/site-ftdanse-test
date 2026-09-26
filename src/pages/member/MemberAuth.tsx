@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, ArrowRight, User, Building2, Trophy, GraduationCap, Award,
-  Upload, FileText, CheckCircle2, Mail, Lock, Phone, MapPin,
+  Upload, FileText, CheckCircle2, Mail, Lock, Phone, MapPin, Loader2, Eye, EyeOff, ImagePlus, X,
 } from "lucide-react";
 import TopBar from "@/components/TopBar";
 import Navbar from "@/components/Navbar";
@@ -14,91 +14,199 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { computeAge } from "@/data/clubMembersStore";
 
 type AccountKind = "individual" | "club";
 type IndividualRole = "athlete" | "coach" | "referee";
 
-interface MemberSession {
-  kind: AccountKind;
-  role?: IndividualRole;
-  fullName: string;
-  email: string;
-  city: string;
-  discipline: string;
-  clubName?: string;
-  avatarUrl?: string;
-}
-
 const MemberAuth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signIn } = useAuth();
 
   // Sign-up wizard state
   const [step, setStep] = useState(1);
   const [kind, setKind] = useState<AccountKind | null>(null);
   const [role, setRole] = useState<IndividualRole | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({
     fullName: "", email: "", password: "", phone: "",
     city: "", discipline: "", clubName: "",
     clubType: "", orgName: "",
+    birthDate: "", gender: "M", actYear: "", actNumber: "",
+    emergencyRelation: "", emergencyName: "", emergencyPhone: "", emergencyEmail: "",
   });
-  const [avatar, setAvatar] = useState<string>("");
-  const [docs, setDocs] = useState<{ name: string; size: string }[]>([]);
+  const [documentFiles, setDocumentFiles] = useState<File[]>([]);
+  const [documentTypes, setDocumentTypes] = useState<string[]>([]);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
   const handleFiles = (files: FileList | null) => {
     if (!files) return;
-    const list = Array.from(files).map((f) => ({
-      name: f.name,
-      size: `${(f.size / 1024).toFixed(0)} KB`,
-    }));
-    setDocs((prev) => [...prev, ...list]);
+    const newFiles = Array.from(files);
+    setDocumentFiles(prev => [...prev, ...newFiles]);
+    setDocumentTypes(prev => [...prev, ...newFiles.map(() => "")]);
   };
 
-  const finishSignup = () => {
-    const session: MemberSession = {
-      kind: kind!,
-      role: role || undefined,
-      fullName: kind === "club" ? form.clubName : form.fullName,
-      email: form.email,
-      city: form.city,
-      discipline: form.discipline,
-      clubName: form.clubName,
-      avatarUrl: avatar || undefined,
-    };
-    localStorage.setItem("ftdap_member", JSON.stringify(session));
-    window.dispatchEvent(new Event("ftdap-auth-change"));
-    toast({
-      title: "Demande envoyée",
-      description: "Votre compte est créé. La licence sera validée sous 48h.",
-    });
-    navigate("/member");
+  const removeFile = (index: number) => {
+    setDocumentFiles(prev => prev.filter((_, i) => i !== index));
+    setDocumentTypes(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleLogoChange = (file: File | null) => {
+    if (logoPreview) URL.revokeObjectURL(logoPreview);
+    setLogoFile(file);
+    setLogoPreview(file ? URL.createObjectURL(file) : null);
+  };
+
+  // Individual signups share the dancer profile: age drives the required documents.
+  const signupAge = computeAge(form.birthDate);
+
+  const finishSignup = async () => {
+    if (documentFiles.length === 0) {
+      toast({ title: "Erreur", description: "Au moins un document est requis", variant: "destructive" });
+      return;
+    }
+
+    // Validate all documents have types
+    if (documentTypes.some(t => !t.trim())) {
+      toast({ title: "Erreur", description: "Veuillez spécifier le type pour chaque document", variant: "destructive" });
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const formData = new FormData();
+      
+      // Validate and build form data
+      const fullNameValue = kind === "club" ? form.orgName : form.fullName;
+      if (!fullNameValue?.trim()) throw new Error(kind === "club" ? "Nom d'organisme requis" : "Nom complet requis");
+      if (!form.email?.trim()) throw new Error("Email requis");
+      if (!form.password?.trim()) throw new Error("Mot de passe requis");
+      if (!form.city?.trim()) throw new Error("Ville requise");
+      if (!form.discipline?.trim()) throw new Error("Discipline requise");
+      
+      if (kind === "club" && !form.clubType?.trim()) throw new Error("Type du club requis");
+      if (kind === "individual") {
+        if (!form.birthDate?.trim()) throw new Error("Date de naissance requise");
+        if (!form.actYear?.trim()) throw new Error("Année (السنة) requise");
+        if (!form.actNumber?.trim()) throw new Error("N° d'acte (رقم العقد) requis");
+        if (!form.emergencyRelation?.trim() || !form.emergencyName?.trim() || !form.emergencyPhone?.trim()) {
+          throw new Error("Contact d'urgence incomplet (lien, nom et téléphone requis)");
+        }
+        const chosenTypes = documentTypes.map((t) => t.trim());
+        if (signupAge < 18) {
+          if (!chosenTypes.includes("parental_auth")) throw new Error("ترخيص أبوي (Autorisation parentale) requise pour les mineurs");
+          if (!chosenTypes.includes("photo")) throw new Error("الصورة (Photo d'identité) requise pour les mineurs");
+        } else {
+          if (!chosenTypes.some((t) => t === "id_recto" || t === "id_verso")) throw new Error("Carte d'identité nationale requise (recto ou verso)");
+          if (!chosenTypes.includes("photo")) throw new Error("Photo d'identité requise");
+        }
+      }
+
+      formData.append("fullName", fullNameValue.trim());
+      formData.append("email", form.email.trim());
+      formData.append("password", form.password);
+      formData.append("phone", form.phone?.trim() || "");
+      formData.append("city", form.city.trim());
+      formData.append("discipline", form.discipline.trim());
+      formData.append("clubName", form.clubName?.trim() || "");
+      formData.append("accountType", kind === "club" ? "club" : (role || "athlete"));
+      formData.append("documentTypes", JSON.stringify(documentTypes.map(t => t.trim())));
+      if (kind === "club") {
+        formData.append("clubType", form.clubType.trim());
+        formData.append("organizationName", form.orgName.trim());
+        if (logoFile) formData.append("logo", logoFile);
+      } else {
+        formData.append("birthDate", form.birthDate.trim());
+        formData.append("gender", form.gender);
+        formData.append("actYear", form.actYear.trim());
+        formData.append("actNumber", form.actNumber.trim());
+        formData.append("emergencyContact", JSON.stringify({
+          relation: form.emergencyRelation.trim(),
+          name: form.emergencyName.trim(),
+          phone: form.emergencyPhone.trim(),
+          email: form.emergencyEmail?.trim() || undefined,
+        }));
+      }
+
+      // Add files
+      for (let i = 0; i < documentFiles.length; i++) {
+        formData.append("documents", documentFiles[i]);
+      }
+      
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        body: formData,
+      });
+
+      // Parse response
+      let data: any = {};
+      try {
+        const contentType = response.headers.get("content-type");
+        if (contentType?.includes("application/json")) {
+          data = await response.json();
+        } else {
+          const text = await response.text();
+          if (text) {
+            try {
+              data = JSON.parse(text);
+            } catch {
+              throw new Error(`Server returned invalid response: ${text.substring(0, 100)}`);
+            }
+          }
+        }
+      } catch (parseErr) {
+        console.error("Response parse error:", parseErr);
+        throw new Error("Erreur serveur: réponse invalide");
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || `Erreur ${response.status}: ${response.statusText}`);
+      }
+
+      toast({
+        title: "Demande envoyée",
+        description: "Votre compte est créé. La licence sera validée sous 48h.",
+      });
+
+      // Clear form and redirect
+      setStep(1);
+      navigate("/member/login");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Une erreur est survenue";
+      console.error("Signup error:", message);
+      toast({
+        title: "Erreur d'inscription",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
-    const email = (data.get("email") as string) || "demo@ftdap.tn";
-    // Demo: pick a role from email prefix for showcase
-    let demoRole: IndividualRole = "athlete";
-    let demoKind: AccountKind = "individual";
-    if (email.startsWith("club")) demoKind = "club";
-    else if (email.startsWith("coach")) demoRole = "coach";
-    else if (email.startsWith("referee") || email.startsWith("arbitre")) demoRole = "referee";
+    const email = (data.get("email") as string) || "";
+    const password = (data.get("password") as string) || "";
 
-    const session: MemberSession = {
-      kind: demoKind,
-      role: demoKind === "individual" ? demoRole : undefined,
-      fullName: demoKind === "club" ? "Club Elite Dance" : "Ahmed Ben Ali",
-      email,
-      city: "Tunis",
-      discipline: "Hip-Hop",
-      clubName: demoKind === "club" ? "Club Elite Dance" : "Club Tunis Danse",
-      avatarUrl: demoKind === "club" ? "" : undefined,
-    };
-    localStorage.setItem("ftdap_member", JSON.stringify(session));
-    window.dispatchEvent(new Event("ftdap-auth-change"));
-    toast({ title: "Connexion réussie" });
-    navigate("/member");
+    if (!email || !password) {
+      toast({ title: "Erreur", description: "Email et mot de passe requis", variant: "destructive" });
+      return;
+    }
+
+    const { error, user: signedIn } = await signIn(email, password);
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Connexion réussie" });
+      // Clubs skip the profile page and land directly on their member management.
+      navigate(signedIn?.accountType === "club" ? "/member/dashboard" : "/member");
+    }
   };
 
   return (
@@ -145,13 +253,20 @@ const MemberAuth = () => {
                       <Label>Mot de passe</Label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input name="password" type="password" required placeholder="••••••••" className="pl-10" />
+                        <Input name="password" type={showPassword ? "text" : "password"} required placeholder="••••••••" className="pl-10 pr-10" />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
                       </div>
                     </div>
-                    <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
-                      💡 Démo : préfixez votre email par <code>club</code>, <code>coach</code> ou <code>arbitre</code> pour tester chaque type d'espace.
-                    </div>
                     <Button type="submit" className="w-full">Se connecter</Button>
+                    <div className="text-center">
+                      <Link to="/forgot-password" className="text-sm text-accent hover:underline">Mot de passe oublié?</Link>
+                    </div>
                   </form>
                 </TabsContent>
 
@@ -256,44 +371,155 @@ const MemberAuth = () => {
                               <Label>Nom du club *</Label>
                               <Input value={form.clubName} onChange={(e) => setForm({ ...form, clubName: e.target.value })} />
                             </div>
-                          </>
-                        ) : (
-                          <div className="space-y-2">
-                            <Label>Nom complet *</Label>
-                            <Input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} />
-                          </div>
-                        )}
-                        {kind === "club" && (
-                          <div className="space-y-2">
-                            <Label>Logo du club</Label>
-                            <div className="flex items-center gap-4">
-                              <div className="w-16 h-16 rounded-full bg-muted border border-border flex items-center justify-center overflow-hidden">
-                                {avatar ? (
-                                  <img src={avatar} alt="Logo" className="w-full h-full object-cover" />
-                                ) : (
-                                  <Building2 className="w-6 h-6 text-muted-foreground" />
+                            <div className="space-y-2">
+                              <Label>Logo du club</Label>
+                              <div className="flex items-center gap-3">
+                                <div className="w-16 h-16 rounded-xl border border-border bg-muted flex items-center justify-center overflow-hidden shrink-0">
+                                  {logoPreview ? (
+                                    <img src={logoPreview} alt="Logo du club" className="w-full h-full object-contain" />
+                                  ) : (
+                                    <Building2 className="w-7 h-7 text-muted-foreground" />
+                                  )}
+                                </div>
+                                <label className="inline-flex items-center gap-2 text-sm border border-border rounded-md px-3 py-2 cursor-pointer hover:bg-muted/60 transition-colors">
+                                  <ImagePlus className="w-4 h-4" /> Choisir une image
+                                  <input
+                                    type="file"
+                                    accept="image/png,image/jpeg,image/webp"
+                                    className="hidden"
+                                    onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) handleLogoChange(f); }}
+                                    disabled={submitting}
+                                  />
+                                </label>
+                                {logoPreview && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleLogoChange(null)}
+                                    className="text-muted-foreground hover:text-destructive"
+                                    title="Retirer le logo"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
                                 )}
                               </div>
-                              <label className="cursor-pointer">
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  className="hidden"
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) {
-                                      const reader = new FileReader();
-                                      reader.onload = (ev) => setAvatar(ev.target?.result as string);
-                                      reader.readAsDataURL(file);
-                                    }
-                                  }}
-                                />
-                                <Button type="button" variant="outline" size="sm" asChild>
-                                  <span><Upload className="w-3.5 h-3.5 mr-1" /> Choisir une image</span>
-                                </Button>
-                              </label>
+                              <p className="text-xs text-muted-foreground">PNG, JPG ou WebP — max 10 Mo (optionnel)</p>
                             </div>
-                          </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="space-y-2">
+                              <Label>Nom complet *</Label>
+                              <Input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label>Date de naissance *</Label>
+                                <Input
+                                  type="date"
+                                  value={form.birthDate}
+                                  onChange={(e) => setForm({ ...form, birthDate: e.target.value })}
+                                  max={new Date().toISOString().slice(0, 10)}
+                                />
+                                {form.birthDate && (
+                                  <p className="text-xs text-muted-foreground">
+                                    {signupAge} ans · {signupAge < 18 ? "Mineur (< 18 ans)" : "Adulte (≥ 18 ans)"}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Genre</Label>
+                                <select
+                                  value={form.gender}
+                                  onChange={(e) => setForm({ ...form, gender: e.target.value })}
+                                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                >
+                                  <option value="M">Homme</option>
+                                  <option value="F">Femme</option>
+                                </select>
+                              </div>
+                            </div>
+                            {form.birthDate && (
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <Label>Année (السنة) *</Label>
+                                  <Input
+                                    type="number"
+                                    min={1900}
+                                    max={2100}
+                                    value={form.actYear}
+                                    onChange={(e) => setForm({ ...form, actYear: e.target.value })}
+                                    placeholder="Ex. 2012"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label>N° d'acte (رقم العقد) *</Label>
+                                  <Input
+                                    value={form.actNumber}
+                                    onChange={(e) => setForm({ ...form, actNumber: e.target.value })}
+                                    placeholder="Ex. 12345"
+                                  />
+                                </div>
+                              </div>
+                            )}
+                            {form.birthDate && (
+                              <div className="border border-border rounded-lg p-3 space-y-3">
+                                <h5 className="text-xs font-semibold">
+                                  {signupAge < 18
+                                    ? "Contact d'urgence — Parent (obligatoire pour les mineurs)"
+                                    : "Contact en cas d'urgence"}
+                                </h5>
+                                <div className="grid grid-cols-2 gap-3">
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">
+                                      {signupAge < 18 ? "Lien de parenté *" : "Lien / Relation *"}
+                                    </Label>
+                                    {signupAge < 18 ? (
+                                      <select
+                                        value={form.emergencyRelation}
+                                        onChange={(e) => setForm({ ...form, emergencyRelation: e.target.value })}
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                      >
+                                        <option value="father">Père (الأب)</option>
+                                        <option value="mother">Mère (الأم)</option>
+                                      </select>
+                                    ) : (
+                                      <Input
+                                        value={form.emergencyRelation}
+                                        onChange={(e) => setForm({ ...form, emergencyRelation: e.target.value })}
+                                        placeholder="Ex. Conjoint, Ami, Frère..."
+                                      />
+                                    )}
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">Nom complet *</Label>
+                                    <Input
+                                      value={form.emergencyName}
+                                      onChange={(e) => setForm({ ...form, emergencyName: e.target.value })}
+                                      required={signupAge < 18}
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">Téléphone *</Label>
+                                    <Input
+                                      type="tel"
+                                      value={form.emergencyPhone}
+                                      onChange={(e) => setForm({ ...form, emergencyPhone: e.target.value })}
+                                      placeholder="+216 .. ... ..."
+                                      required={signupAge < 18}
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">Email</Label>
+                                    <Input
+                                      type="email"
+                                      value={form.emergencyEmail}
+                                      onChange={(e) => setForm({ ...form, emergencyEmail: e.target.value })}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </>
                         )}
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
@@ -306,8 +532,18 @@ const MemberAuth = () => {
                           </div>
                         </div>
                         <div className="space-y-2">
-                          <Label>Mot de passe *</Label>
-                          <Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+                          <Label>Mot de passe (min. 8 caractères) *</Label>
+                          <div className="relative">
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            <Input type={showPassword ? "text" : "password"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="pl-10 pr-10" />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            >
+                              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                          </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
@@ -333,10 +569,10 @@ const MemberAuth = () => {
                           </div>
                         )}
                         <div className="flex justify-between pt-2">
-                          <Button variant="ghost" onClick={() => setStep(kind === "club" ? 1 : 2)}>
+                          <Button variant="ghost" size="sm" onClick={() => setStep(kind === "club" ? 1 : 2)}>
                             <ArrowLeft className="w-4 h-4 mr-1" /> Retour
                           </Button>
-                          <Button onClick={() => setStep(4)} disabled={!form.email || !form.password || !form.city}>
+                          <Button size="sm" onClick={() => setStep(4)} disabled={!form.email || !form.password || !form.city || (kind === "individual" && !form.fullName) || (kind === "club" && !form.orgName)}>
                             Continuer <ArrowRight className="w-4 h-4 ml-1" />
                           </Button>
                         </div>
@@ -362,10 +598,16 @@ const MemberAuth = () => {
                                 <li>RIB du club</li>
                                 <li>Attestation d'assurance</li>
                               </>
+                            ) : form.birthDate && signupAge < 18 ? (
+                              <>
+                                <li className="font-medium">ترخيص أبوي (Autorisation parentale) — obligatoire</li>
+                                <li className="font-medium">الصورة (Photo d'identité) — obligatoire</li>
+                                <li>Extrait de naissance</li>
+                              </>
                             ) : (
                               <>
-                                <li>Carte d'identité nationale (recto/verso)</li>
-                                <li>Photo d'identité récente</li>
+                                <li className="font-medium">Carte d'identité nationale (recto/verso) — obligatoire</li>
+                                <li className="font-medium">Photo d'identité récente — obligatoire</li>
                                 {role === "coach" && <li>Diplôme ou certificat d'entraîneur</li>}
                                 {role === "referee" && <li>Certificat d'arbitrage</li>}
                                 {role === "athlete" && <li>Certificat médical</li>}
@@ -381,31 +623,94 @@ const MemberAuth = () => {
                             className="hidden"
                             accept=".pdf,.jpg,.jpeg,.png"
                             onChange={(e) => handleFiles(e.target.files)}
+                            disabled={submitting}
                           />
                           <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
                           <p className="text-sm font-medium">Cliquez pour télécharger</p>
                           <p className="text-xs text-muted-foreground mt-1">PDF, JPG, PNG — max 10MB</p>
                         </label>
 
-                        {docs.length > 0 && (
-                          <div className="space-y-2">
-                            {docs.map((d, i) => (
-                              <div key={i} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                                <FileText className="w-4 h-4 text-accent" />
-                                <span className="text-sm flex-1 truncate">{d.name}</span>
-                                <span className="text-xs text-muted-foreground">{d.size}</span>
-                                <CheckCircle2 className="w-4 h-4 text-green-600" />
+                        {documentFiles.length > 0 && (
+                          <div className="space-y-3">
+                            <p className="text-sm font-medium">Documents {documentFiles.length > 0 && `(${documentFiles.length})`}</p>
+                            {documentFiles.map((file, i) => (
+                              <div key={i} className="space-y-2 p-3 bg-muted/50 rounded-lg">
+                                <div className="flex items-center gap-3 justify-between">
+                                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                                    <FileText className="w-4 h-4 text-accent shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm truncate">{file.name}</p>
+                                      <p className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(0)} KB</p>
+                                    </div>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeFile(i)}
+                                    className="text-xs text-destructive hover:underline"
+                                  >
+                                    Retirer
+                                  </button>
+                                </div>
+                                <div>
+                                  <Label htmlFor={`type-${i}`} className="text-xs">Type de document *</Label>
+                                  <Select value={documentTypes[i]} onValueChange={(v) => {
+                                    const newTypes = [...documentTypes];
+                                    newTypes[i] = v;
+                                    setDocumentTypes(newTypes);
+                                  }}>
+                                    <SelectTrigger id={`type-${i}`} className="h-8 text-xs">
+                                      <SelectValue placeholder="Sélectionner le type..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {kind === "club" ? (
+                                        <>
+                                          <SelectItem value="statuts">Statuts du club</SelectItem>
+                                          <SelectItem value="legal">Récépissé de dépôt légal</SelectItem>
+                                          <SelectItem value="id">Pièce d'identité</SelectItem>
+                                          <SelectItem value="ag">Procès-verbal AG</SelectItem>
+                                          <SelectItem value="bureau">Liste du bureau</SelectItem>
+                                          <SelectItem value="rib">RIB</SelectItem>
+                                          <SelectItem value="assurance">Attestation assurance</SelectItem>
+                                          <SelectItem value="autre">Autre</SelectItem>
+                                        </>
+                                      ) : (
+                                        <>
+                                          {form.birthDate && signupAge < 18 && (
+                                            <SelectItem value="parental_auth">ترخيص أبوي (Autorisation parentale)</SelectItem>
+                                          )}
+                                          <SelectItem value="id_recto">Pièce d'identité recto</SelectItem>
+                                          <SelectItem value="id_verso">Pièce d'identité verso</SelectItem>
+                                          <SelectItem value="birth_extract">Extrait de naissance (مضمون)</SelectItem>
+                                          <SelectItem value="photo">Photo d'identité</SelectItem>
+                                          <SelectItem value="medical">Certificat médical</SelectItem>
+                                          <SelectItem value="diplome">Diplôme/Certificat</SelectItem>
+                                          <SelectItem value="autre">Autre</SelectItem>
+                                        </>
+                                      )}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
                               </div>
                             ))}
                           </div>
                         )}
 
                         <div className="flex justify-between pt-2">
-                          <Button variant="ghost" onClick={() => setStep(3)}>
+                          <Button variant="ghost" size="sm" onClick={() => setStep(3)} disabled={submitting}>
                             <ArrowLeft className="w-4 h-4 mr-1" /> Retour
                           </Button>
-                          <Button onClick={finishSignup} disabled={docs.length === 0}>
-                            Envoyer la demande
+                          <Button 
+                            size="sm"
+                            onClick={finishSignup} 
+                            disabled={documentFiles.length === 0 || submitting || documentTypes.some(t => !t.trim())}
+                          >
+                            {submitting ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-1 animate-spin" /> Envoi...
+                              </>
+                            ) : (
+                              "Envoyer la demande"
+                            )}
                           </Button>
                         </div>
                       </div>

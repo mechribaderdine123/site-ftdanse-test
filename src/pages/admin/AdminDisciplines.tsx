@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,23 +6,59 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, Upload, X, Save, ImageIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload, X, Save, ImageIcon, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/admin/PageHeader";
-import { disciplinesData, type DisciplineItem } from "@/data/disciplinesData";
+import {
+  adminListContent, adminCreateContent, adminUpdateContent, adminDeleteContent,
+  uploadMediaFile, contentUrl, type ContentItem,
+} from "@/lib/contentApi";
+
+interface DisciplineItem extends ContentItem {
+  slug: string;
+  name: string;
+  shortDesc: string;
+  longDesc: string;
+  image: string;
+  gallery: string[];
+  origin?: string;
+  characteristics?: string[];
+}
 
 const AdminDisciplines = () => {
   const { toast } = useToast();
-  const [items, setItems] = useState<DisciplineItem[]>(disciplinesData);
+  const [items, setItems] = useState<DisciplineItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState<DisciplineItem | null>(null);
+  const [isNew, setIsNew] = useState(false);
   const [open, setOpen] = useState(false);
   const heroRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
 
+  const load = async () => {
+    try {
+      setLoading(true);
+      const data = await adminListContent("disciplines");
+      setItems(data.map((raw) => ({
+        ...(raw as unknown as DisciplineItem),
+        image: contentUrl((raw.image as string) || ""),
+        gallery: ((raw.gallery as string[]) || []).map(contentUrl),
+      })));
+    } catch (error) {
+      toast({ title: "Chargement impossible", description: (error as Error).message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { void load(); }, []);
+
   const blank = (): DisciplineItem => ({
+    id: 0,
     slug: "",
     name: "",
     shortDesc: "",
@@ -35,42 +71,68 @@ const AdminDisciplines = () => {
 
   const openNew = () => {
     setEditing(blank());
+    setIsNew(true);
     setOpen(true);
   };
 
   const openEdit = (d: DisciplineItem) => {
     setEditing({ ...d, characteristics: [...(d.characteristics || [])], gallery: [...d.gallery] });
+    setIsNew(false);
     setOpen(true);
   };
 
-  const save = () => {
+  const save = async () => {
     if (!editing) return;
     if (!editing.name || !editing.slug) {
       toast({ title: "Champs requis", description: "Nom et identifiant sont requis", variant: "destructive" });
       return;
     }
-    const exists = items.some((i) => i.slug === editing.slug);
-    setItems((prev) =>
-      exists ? prev.map((i) => (i.slug === editing.slug ? editing : i)) : [...prev, editing]
-    );
-    setOpen(false);
-    toast({ title: "Enregistré", description: `${editing.name} mis à jour` });
+    try {
+      setSaving(true);
+      const payload = { ...editing, id: undefined };
+      const saved = isNew
+        ? await adminCreateContent("disciplines", payload)
+        : await adminUpdateContent("disciplines", editing.id, payload);
+      const mapped: DisciplineItem = {
+        ...(saved as unknown as DisciplineItem),
+        image: contentUrl((saved.image as string) || ""),
+        gallery: ((saved.gallery as string[]) || []).map(contentUrl),
+      };
+      setItems((prev) =>
+        isNew ? [...prev, mapped] : prev.map((i) => (i.id === mapped.id ? mapped : i))
+      );
+      setOpen(false);
+      toast({ title: "Enregistré", description: `${editing.name} publié sur le site` });
+    } catch (error) {
+      toast({ title: "Enregistrement impossible", description: (error as Error).message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const remove = (slug: string) => {
-    setItems((prev) => prev.filter((i) => i.slug !== slug));
-    toast({ title: "Supprimé" });
+  const remove = async (id: number) => {
+    try {
+      await adminDeleteContent("disciplines", id);
+      setItems((prev) => prev.filter((i) => i.id !== id));
+      toast({ title: "Supprimé" });
+    } catch (error) {
+      toast({ title: "Suppression impossible", description: (error as Error).message, variant: "destructive" });
+    }
   };
 
-  const onHero = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (f && editing) setEditing({ ...editing, image: URL.createObjectURL(f) });
+  const uploadHero = async (f: File | null) => {
+    if (!f || !editing) return;
+    const url = await uploadMediaFile(f);
+    if (url) setEditing({ ...editing, image: url });
   };
 
-  const onGallery = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (!editing) return;
-    const urls = files.map((f) => URL.createObjectURL(f));
+  const uploadGallery = async (files: FileList | null) => {
+    if (!files || !editing) return;
+    const urls: string[] = [];
+    for (const file of Array.from(files)) {
+      const url = await uploadMediaFile(file);
+      if (url) urls.push(url);
+    }
     setEditing({ ...editing, gallery: [...editing.gallery, ...urls] });
   };
 
@@ -89,6 +151,10 @@ const AdminDisciplines = () => {
   const removeChar = (idx: number) =>
     editing && setEditing({ ...editing, characteristics: (editing.characteristics || []).filter((_, i) => i !== idx) });
 
+  if (loading) {
+    return <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -103,7 +169,7 @@ const AdminDisciplines = () => {
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {items.map((d) => (
-          <Card key={d.slug} className="overflow-hidden">
+          <Card key={d.id} className="overflow-hidden">
             <div className="aspect-video bg-muted relative">
               {d.image ? (
                 <img src={d.image} alt={d.name} className="w-full h-full object-cover" />
@@ -128,7 +194,7 @@ const AdminDisciplines = () => {
                 <Button size="sm" variant="outline" className="flex-1" onClick={() => openEdit(d)}>
                   <Pencil className="w-3.5 h-3.5 mr-1" /> Modifier
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => remove(d.slug)}>
+                <Button size="sm" variant="ghost" onClick={() => remove(d.id)}>
                   <Trash2 className="w-3.5 h-3.5 text-destructive" />
                 </Button>
               </div>
@@ -136,13 +202,14 @@ const AdminDisciplines = () => {
           </Card>
         ))}
       </div>
+      {items.length === 0 && (
+        <p className="text-center text-muted-foreground py-10">Aucun style — ajoutez le premier.</p>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              {editing && items.some((i) => i.slug === editing.slug) ? "Modifier le style" : "Nouveau style"}
-            </DialogTitle>
+            <DialogTitle>{isNew ? "Nouveau style" : "Modifier le style"}</DialogTitle>
           </DialogHeader>
 
           {editing && (
@@ -173,7 +240,7 @@ const AdminDisciplines = () => {
                   {editing.image && (
                     <img src={editing.image} alt="" className="w-full h-40 object-cover rounded-md border" />
                   )}
-                  <input ref={heroRef} type="file" accept="image/*" hidden onChange={onHero} />
+                  <input ref={heroRef} type="file" accept="image/*" hidden onChange={(e) => { void uploadHero(e.target.files?.[0] || null); e.target.value = ""; }} />
                   <Button type="button" variant="outline" size="sm" onClick={() => heroRef.current?.click()}>
                     <Upload className="w-4 h-4 mr-2" /> Uploader
                   </Button>
@@ -216,7 +283,7 @@ const AdminDisciplines = () => {
               </TabsContent>
 
               <TabsContent value="gallery" className="space-y-4 pt-4">
-                <input ref={galleryRef} type="file" accept="image/*" multiple hidden onChange={onGallery} />
+                <input ref={galleryRef} type="file" accept="image/*" multiple hidden onChange={(e) => { void uploadGallery(e.target.files); e.target.value = ""; }} />
                 <Button type="button" variant="outline" onClick={() => galleryRef.current?.click()}>
                   <Upload className="w-4 h-4 mr-2" /> Ajouter des images
                 </Button>
@@ -244,8 +311,9 @@ const AdminDisciplines = () => {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-            <Button onClick={save}>
-              <Save className="w-4 h-4 mr-2" /> Enregistrer
+            <Button onClick={save} disabled={saving}>
+              {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+              Enregistrer
             </Button>
           </DialogFooter>
         </DialogContent>

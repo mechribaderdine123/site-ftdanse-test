@@ -1,4 +1,4 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "./AdminSidebar";
@@ -17,6 +17,10 @@ const AdminLayout = () => {
     );
   }
 
+  // Redirect to admin login if not authenticated or not admin
+  if (!user || user.role !== "admin") {
+    return <Navigate to="/admin/login" replace />;
+  }
 
   return (
     <SidebarProvider>
@@ -41,7 +45,7 @@ const AdminLayout = () => {
                 <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary" />
               </Button>
               <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground text-sm font-semibold">
-                A
+                {user.fullName?.charAt(0).toUpperCase() || "A"}
               </div>
             </div>
           </header>

@@ -1,42 +1,22 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Menu, X, Building2, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLang } from "@/contexts/LangContext";
+import { useAuth } from "@/hooks/useAuth";
 import logoFtdap from "@/assets/logo-ftdap.png";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 
-interface MemberSession {
-  kind: "individual" | "club";
-  fullName: string;
-  avatarUrl?: string;
-}
-
 const Navbar = () => {
   const [open, setOpen] = useState(false);
-  const [session, setSession] = useState<MemberSession | null>(null);
+  const { user } = useAuth();
   const { t } = useLang();
 
-  useEffect(() => {
-    const check = () => {
-      const raw = localStorage.getItem("ftdap_member");
-      if (raw) {
-        try {
-          setSession(JSON.parse(raw));
-        } catch {
-          setSession(null);
-        }
-      } else {
-        setSession(null);
+  const session = user
+    ? {
+        kind: user.accountType === "club" ? ("club" as const) : ("individual" as const),
+        fullName: user.fullName || user.email,
       }
-    };
-    check();
-    window.addEventListener("ftdap-auth-change", check);
-    window.addEventListener("storage", check);
-    return () => {
-      window.removeEventListener("ftdap-auth-change", check);
-      window.removeEventListener("storage", check);
-    };
-  }, []);
+    : null;
 
   const navLinks = [
     { label: t("nav.home"), href: "/" },
@@ -74,11 +54,7 @@ const Navbar = () => {
               className="inline-flex items-center gap-2 rounded-full border border-border bg-muted/60 px-3 py-1.5 text-sm font-medium text-primary hover:bg-muted transition-colors"
             >
               {session.kind === "club" ? (
-                session.avatarUrl ? (
-                  <img src={session.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover" />
-                ) : (
-                  <Building2 className="w-4 h-4 text-violet-600" />
-                )
+                <Building2 className="w-4 h-4 text-violet-600" />
               ) : (
                 <User className="w-4 h-4 text-blue-600" />
               )}
@@ -127,11 +103,7 @@ const Navbar = () => {
                 onClick={() => setOpen(false)}
               >
                 {session.kind === "club" ? (
-                  session.avatarUrl ? (
-                    <img src={session.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover" />
-                  ) : (
-                    <Building2 className="w-4 h-4 text-violet-600" />
-                  )
+                  <Building2 className="w-4 h-4 text-violet-600" />
                 ) : (
                   <User className="w-4 h-4 text-blue-600" />
                 )}

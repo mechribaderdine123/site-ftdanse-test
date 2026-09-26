@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate, Link } from "react-router-dom";
 import {
   User, Building2, Trophy, GraduationCap, Award, LogOut, BadgeCheck,
-  Calendar, MapPin, Mail, Phone, Plus, Pencil, Trash2, Users, FileText,
-  TrendingUp, Medal, ShieldCheck, Clock, ArrowLeft, Eye,
+  Calendar, MapPin, Mail, Plus, Pencil, Trash2, FileText,
+  TrendingUp, Medal, Clock, ArrowLeft, Eye, CalendarClock,
 } from "lucide-react";
 import TopBar from "@/components/TopBar";
 import Navbar from "@/components/Navbar";
@@ -17,16 +18,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import {
-  ClubMember, UploadedDoc, loadClubMembers, upsertClubMember,
-  removeClubMember, computeAge,
-} from "@/data/clubMembersStore";
+import { apiRequest } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
+import { LicenseQrCard, openPrintLicenseWindow } from "@/components/LicenseQr";
+import { ExpiryChip } from "@/components/LicenseExpiry";
+import MemberRenewalDialog, { useMemberRenewals } from "@/components/club/MemberRenewalDialog";
+import { computeAge } from "@/data/clubMembersStore";
+import type { UploadedDoc, ClubMember } from "@/data/clubMembersStore";
+import { DocumentsTabs } from "@/components/club/ClubDocumentsTabs";
 import { Switch } from "@/components/ui/switch";
-import { Upload, Send, FileCheck2, CheckCircle2, XCircle, AlertCircle, Printer } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
-import licenseTemplate from "@/assets/license-template.png";
-import QRCode from "qrcode";
-import { printClubLicense } from "@/lib/printLicense";
+import { Upload, FileCheck2, CheckCircle2, XCircle, AlertCircle, Printer } from "lucide-react";
+
 
 type AccountKind = "individual" | "club";
 type IndividualRole = "athlete" | "coach" | "referee";
@@ -79,19 +81,62 @@ const RoleBadge = ({ session }: { session: MemberSession }) => {
   );
 };
 
+// Server-backed club member (replaces the old localStorage-only ClubMember).
+interface ApiClubMember {
+  id: number;
+  memberId: string | null;
+  fullName: string;
+  birthDate?: string;
+  age?: number;
+  gender?: "M" | "F";
+  discipline?: string;
+  phone?: string;
+  email?: string;
+  season?: string;
+  quality?: string;
+  clubName?: string;
+  emergencyContact?: ClubMember["emergencyContact"];
+  documents: Record<string, UploadedDoc>;
+  payment: ClubMember["payment"];
+  approvalStatus: "pending" | "accepted" | "rejected" | "approved";
+  licenseNumber: string | null;
+  licenseExpiresAt?: string | null;
+  createdAt: string;
+}
+
+const toClubMember = (m: ApiClubMember): ClubMember => ({
+  id: m.memberId || String(m.id),
+  clubName: m.clubName || "",
+  fullName: m.fullName,
+  birthDate: m.birthDate || "",
+  age: m.age || 0,
+  gender: m.gender || "M",
+  discipline: m.discipline || "",
+  phone: m.phone,
+  email: m.email,
+  season: m.season,
+  quality: m.quality,
+  emergencyContact: m.emergencyContact,
+  documents: (m.documents || {}) as ClubMember["documents"],
+  payment: m.payment || { status: "unpaid" },
+  approval: { status: m.approvalStatus },
+  createdAt: m.createdAt,
+});
+
 const MemberDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, signOut } = useAuth();
   const [session, setSession] = useState<MemberSession | null>(null);
-  const [dancers, setDancers] = useState<Dancer[]>(initialDancers);
+  const [dancers, setDancers] = useState<Dancer[]>([]);
   const [dancerDialog, setDancerDialog] = useState(false);
   const [editDancer, setEditDancer] = useState<Dancer | null>(null);
-  const [badgeRequested, setBadgeRequested] = useState(false);
 
-  // Club member management state
+  // Club member management state (persisted through the API)
   const [clubMembers, setClubMembers] = useState<ClubMember[]>([]);
   const [cmDialog, setCmDialog] = useState(false);
-  const [editCm, setEditCm] = useState<ClubMember | null>(null);
+  const [editCm, setEditCm] = useState<ApiClubMember | null>(null);
+  const [editingDbId, setEditingDbId] = useState<number | null>(null);
   const [cmBirth, setCmBirth] = useState<string>("");
   const [cmDocs, setCmDocs] = useState<ClubMember["documents"]>({});
   const [cmPayment, setCmPayment] = useState<ClubMember["payment"]>({ status: "unpaid" });
@@ -99,25 +144,50 @@ const MemberDashboard = () => {
   const [seasonFilter, setSeasonFilter] = useState<string>("all");
   const [searchId, setSearchId] = useState<string>("");
   const [viewMember, setViewMember] = useState<ClubMember | null>(null);
+  const [renewalTarget, setRenewalTarget] = useState<{ id: number; fullName: string; licenseNumber: string | null; licenseExpiresAt: string | null; daysRemaining: number | null } | null>(null);
+
+  const { data: apiClubMembers, refetch: refetchClubMembers } = useQuery({
+    queryKey: ["club-members"],
+    queryFn: () => apiRequest<ApiClubMember[]>("/api/member/club-members"),
+    enabled: !!user,
+  });
+
+  // Auto-generated license number for the signed-in account (athlete, coach, referee or club).
+  const { data: profileData } = useQuery({
+    queryKey: ["member-profile"],
+    queryFn: () => apiRequest<{ licenseNumber: string | null; publicId: string | null }>("/api/member/profile"),
+    enabled: !!user,
+  });
+  const licenseNumber = profileData?.licenseNumber || profileData?.publicId || null;
+
+  // Renouvellements annuels des membres du club (état + échéances).
+  const { data: renewalRows, refetch: refetchRenewals } = useMemberRenewals(!!user && user.accountType === "club");
 
   useEffect(() => {
-    const raw = localStorage.getItem("ftdap_member");
-    if (!raw) { navigate("/member/login"); return; }
-    setSession(JSON.parse(raw));
-    setClubMembers(loadClubMembers());
-  }, [navigate]);
+    if (!user) { navigate("/member/login"); return; }
+    setSession({
+      kind: user.accountType === "club" ? "club" : "individual",
+      role: user.accountType === "club" ? undefined : (user.accountType as IndividualRole),
+      fullName: user.fullName || user.email,
+      email: user.email,
+      city: (user as unknown as { city?: string }).city || "",
+      discipline: (user as unknown as { discipline?: string }).discipline || "",
+      clubName: (user as unknown as { clubName?: string }).clubName,
+    });
+  }, [user]);
 
+  useEffect(() => {
+    if (apiClubMembers) {
+      setClubMembers(apiClubMembers.map(toClubMember));
+    }
+  }, [apiClubMembers]);
+
+  if (!user) return null;
   if (!session) return null;
 
   const logout = () => {
-    localStorage.removeItem("ftdap_member");
-    window.dispatchEvent(new Event("ftdap-auth-change"));
+    signOut();
     navigate("/");
-  };
-
-  const requestBadge = () => {
-    setBadgeRequested(true);
-    toast({ title: "Demande d'activation envoyée", description: "Votre licence sera activée sous 48h." });
   };
 
   const saveDancer = (e: React.FormEvent<HTMLFormElement>) => {
@@ -170,54 +240,128 @@ const MemberDashboard = () => {
     setCmDialog(true);
   };
   const openEditClubMember = (m: ClubMember) => {
-    setEditCm(m);
+    const api = apiClubMembers?.find((row) => (row.memberId || String(row.id)) === m.id);
+    setEditCm(api || null);
+    setEditingDbId(api?.id ?? null);
     setCmBirth(m.birthDate);
     setCmDocs(m.documents);
     setCmPayment(m.payment);
     setCmDialog(true);
   };
 
-  const compressImage = (file: File, maxSize = 600, quality = 0.7): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onerror = () => reject(reader.error);
-      reader.onload = () => {
-        const img = new Image();
-        img.onerror = () => reject(new Error("image load failed"));
-        img.onload = () => {
-          const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
-          const w = Math.round(img.width * scale);
-          const h = Math.round(img.height * scale);
-          const canvas = document.createElement("canvas");
-          canvas.width = w;
-          canvas.height = h;
-          const ctx = canvas.getContext("2d");
-          if (!ctx) return reject(new Error("no ctx"));
-          ctx.drawImage(img, 0, 0, w, h);
-          resolve(canvas.toDataURL("image/jpeg", quality));
-        };
-        img.src = reader.result as string;
-      };
-      reader.readAsDataURL(file);
-    });
-
-  const fakeUpload = async (file: File): Promise<UploadedDoc> => {
-    let dataUrl: string | undefined;
-    if (file.type.startsWith("image/")) {
-      try {
-        dataUrl = await compressImage(file);
-      } catch {
-        dataUrl = undefined;
+  const saveClubMember = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!requiredDocsOk) {
+      toast({ title: "Documents requis manquants", variant: "destructive" });
+      return;
+    }
+    const data = new FormData(e.currentTarget);
+    const payload = new FormData();
+    payload.append("fullName", String(data.get("fullName") || ""));
+    payload.append("birthDate", cmBirth);
+    payload.append("age", String(age));
+    payload.append("gender", String(data.get("gender") || "M"));
+    payload.append("discipline", String(data.get("discipline") || ""));
+    payload.append("phone", String(data.get("phone") || ""));
+    payload.append("email", String(data.get("email") || ""));
+    payload.append("season", String(data.get("season") || ""));
+    payload.append("quality", String(data.get("quality") || ""));
+    payload.append("actYear", String(data.get("actYear") || ""));
+    payload.append("actNumber", String(data.get("actNumber") || ""));
+    const emRel = String(data.get("emergencyRelation") || "");
+    const emName = String(data.get("emergencyName") || "");
+    const emPhone = String(data.get("emergencyPhone") || "");
+    const emEmail = String(data.get("emergencyEmail") || "");
+    payload.append("emergencyContact", JSON.stringify(
+      emRel && emName && emPhone
+        ? { relation: emRel, name: emName, phone: emPhone, email: emEmail || undefined }
+        : editCm?.emergencyContact || null,
+    ));
+    const keepKeys: string[] = [];
+    for (const [key, doc] of Object.entries(cmDocs)) {
+      if (!doc) continue;
+      if (doc.storedName) {
+        keepKeys.push(key); // previously uploaded file — keep server copy
+      } else if (doc.file) {
+        payload.append("documents", doc.file);
+        payload.append("documentKeys", key);
       }
     }
-    return { name: file.name, uploadedAt: new Date().toISOString(), size: file.size, dataUrl };
+    if (editingDbId) payload.append("keepExistingDocuments", JSON.stringify(keepKeys));
+
+    try {
+      if (editingDbId) {
+        await apiRequest(`/api/member/club-members/${editingDbId}`, { method: "PUT", body: payload });
+      } else {
+        await apiRequest("/api/member/club-members", { method: "POST", body: payload });
+      }
+      setCmDialog(false);
+      setEditCm(null);
+      setEditingDbId(null);
+      setCmDocs({});
+      await refetchClubMembers();
+      toast({ title: editingDbId ? "Membre modifié" : "Membre ajouté", description: "Le numéro de licence est généré automatiquement." });
+    } catch (error) {
+      toast({ title: "Enregistrement impossible", description: (error as Error).message, variant: "destructive" });
+    }
   };
 
+  const deleteClubMember = async (id: string) => {
+    const api = apiClubMembers?.find((row) => (row.memberId || String(row.id)) === id);
+    if (!api) return;
+    try {
+      await apiRequest(`/api/member/club-members/${api.id}`, { method: "DELETE" });
+      await refetchClubMembers();
+      toast({ title: "Membre supprimé" });
+    } catch (error) {
+      toast({ title: "Suppression impossible", description: (error as Error).message, variant: "destructive" });
+    }
+  };
+
+  const togglePaymentStatus = async (m: ClubMember, paid: boolean) => {
+    const api = apiClubMembers?.find((row) => (row.memberId || String(row.id)) === m.id);
+    if (!api) return;
+    try {
+      await apiRequest("/api/member/club-members/bulk-payment", {
+        method: "POST",
+        body: JSON.stringify({ memberIds: [api.id], status: paid ? "paid" : "unpaid" }),
+      });
+      await refetchClubMembers();
+    } catch (error) {
+      toast({ title: "Mise à jour impossible", description: (error as Error).message, variant: "destructive" });
+    }
+  };
+
+  const paidMembers = myClubMembers.filter((m) => m.payment.status === "paid");
+
+  const handleBulkPayment = async (file: File) => {
+    if (paidMembers.length === 0) return;
+    const ids = paidMembers
+      .map((m) => apiClubMembers?.find((row) => (row.memberId || String(row.id)) === m.id)?.id)
+      .filter((id): id is number => typeof id === "number");
+    const payload = new FormData();
+    payload.append("memberIds", JSON.stringify(ids));
+    payload.append("documents", file);
+    try {
+      await apiRequest("/api/member/club-members/bulk-payment", { method: "POST", body: payload });
+      await refetchClubMembers();
+      toast({
+        title: "Paiement enregistré",
+        description: `Reçu attaché à ${ids.length} membre(s) payé(s).`,
+      });
+      setBulkPayDialog(false);
+    } catch (error) {
+      toast({ title: "Paiement impossible", description: (error as Error).message, variant: "destructive" });
+    }
+  };
+
+  // Documents are kept locally in state as pending Files until save, then
+  // uploaded through the API (multipart) — no more base64 in localStorage.
   const handleDocChange = (key: keyof ClubMember["documents"]) =>
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
+    (e: React.ChangeEvent<HTMLInputElement>) => {
       const f = e.target.files?.[0];
       if (!f) return;
-      const doc = await fakeUpload(f);
+      const doc: UploadedDoc = { name: f.name, uploadedAt: new Date().toISOString(), size: f.size, file: f };
       setCmDocs((prev) => ({ ...prev, [key]: doc }));
     };
 
@@ -229,146 +373,14 @@ const MemberDashboard = () => {
       : !!cmDocs.cin && !!cmDocs.photo
     : false;
 
-  const saveClubMember = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!requiredDocsOk) {
-      toast({ title: "Documents requis manquants", variant: "destructive" });
-      return;
-    }
-    const data = new FormData(e.currentTarget);
-    const generateMemberId = () => {
-      const yy = new Date().getFullYear().toString().slice(-2);
-      const all = loadClubMembers();
-      const sameYear = all.filter((x) => /^\d{3}-\d{2}$/.test(x.id) && x.id.endsWith(`-${yy}`));
-      const maxSeq = sameYear.reduce((acc, x) => {
-        const n = parseInt(x.id.split("-")[0], 10);
-        return isNaN(n) ? acc : Math.max(acc, n);
-      }, 0);
-      return `${String(maxSeq + 1).padStart(3, "0")}-${yy}`;
-    };
-    const emRel = data.get("emergencyRelation") as string;
-    const emName = data.get("emergencyName") as string;
-    const emPhone = data.get("emergencyPhone") as string;
-    const emEmail = data.get("emergencyEmail") as string;
-    const m: ClubMember = {
-      id: editCm?.id || generateMemberId(),
-      clubName: session.fullName,
-      fullName: data.get("fullName") as string,
-      birthDate: cmBirth,
-      age,
-      gender: (data.get("gender") as "M" | "F") || "M",
-      discipline: data.get("discipline") as string,
-      phone: (data.get("phone") as string) || undefined,
-      email: (data.get("email") as string) || undefined,
-      season: (data.get("season") as string) || editCm?.season,
-      quality: (data.get("quality") as string) || editCm?.quality,
-      emergencyContact:
-        emRel && emName && emPhone
-          ? { relation: emRel, name: emName, phone: emPhone, email: emEmail || undefined }
-          : editCm?.emergencyContact,
-      documents: cmDocs,
-      payment: cmPayment,
-      approval: editCm?.approval || { status: "pending" },
-      createdAt: editCm?.createdAt || new Date().toISOString(),
-    };
-    try {
-      upsertClubMember(m);
-      setClubMembers(loadClubMembers());
-      setCmDialog(false);
-      toast({ title: editCm ? "Membre modifié" : "Membre ajouté" });
-    } catch (err) {
-      // Quota likely exceeded — retry without dataUrls
-      const slim: ClubMember = {
-        ...m,
-        documents: Object.fromEntries(
-          Object.entries(m.documents).map(([k, v]) => [k, v ? { ...v, dataUrl: undefined } : v])
-        ) as ClubMember["documents"],
-      };
-      try {
-        upsertClubMember(slim);
-        setClubMembers(loadClubMembers());
-        setCmDialog(false);
-        toast({
-          title: "Membre enregistré",
-          description: "Aperçu des images désactivé (stockage local plein).",
-        });
-      } catch {
-        toast({
-          title: "Stockage plein",
-          description: "Supprimez d'anciens membres pour libérer de l'espace.",
-          variant: "destructive",
-        });
-      }
-    }
-  };
-
-  const deleteClubMember = (id: string) => {
-    removeClubMember(id);
-    setClubMembers(loadClubMembers());
-    toast({ title: "Membre supprimé" });
-  };
-
-  const togglePaymentStatus = (m: ClubMember, paid: boolean) => {
-    const all = loadClubMembers();
-    const updated = all.map((x) =>
-      x.id === m.id
-        ? {
-            ...x,
-            payment: {
-              ...x.payment,
-              status: paid ? ("paid" as const) : ("unpaid" as const),
-              updatedAt: new Date().toISOString(),
-              // clear receipt if marked unpaid
-              receipt: paid ? x.payment.receipt : undefined,
-            },
-          }
-        : x,
-    );
-    saveAllAndReload(updated);
-  };
-
-  const paidMembers = myClubMembers.filter((m) => m.payment.status === "paid");
-
-  const handleBulkPayment = async (file: File) => {
-    if (paidMembers.length === 0) return;
-    const receipt = await fakeUpload(file);
-    const now = new Date().toISOString();
-    const all = loadClubMembers();
-    const paidIds = paidMembers.map((p) => p.id);
-    const updated = all.map((m) => {
-      if (!paidIds.includes(m.id)) return m;
-      const docsCount = Object.values(m.documents).filter(Boolean).length;
-      const canSubmit = docsCount >= 2;
-      return {
-        ...m,
-        payment: { status: "paid" as const, receipt, updatedAt: now },
-        approval: canSubmit
-          ? { status: "pending" as const, submittedAt: now }
-          : m.approval,
-      };
-    });
-    saveAllAndReload(updated);
-    const submittedCount = updated.filter(
-      (m) => paidIds.includes(m.id) && m.approval.status === "pending" && m.approval.submittedAt === now,
-    ).length;
-    toast({
-      title: "Paiement enregistré",
-      description: `Reçu attaché à ${paidIds.length} membre(s) payé(s). ${submittedCount} soumission(s) envoyée(s) pour licence.`,
-    });
-    setBulkPayDialog(false);
-  };
-
-  const saveAllAndReload = (list: ClubMember[]) => {
-    localStorage.setItem("ftdap_club_members", JSON.stringify(list));
-    setClubMembers(loadClubMembers());
-  };
-
   const approvalBadge = (status: ClubMember["approval"]["status"]) => {
+    // The API uses approved/rejected (not accepted) — map both spellings.
+    const normalized = status === "accepted" ? "approved" : status;
     const m = {
       pending: { label: "En attente", cls: "bg-yellow-100 text-yellow-700", icon: AlertCircle },
-      accepted: { label: "Acceptée", cls: "bg-green-100 text-green-700", icon: CheckCircle2 },
+      approved: { label: "Approuvée", cls: "bg-green-100 text-green-700", icon: CheckCircle2 },
       rejected: { label: "Refusée", cls: "bg-red-100 text-red-700", icon: XCircle },
-    }[status];
+    }[normalized] ?? { label: status, cls: "bg-muted text-muted-foreground", icon: AlertCircle };
     const Icon = m.icon;
     return (
       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${m.cls}`}>
@@ -377,128 +389,30 @@ const MemberDashboard = () => {
     );
   };
 
+  const daysUntilExpiry = (value: unknown): number | null => {
+    if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+    const target = new Date(`${value}T00:00:00Z`).getTime();
+    if (Number.isNaN(target)) return null;
+    const today = new Date(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`).getTime();
+    return Math.ceil((target - today) / 86400000);
+  };
+
   const printLicense = async (m: ClubMember) => {
-    const [first, ...rest] = (m.fullName || "").split(" ");
-    const prenom = rest.join(" ") || first;
-    const nom = rest.length ? first : "";
-    const photo = m.documents.photo?.dataUrl || "";
-    const qrData = JSON.stringify({
-      kind: "athlete",
-      id: m.id,
-      name: m.fullName,
-      club: m.clubName,
-      birthDate: m.birthDate,
-      age: m.age,
-      gender: m.gender,
-      discipline: m.discipline,
-      season: m.season,
-      quality: m.quality,
-      phone: m.phone,
+    const api = apiClubMembers?.find((row) => (row.memberId || String(row.id)) === m.id);
+    const ok = await openPrintLicenseWindow({
+      licenseNumber: api?.licenseNumber || m.id,
+      fullName: m.fullName,
+      accountType: "athlete",
       email: m.email,
+      phone: m.phone,
+      discipline: m.discipline,
+      clubName: m.clubName,
+      season: m.season,
+      photoDataUrl: m.documents.photo?.dataUrl,
     });
-    let qrUrl = "";
-    try {
-      qrUrl = await QRCode.toDataURL(qrData, { width: 220, margin: 1, errorCorrectionLevel: "M" });
-    } catch {}
-    const html = `<!doctype html><html><head><meta charset="utf-8"/><title>Licence ${m.id}</title>
-<style>
-  @page { size: A6 landscape; margin: 0; }
-  body { margin: 0; font-family: 'Inter', Arial, sans-serif; background:#f3f4f6; }
-  .card { position: relative; width: 620px; height: 400px; margin: 16px auto; background-image:url('${licenseTemplate}'); background-size: cover; background-position: center; }
-  .fields { position:absolute; left: 38px; top: 168px; font-size: 14px; color:#0a3d8f; line-height: 1.55; font-weight:600; }
-  .fields .row { display:flex; gap:6px; }
-  .fields .lbl { width: 130px; color:#7a1d1d; }
-  .fields .val { border-bottom:1px dotted #94a3b8; min-width:220px; padding:0 4px; }
-  .lic { position:absolute; left: 230px; top: 118px; font-size: 15px; font-weight:700; color:#0a3d8f; }
-  .photo { position:absolute; right: 24px; top: 36px; width: 130px; height: 160px; border:2px solid #c2185b; background:#fff; object-fit: cover; }
-  .photo-ph { position:absolute; right: 24px; top: 36px; width: 130px; height: 160px; border:2px dashed #c2185b; background:#fff8; display:flex; align-items:center; justify-content:center; color:#c2185b; font-size:11px; }
-  .qr { position:absolute; right: 28px; bottom: 18px; width: 86px; height: 86px; background:#fff; padding:4px; border:1px solid #c2185b; border-radius:4px; }
-  .toolbar { text-align:center; padding: 12px; }
-  .toolbar button { padding:8px 16px; background:#0a3d8f; color:#fff; border:0; border-radius:6px; cursor:pointer; }
-  @media print { .toolbar { display:none; } body { background:#fff; } .card { margin:0; } }
-</style></head>
-<body>
-  <div class="card">
-    <div class="lic">${m.id}</div>
-    ${photo
-      ? `<img class="photo" src="${photo}" alt="photo" />`
-      : `<div class="photo-ph">Photo</div>`}
-    <div class="fields">
-      <div class="row"><span class="lbl">Nom :</span><span class="val">${nom || "—"}</span></div>
-      <div class="row"><span class="lbl">Prénom :</span><span class="val">${prenom || "—"}</span></div>
-      <div class="row"><span class="lbl">Date de Naissance :</span><span class="val">${m.birthDate || "—"}</span></div>
-      <div class="row"><span class="lbl">Saison :</span><span class="val">${m.season || "—"}</span></div>
-      <div class="row"><span class="lbl">Qualité :</span><span class="val">${m.quality || m.discipline || "—"}</span></div>
-      <div class="row"><span class="lbl">Club :</span><span class="val">${m.clubName || "—"}</span></div>
-    </div>
-    ${qrUrl ? `<img class="qr" src="${qrUrl}" alt="QR" />` : ""}
-  </div>
-  <script>
-    (function(){
-      var imgs = Array.from(document.images);
-      var bg = new Image(); bg.src = '${licenseTemplate}'; imgs.push(bg);
-      var pending = imgs.filter(function(i){ return !i.complete; }).length;
-      function done(){
-        try { window.parent.postMessage({ type: 'ftdap-license-print-done' }, '*'); } catch (e) {}
-      }
-      function go(){
-        window.focus();
-        setTimeout(function(){
-          window.print();
-          setTimeout(done, 1200);
-        }, 60);
-      }
-      window.addEventListener('afterprint', done);
-      if (pending === 0) { go(); return; }
-      imgs.forEach(function(i){ i.addEventListener('load', function(){ if(--pending<=0) go(); }); i.addEventListener('error', function(){ if(--pending<=0) go(); }); });
-    })();
-  </script>
-</body></html>`;
-
-    document
-      .querySelectorAll('iframe[data-license-print-frame="true"]')
-      .forEach((node) => node.remove());
-
-    const iframe = document.createElement("iframe");
-    iframe.setAttribute("data-license-print-frame", "true");
-    iframe.setAttribute("aria-hidden", "true");
-    iframe.style.position = "fixed";
-    iframe.style.width = "1px";
-    iframe.style.height = "1px";
-    iframe.style.opacity = "0";
-    iframe.style.pointerEvents = "none";
-    iframe.style.border = "0";
-    iframe.style.right = "0";
-    iframe.style.bottom = "0";
-
-    const cleanup = () => {
-      window.removeEventListener("message", handleMessage);
-      iframe.remove();
-    };
-
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type === "ftdap-license-print-done") {
-        cleanup();
-      }
-    };
-
-    window.addEventListener("message", handleMessage);
-    document.body.appendChild(iframe);
-
-    const doc = iframe.contentWindow?.document;
-    if (!doc) {
-      cleanup();
-      toast({
-        title: "Impression impossible",
-        description: "Le document de licence n'a pas pu être généré.",
-        variant: "destructive",
-      });
-      return;
+    if (!ok) {
+      toast({ title: "Impression impossible", description: "Autorisez les pop-ups pour imprimer la licence.", variant: "destructive" });
     }
-
-    doc.open();
-    doc.write(html);
-    doc.close();
   };
 
   return (
@@ -585,10 +499,9 @@ const MemberDashboard = () => {
                               const reader = new FileReader();
                               reader.onload = (ev) => {
                                 const url = ev.target?.result as string;
-                                const updated = { ...session, avatarUrl: url };
-                                localStorage.setItem("ftdap_member", JSON.stringify(updated));
-                                setSession(updated);
-                                toast({ title: "Logo mis à jour" });
+                              const updated = { ...session, avatarUrl: url };
+                              setSession(updated);
+                              toast({ title: "Logo mis à jour" });
                               };
                               reader.readAsDataURL(file);
                             }}
@@ -722,25 +635,39 @@ const MemberDashboard = () => {
                       <div className="flex items-start justify-between mb-6">
                         <div>
                           <p className="text-xs opacity-80">Licence n°</p>
-                          <p className="font-mono text-lg font-bold">FTDAP-2025-{Math.floor(Math.random() * 9000 + 1000)}</p>
+                          <p className="font-mono text-lg font-bold">{licenseNumber || "En attente d'attribution"}</p>
                         </div>
                         <BadgeCheck className="w-10 h-10" />
                       </div>
                       <p className="font-bold text-xl">{session.fullName}</p>
                       <p className="text-sm opacity-90">{session.discipline} · {session.city}</p>
                       <div className="mt-6 pt-4 border-t border-primary-foreground/20 flex items-center justify-between text-xs">
-                        <span>Saison 2025</span>
-                        <span className={`px-2 py-0.5 rounded-full ${badgeRequested ? "bg-yellow-400 text-yellow-900" : "bg-green-400 text-green-900"}`}>
-                          {badgeRequested ? "En attente" : "Active"}
+                        <span>Saison {new Date().getFullYear()}</span>
+                        <span className={`px-2 py-0.5 rounded-full ${user.status === "approved" ? "bg-green-400 text-green-900" : "bg-yellow-400 text-yellow-900"}`}>
+                          {user.status === "approved" ? "Active" : "En attente"}
                         </span>
                       </div>
                     </div>
-                    <div className="mt-6 flex gap-3">
-                      <Button onClick={requestBadge} disabled={badgeRequested}>
-                        <ShieldCheck className="w-4 h-4 mr-2" />
-                        {badgeRequested ? "Demande envoyée" : "Demander l'activation"}
+                    <div className="mt-6 flex flex-wrap items-center gap-3">
+                      <LicenseQrCard licenseNumber={licenseNumber} size={120} caption="Scannez pour vérifier" />
+                      <Button
+                        variant="outline"
+                        disabled={!licenseNumber}
+                        onClick={() =>
+                          licenseNumber &&
+                          openPrintLicenseWindow({
+                            licenseNumber,
+                            fullName: session.fullName,
+                            accountType: session.role || "athlete",
+                            email: session.email,
+                            city: session.city,
+                            discipline: session.discipline,
+                            clubName: session.clubName,
+                          })
+                        }
+                      >
+                        <Printer className="w-4 h-4 mr-2" /> Imprimer la licence
                       </Button>
-                      <Button variant="outline">Télécharger PDF</Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -908,6 +835,7 @@ const MemberDashboard = () => {
                           <TableHead>Documents</TableHead>
                           <TableHead>Paiement</TableHead>
                           <TableHead>Licence</TableHead>
+                          <TableHead>Échéance</TableHead>
                           <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -962,6 +890,19 @@ const MemberDashboard = () => {
                                 </div>
                               </TableCell>
                               <TableCell>{approvalBadge(m.approval.status)}</TableCell>
+                              {(() => {
+                                const api = apiClubMembers?.find((row) => (row.memberId || String(row.id)) === m.id);
+                                return (
+                                  <TableCell>
+                                    <ExpiryChip
+                                      info={{
+                                        licenseExpiresAt: api?.licenseExpiresAt ?? null,
+                                        daysRemaining: daysUntilExpiry(api?.licenseExpiresAt),
+                                      }}
+                                    />
+                                  </TableCell>
+                                );
+                              })()}
                               <TableCell className="text-right">
                                 <div className="flex justify-end gap-1">
                                   <Button variant="ghost" size="icon" title="Voir profil" onClick={() => setViewMember(m)}>
@@ -970,6 +911,32 @@ const MemberDashboard = () => {
                                   <Button variant="ghost" size="icon" title="Imprimer la licence" onClick={() => printLicense(m)}>
                                     <Printer className="w-4 h-4" />
                                   </Button>
+                                  {(() => {
+                                    const api = apiClubMembers?.find((row) => (row.memberId || String(row.id)) === m.id);
+                                    const renewal = renewalRows?.find((row) => row.id === api?.id);
+                                    const approved = (api?.approvalStatus ?? m.approval.status) === "approved" && api?.licenseNumber;
+                                    const upToDate = api?.licenseExpiresAt ? api.licenseExpiresAt >= `${new Date().getFullYear() + 1}-09-30` : false;
+                                    if (!approved || upToDate) return null;
+                                    return (
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        title={renewal?.renewalStatus === "pending" ? "Renouvellement en cours de traitement" : "Demander le renouvellement"}
+                                        className={renewal?.renewalStatus === "pending" ? "text-yellow-600" : "text-primary"}
+                                        onClick={() =>
+                                          setRenewalTarget({
+                                            id: api!.id,
+                                            fullName: m.fullName,
+                                            licenseNumber: api?.licenseNumber ?? null,
+                                            licenseExpiresAt: api?.licenseExpiresAt ?? null,
+                                            daysRemaining: daysUntilExpiry(api?.licenseExpiresAt),
+                                          })
+                                        }
+                                      >
+                                        <CalendarClock className="w-4 h-4" />
+                                      </Button>
+                                    );
+                                  })()}
                                   <Button variant="ghost" size="icon" onClick={() => openEditClubMember(m)}>
                                     <Pencil className="w-4 h-4" />
                                   </Button>
@@ -995,66 +962,62 @@ const MemberDashboard = () => {
             {/* CLUB LICENSE */}
             {isClub && (
               <TabsContent value="club-license">
-                {(() => {
-                  const yy = String(new Date().getFullYear()).slice(-2);
-                  const key = `ftdap_club_license_${session.fullName}`;
-                  let clubLicenseId = localStorage.getItem(key) || "";
-                  if (!clubLicenseId) {
-                    clubLicenseId = `CLUB-001-${yy}`;
-                    localStorage.setItem(key, clubLicenseId);
-                  }
-                  const data = {
-                    id: clubLicenseId,
-                    name: session.fullName,
-                    city: session.city,
-                    discipline: session.discipline,
-                    email: session.email,
-                    phone: (session as any).phone,
-                    season: `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`,
-                    avatarUrl: session.avatarUrl,
-                  };
-                  return (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Licence du club</CardTitle>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Aperçu et impression de la licence officielle du club avec QR code.
-                        </p>
-                      </CardHeader>
-                      <CardContent className="space-y-6">
-                        <div className="rounded-2xl border border-border bg-gradient-to-br from-primary/90 to-primary text-primary-foreground p-6 max-w-xl">
-                          <div className="flex items-start justify-between mb-4">
-                            <div>
-                              <p className="text-xs opacity-80">Licence n°</p>
-                              <p className="font-mono text-lg font-bold">{data.id}</p>
-                            </div>
-                            <div className="w-14 h-14 rounded-full bg-white/10 border border-white/30 flex items-center justify-center overflow-hidden">
-                              {data.avatarUrl ? (
-                                <img src={data.avatarUrl} alt="logo" className="w-full h-full object-cover" />
-                              ) : (
-                                <Building2 className="w-7 h-7" />
-                              )}
-                            </div>
-                          </div>
-                          <p className="font-bold text-xl">{data.name}</p>
-                          <p className="text-sm opacity-90">{data.discipline} · {data.city}</p>
-                          <div className="mt-4 pt-3 border-t border-white/20 grid grid-cols-2 gap-2 text-xs">
-                            <span className="opacity-80">Email</span>
-                            <span className="text-right break-all">{data.email || "—"}</span>
-                            <span className="opacity-80">Saison</span>
-                            <span className="text-right">{data.season}</span>
-                          </div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Licence du club</CardTitle>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Aperçu et impression de la licence officielle du club avec QR code.
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="rounded-2xl border border-border bg-gradient-to-br from-primary/90 to-primary text-primary-foreground p-6 max-w-xl">
+                      <div className="flex items-start justify-between mb-4">
+                        <div>
+                          <p className="text-xs opacity-80">Licence n°</p>
+                          <p className="font-mono text-lg font-bold">
+                            {licenseNumber || "En attente d'attribution"}
+                          </p>
                         </div>
+                        <div className="w-14 h-14 rounded-full bg-white/10 border border-white/30 flex items-center justify-center overflow-hidden">
+                          {session.avatarUrl ? (
+                            <img src={session.avatarUrl} alt="logo" className="w-full h-full object-cover" />
+                          ) : (
+                            <Building2 className="w-7 h-7" />
+                          )}
+                        </div>
+                      </div>
+                      <p className="font-bold text-xl">{session.fullName}</p>
+                      <p className="text-sm opacity-90">{session.discipline} · {session.city}</p>
+                      <div className="mt-4 pt-3 border-t border-white/20 grid grid-cols-2 gap-2 text-xs">
+                        <span className="opacity-80">Email</span>
+                        <span className="text-right break-all">{session.email || "—"}</span>
+                        <span className="opacity-80">Saison</span>
+                        <span className="text-right">{`${new Date().getFullYear()}-${new Date().getFullYear() + 1}`}</span>
+                      </div>
+                    </div>
 
-                        <div className="flex flex-wrap gap-3">
-                          <Button onClick={() => printClubLicense(data)}>
-                            <Printer className="w-4 h-4 mr-2" /> Imprimer la licence
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })()}
+                    <div className="flex flex-wrap items-center gap-3">
+                      <LicenseQrCard licenseNumber={licenseNumber} size={110} caption="Vérification officielle" />
+                      <Button
+                        onClick={() =>
+                          licenseNumber &&
+                          openPrintLicenseWindow({
+                            licenseNumber,
+                            fullName: session.fullName,
+                            accountType: "club",
+                            email: session.email,
+                            city: session.city,
+                            discipline: session.discipline,
+                            logoUrl: session.avatarUrl,
+                          })
+                        }
+                        disabled={!licenseNumber}
+                      >
+                        <Printer className="w-4 h-4 mr-2" /> Imprimer la licence
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
               </TabsContent>
             )}
 
@@ -1503,6 +1466,16 @@ const MemberDashboard = () => {
             </DialogContent>
           </Dialog>
 
+          {/* Demande de renouvellement annuel pour un membre du club */}
+          <MemberRenewalDialog
+            member={renewalTarget}
+            onClose={() => setRenewalTarget(null)}
+            onSubmitted={() => {
+              void refetchClubMembers();
+              void refetchRenewals();
+            }}
+          />
+
         </div>
       </section>
 
@@ -1512,244 +1485,3 @@ const MemberDashboard = () => {
 };
 
 export default MemberDashboard;
-
-// ============================================================
-// DocumentsTabs (club account): Club docs vs Members docs
-// ============================================================
-const DocumentsTabs = ({
-  clubMembers,
-}: {
-  clubMembers: ClubMember[];
-}) => {
-  const [tab, setTab] = useState<"club" | "members">("club");
-  const [q, setQ] = useState("");
-  const [season, setSeason] = useState<string>("all");
-  const [docsMember, setDocsMember] = useState<ClubMember | null>(null);
-
-  const seasons = Array.from(
-    new Set(clubMembers.map((m) => m.season).filter(Boolean) as string[])
-  ).sort();
-
-  const filtered = clubMembers.filter((m) => {
-    const term = q.trim().toLowerCase();
-    const matchTerm =
-      !term ||
-      m.fullName.toLowerCase().includes(term) ||
-      m.id.toLowerCase().includes(term);
-    const matchSeason = season === "all" || m.season === season;
-    return matchTerm && matchSeason;
-  });
-
-  const clubDocs = [
-    { name: "Statuts du club.pdf", status: "Validé" },
-    { name: "Récépissé de dépôt.pdf", status: "Validé" },
-    { name: "Liste des dirigeants.pdf", status: "Validé" },
-    { name: "PV de l'AG.pdf", status: "En attente" },
-  ];
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Documents</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex gap-2 mb-4">
-          <Button
-            variant={tab === "club" ? "default" : "outline"}
-            onClick={() => setTab("club")}
-            size="sm"
-          >
-            <Building2 className="w-4 h-4 mr-2" /> Documents du club
-          </Button>
-          <Button
-            variant={tab === "members" ? "default" : "outline"}
-            onClick={() => setTab("members")}
-            size="sm"
-          >
-            <Users className="w-4 h-4 mr-2" /> Documents des membres
-          </Button>
-        </div>
-
-        {tab === "club" ? (
-          <div className="space-y-2">
-            {clubDocs.map((doc, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-3 p-3 border border-border rounded-lg"
-              >
-                <FileText className="w-5 h-5 text-accent" />
-                <span className="flex-1 text-sm font-medium">{doc.name}</span>
-                <Badge variant="outline" className="gap-1">
-                  <Clock className="w-3 h-3" /> {doc.status}
-                </Badge>
-                <Button variant="ghost" size="sm">Télécharger</Button>
-              </div>
-            ))}
-            <Button variant="outline" className="mt-4">
-              <Plus className="w-4 h-4 mr-2" /> Ajouter un document
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="flex flex-col md:flex-row gap-2">
-              <Input
-                placeholder="Rechercher par ID ou nom..."
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                className="md:max-w-sm"
-              />
-              <select
-                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-                value={season}
-                onChange={(e) => setSeason(e.target.value)}
-              >
-                <option value="all">Toutes les saisons</option>
-                {seasons.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-            </div>
-
-            {filtered.length === 0 ? (
-              <div className="text-sm text-muted-foreground py-8 text-center">
-                Aucun membre trouvé.
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Nom</TableHead>
-                    <TableHead>Saison</TableHead>
-                    <TableHead>Documents</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((m) => {
-                    const count = Object.values(m.documents).filter(Boolean).length;
-                    return (
-                      <TableRow key={m.id}>
-                        <TableCell className="font-mono text-xs">{m.id}</TableCell>
-                        <TableCell className="font-medium">{m.fullName}</TableCell>
-                        <TableCell>{m.season || "—"}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="gap-1">
-                            <FileText className="w-3 h-3" /> {count}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setDocsMember(m)}
-                          >
-                            <Eye className="w-4 h-4 mr-1" /> Documents
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            )}
-          </div>
-        )}
-      </CardContent>
-
-      <Dialog open={!!docsMember} onOpenChange={(o) => !o && setDocsMember(null)}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              Documents — {docsMember?.fullName}{" "}
-              <span className="text-xs font-mono text-muted-foreground">({docsMember?.id})</span>
-            </DialogTitle>
-          </DialogHeader>
-          {docsMember && (
-            <MemberDocsList member={docsMember} />
-          )}
-        </DialogContent>
-      </Dialog>
-    </Card>
-  );
-};
-
-// Documents-only list with preview + print
-const MemberDocsList = ({ member }: { member: ClubMember }) => {
-  const entries: { key: string; label: string; doc?: UploadedDoc }[] = [
-    { key: "cin", label: "CIN", doc: member.documents.cin },
-    { key: "birthExtract", label: "Extrait de naissance", doc: member.documents.birthExtract },
-    { key: "parentalAuth", label: "Autorisation parentale", doc: member.documents.parentalAuth },
-    { key: "photo", label: "Photo", doc: member.documents.photo },
-    { key: "receipt", label: "Reçu de paiement", doc: member.payment.receipt },
-  ].filter((e) => e.doc);
-
-  const printDoc = (doc: UploadedDoc) => {
-    if (!doc.dataUrl) {
-      window.alert("Aperçu indisponible pour ce document.");
-      return;
-    }
-    const iframe = document.createElement("iframe");
-    iframe.style.position = "fixed";
-    iframe.style.right = "0";
-    iframe.style.bottom = "0";
-    iframe.style.width = "0";
-    iframe.style.height = "0";
-    iframe.style.border = "0";
-    document.body.appendChild(iframe);
-    const isPdf = doc.dataUrl.startsWith("data:application/pdf");
-    const html = isPdf
-      ? `<html><body style="margin:0"><iframe src="${doc.dataUrl}" style="border:0;width:100vw;height:100vh"></iframe></body></html>`
-      : `<html><head><title>${doc.name}</title></head><body style="margin:0;display:flex;align-items:center;justify-content:center"><img src="${doc.dataUrl}" style="max-width:100%;max-height:100vh" onload="setTimeout(()=>{window.focus();window.print();},200)"/></body></html>`;
-    const d = iframe.contentWindow?.document;
-    if (!d) return;
-    d.open();
-    d.write(html);
-    d.close();
-    if (isPdf) {
-      setTimeout(() => {
-        iframe.contentWindow?.focus();
-        iframe.contentWindow?.print();
-      }, 400);
-    }
-    setTimeout(() => document.body.removeChild(iframe), 60000);
-  };
-
-  if (entries.length === 0) {
-    return (
-      <div className="text-sm text-muted-foreground py-8 text-center">
-        Aucun document fourni.
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-2">
-      {entries.map((e) => (
-        <div
-          key={e.key}
-          className="flex items-center gap-3 p-3 border border-border rounded-lg"
-        >
-          <FileText className="w-5 h-5 text-accent" />
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium">{e.label}</div>
-            <div className="text-xs text-muted-foreground truncate">{e.doc?.name}</div>
-          </div>
-          {e.doc?.dataUrl && (
-            <a
-              href={e.doc.dataUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs text-primary underline"
-            >
-              Aperçu
-            </a>
-          )}
-          <Button size="sm" variant="outline" onClick={() => e.doc && printDoc(e.doc)}>
-            <Printer className="w-4 h-4 mr-1" /> Imprimer
-          </Button>
-        </div>
-      ))}
-    </div>
-  );
-};

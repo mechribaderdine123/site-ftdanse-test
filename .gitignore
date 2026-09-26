@@ -22,3 +22,19 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment & secrets
+.env
+.env.*
+server/.env
+server/.env.*
+!.env.example
+!server/.env.example
+
+# Uploaded personal documents (never commit these)
+server/data/
+data/uploads/
+
+# Local databases
+*.sqlite
+*.db

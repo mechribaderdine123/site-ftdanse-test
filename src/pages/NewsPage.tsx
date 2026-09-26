@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useContent } from "@/lib/contentApi";
 import { motion } from "framer-motion";
 import { Search, Filter, Calendar as CalendarIcon, ArrowLeft, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
@@ -12,12 +13,35 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-import { newsData } from "@/data/newsData";
+import { newsData, type NewsItem as StaticNewsItem } from "@/data/newsData";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
 };
+
+interface ApiNews {
+  id: number;
+  title?: string;
+  titleKey?: string;
+  description?: string;
+  descKey?: string;
+  category?: string;
+  date?: string;
+  image?: string;
+  galleryImages?: string[];
+}
+
+/** Maps a static fallback row (translation keys) into the API row shape. */
+const staticToApi = (item: StaticNewsItem): ApiNews => ({
+  id: item.id,
+  titleKey: item.titleKey,
+  descKey: item.descKey,
+  category: item.category,
+  date: item.date,
+  image: item.image,
+  galleryImages: item.galleryImages,
+});
 
 const NewsPage = () => {
   const { t } = useLang();
@@ -26,8 +50,17 @@ const NewsPage = () => {
   const [disciplineFilter, setDisciplineFilter] = useState("all");
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
-  const filteredNews = newsData.filter((item) => {
-    const matchSearch = t(item.titleKey).toLowerCase().includes(search.toLowerCase());
+  const { items, isFallback } = useContent<ApiNews>("news");
+
+  const newsList: ApiNews[] = isFallback
+    ? newsData.map(staticToApi)
+    : items.map((item) => (item.title || item.titleKey ? item : staticToApi(item as unknown as StaticNewsItem)));
+
+  const titleOf = (item: ApiNews) => (item.title ? item.title : item.titleKey ? t(item.titleKey) : "");
+  const descOf = (item: ApiNews) => (item.description ? item.description : item.descKey ? t(item.descKey) : "");
+
+  const filteredNews = newsList.filter((item) => {
+    const matchSearch = titleOf(item).toLowerCase().includes(search.toLowerCase());
     const matchType = typeFilter === "all" || item.category === typeFilter;
     return matchSearch && matchType;
   });
@@ -170,7 +203,7 @@ const NewsPage = () => {
                   <div className="relative h-52 overflow-hidden">
                     <img
                       src={item.image}
-                      alt={t(item.titleKey)}
+                      alt={titleOf(item)}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     <span className="absolute top-3 start-3 px-3 py-1 text-[11px] font-semibold rounded-md text-accent-foreground bg-accent">
@@ -183,10 +216,10 @@ const NewsPage = () => {
                       {item.date}
                     </div>
                     <h3 className="font-bold text-primary text-sm leading-snug mb-2">
-                      {t(item.titleKey)}
+                      {titleOf(item)}
                     </h3>
                     <p className="text-muted-foreground text-xs leading-relaxed mb-4">
-                      {t(item.descKey)}
+                      {descOf(item)}
                     </p>
                     <span className="inline-flex items-center gap-1 text-accent text-xs font-semibold group-hover:gap-2 transition-all">
                       {t("np.readMore")}

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,15 +6,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Upload, Trash2, Plus, Save, ImageIcon, Eye,
+  Upload, Trash2, Plus, Save, ImageIcon, Eye, Loader2,
   Target, Flag, Heart, Star, Award, Trophy, Users, Zap,
   Globe, Shield, Rocket, Lightbulb, Compass, BookOpen,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/admin/PageHeader";
-import heroDanceImg from "@/assets/hero-dance.jpg";
-import danceAboutImg from "@/assets/dance-about.jpg";
 import { Link } from "react-router-dom";
+import { ImageUploadField } from "@/components/admin/ImageUploadField";
+import {
+  adminListContent, adminCreateContent, adminUpdateContent,
+  contentUrl, type ContentItem,
+} from "@/lib/contentApi";
 
 /** Available icons for Mission / Vision / Objectifs cards */
 const ICON_OPTIONS = {
@@ -48,7 +51,7 @@ const IconPicker = ({ value, onChange }: { value: IconName; onChange: (v: IconNa
                     : "bg-muted/40 border-border hover:bg-muted"
                 }`}
               >
-                <Icon className="w-4 h-4" />
+                <Icon className="w-4 w-4" />
               </button>
             );
           })}
@@ -58,72 +61,37 @@ const IconPicker = ({ value, onChange }: { value: IconName; onChange: (v: IconNa
   );
 };
 
-/** Reusable image picker (mockup mode — uses object URL) */
-const ImagePicker = ({
-  value,
-  onChange,
-  label,
-  ratio = "aspect-video",
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  label: string;
-  ratio?: string;
-}) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const handleFile = (file: File) => {
-    const url = URL.createObjectURL(file);
-    onChange(url);
-  };
-  return (
-    <div className="space-y-2">
-      <Label className="text-sm font-medium">{label}</Label>
-      <div className={`relative ${ratio} w-full rounded-lg border-2 border-dashed border-border overflow-hidden bg-muted/30 group`}>
-        {value ? (
-          <img src={value} alt={label} className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground">
-            <ImageIcon className="h-10 w-10 mb-2" />
-            <span className="text-xs">Aucune image</span>
-          </div>
-        )}
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-          <Button size="sm" variant="secondary" onClick={() => inputRef.current?.click()}>
-            <Upload className="h-3.5 w-3.5 mr-1.5" /> Changer
-          </Button>
-          {value && (
-            <Button size="sm" variant="destructive" onClick={() => onChange("")}>
-              <Trash2 className="h-3.5 w-3.5" />
-            </Button>
-          )}
-        </div>
-      </div>
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
-      />
-    </div>
-  );
-};
-
 interface TimelineItem { id: string; year: string; title: string; desc: string; }
 interface BureauMember { id: string; name: string; role: string; date: string; photo: string; }
 interface ValueCard { id: string; title: string; desc: string; icon: IconName; }
 
+interface AboutPayload {
+  heroImage: string;
+  heroTitle1: string;
+  heroTitle2: string;
+  heroDesc: string;
+  pratiquesImage: string;
+  pratiquesTitle1: string;
+  pratiquesTitle2: string;
+  pratiquesDesc: string;
+  values: ValueCard[];
+  timeline: TimelineItem[];
+  bureau: BureauMember[];
+}
+
 const AdminAbout = () => {
   const { toast } = useToast();
+  const [saving, setSaving] = useState(false);
+  const [aboutId, setAboutId] = useState<number | null>(null);
 
   // Header
-  const [heroImage, setHeroImage] = useState(heroDanceImg);
+  const [heroImage, setHeroImage] = useState("");
   const [heroTitle1, setHeroTitle1] = useState("Fédération Tunisienne de Danse");
   const [heroTitle2, setHeroTitle2] = useState("Sportive et Artistique");
   const [heroDesc, setHeroDesc] = useState("La FTDAP regroupe l'ensemble des disciplines de danse en Tunisie depuis 1989.");
 
   // Pratiques
-  const [pratiquesImage, setPratiquesImage] = useState(danceAboutImg);
+  const [pratiquesImage, setPratiquesImage] = useState("");
   const [pratiquesTitle1, setPratiquesTitle1] = useState("Nos Disciplines");
   const [pratiquesTitle2, setPratiquesTitle2] = useState("Pratiquées");
   const [pratiquesDesc, setPratiquesDesc] = useState("Découvrez la richesse des disciplines de danse encadrées par la fédération.");
@@ -151,6 +119,31 @@ const AdminAbout = () => {
     { id: "5", name: "Ahmed Hamdi", role: "Directeur Technique", date: "Depuis 2021", photo: "" },
   ]);
 
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const rows = await adminListContent("about");
+        const first = rows[0] as ContentItem & AboutPayload;
+        if (!first) return;
+        setAboutId(first.id);
+        if (first.heroImage !== undefined) setHeroImage(first.heroImage);
+        if (first.heroTitle1) setHeroTitle1(first.heroTitle1);
+        if (first.heroTitle2) setHeroTitle2(first.heroTitle2);
+        if (first.heroDesc) setHeroDesc(first.heroDesc);
+        if (first.pratiquesImage !== undefined) setPratiquesImage(first.pratiquesImage);
+        if (first.pratiquesTitle1) setPratiquesTitle1(first.pratiquesTitle1);
+        if (first.pratiquesTitle2) setPratiquesTitle2(first.pratiquesTitle2);
+        if (first.pratiquesDesc) setPratiquesDesc(first.pratiquesDesc);
+        if (Array.isArray(first.values)) setValues(first.values);
+        if (Array.isArray(first.timeline)) setTimeline(first.timeline);
+        if (Array.isArray(first.bureau)) setBureau(first.bureau);
+      } catch {
+        /* first save will create the row */
+      }
+    };
+    void load();
+  }, []);
+
   const updateValue = <K extends keyof ValueCard>(id: string, field: K, val: ValueCard[K]) =>
     setValues((p) => p.map((v) => (v.id === id ? { ...v, [field]: val } : v)));
 
@@ -166,11 +159,27 @@ const AdminAbout = () => {
     setBureau((p) => [...p, { id: Date.now().toString(), name: "", role: "", date: "", photo: "" }]);
   const removeBureau = (id: string) => setBureau((p) => p.filter((m) => m.id !== id));
 
-  const handleSave = () => {
-    toast({
-      title: "Modifications enregistrées",
-      description: "Mode maquette : les changements ne sont pas persistés en base.",
-    });
+  const handleSave = async () => {
+    const payload: AboutPayload = {
+      heroImage, heroTitle1, heroTitle2, heroDesc,
+      pratiquesImage, pratiquesTitle1, pratiquesTitle2, pratiquesDesc,
+      values, timeline, bureau,
+    };
+    try {
+      setSaving(true);
+      const saved = aboutId
+        ? await adminUpdateContent("about", aboutId, { ...payload })
+        : await adminCreateContent("about", { ...payload });
+      setAboutId(saved.id);
+      toast({
+        title: "Modifications enregistrées",
+        description: "La page À propos est mise à jour sur le site.",
+      });
+    } catch (error) {
+      toast({ title: "Enregistrement impossible", description: (error as Error).message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -188,8 +197,9 @@ const AdminAbout = () => {
             <Button variant="outline" size="sm" asChild>
               <Link to="/about" target="_blank"><Eye className="h-4 w-4 mr-2" /> Aperçu</Link>
             </Button>
-            <Button size="sm" onClick={handleSave}>
-              <Save className="h-4 w-4 mr-2" /> Enregistrer
+            <Button size="sm" onClick={handleSave} disabled={saving}>
+              {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+              Enregistrer
             </Button>
           </>
         }
@@ -208,7 +218,7 @@ const AdminAbout = () => {
           <Card>
             <CardHeader><CardTitle className="text-base">Bandeau d'introduction</CardTitle></CardHeader>
             <CardContent className="grid md:grid-cols-2 gap-6">
-              <ImagePicker value={heroImage} onChange={setHeroImage} label="Image principale" />
+              <ImageUploadField value={heroImage} onChange={setHeroImage} label="Image principale" />
               <div className="space-y-3">
                 <div className="space-y-1.5">
                   <Label>Titre (1ère partie)</Label>
@@ -229,7 +239,7 @@ const AdminAbout = () => {
           <Card>
             <CardHeader><CardTitle className="text-base">Section "Disciplines pratiquées"</CardTitle></CardHeader>
             <CardContent className="grid md:grid-cols-2 gap-6">
-              <ImagePicker value={pratiquesImage} onChange={setPratiquesImage} label="Image" />
+              <ImageUploadField value={pratiquesImage} onChange={setPratiquesImage} label="Image" />
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
@@ -290,7 +300,7 @@ const AdminAbout = () => {
             </Button>
           </div>
           <div className="space-y-3">
-            {timeline.map((item, i) => (
+            {timeline.map((item) => (
               <Card key={item.id}>
                 <CardContent className="p-4">
                   <div className="grid md:grid-cols-[120px_1fr_2fr_auto] gap-3 items-start">
@@ -333,7 +343,7 @@ const AdminAbout = () => {
             {bureau.map((m) => (
               <Card key={m.id}>
                 <CardContent className="p-4 space-y-3">
-                  <ImagePicker
+                  <ImageUploadField
                     value={m.photo}
                     onChange={(v) => updateBureau(m.id, "photo", v)}
                     label="Photo"

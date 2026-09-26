@@ -1,993 +1,976 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Link, useNavigate } from "react-router-dom";
+import { apiRequest } from "@/lib/api";
+import { downloadProtectedFile } from "@/lib/download";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Plus, Pencil, Trash2, Search, User, Building2, Mail, Phone,
-  Check, X, Eye, Inbox, GraduationCap, Users as UsersIcon, Trophy,
-  FileText, Receipt, ShieldCheck, ArrowLeft, UserRound, QrCode,
-} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/admin/PageHeader";
-import { ClubMember, loadClubMembers, upsertClubMember } from "@/data/clubMembersStore";
-import MemberQRDialog, { MemberQRPayload } from "@/components/shared/MemberQRDialog";
-import { printMemberLicense } from "@/lib/printLicense";
-import { Printer } from "lucide-react";
-
-type AccountType = "athlete" | "club" | "coach" | "trainer";
-type RequestStatus = "pending" | "approved" | "rejected";
-
-interface DirectoryEntry {
-  id: number;
-  type: "member" | "club";
-  accountType?: AccountType;
-  name: string;
-  city: string;
-  discipline: string;
-  role?: string;
-  memberCount?: number;
-  licenseActive: boolean;
-  email?: string;
-  phone?: string;
-}
+import {
+  Building2, User, Mail, Phone, MapPin, Award, Check, X, Eye,
+  Download, FileText, Loader2, AlertCircle, CheckCircle2, Dumbbell, Users,
+  BadgeCheck, CalendarClock, Clock, XCircle, UserPlus,
+} from "lucide-react";
+import { openProtectedFile } from "@/lib/download";
+import { ExpiryChip } from "@/components/LicenseExpiry";
 
 interface AccountRequest {
   id: number;
-  accountType: AccountType;
+  userId: number;
+  accountType: "athlete" | "coach" | "referee" | "club";
   fullName: string;
   email: string;
   phone: string;
   city: string;
   discipline: string;
   clubName?: string;
-  experience?: string;
-  message?: string;
+  documents: Array<{ id: string; originalName: string; type: string }>;
+  status: "pending" | "approved" | "rejected";
   submittedAt: string;
-  status: RequestStatus;
+  reviewedAt?: string;
+  message?: string;
 }
 
-const initialData: DirectoryEntry[] = [
-  { id: 1, type: "member", accountType: "athlete", name: "Ahmed Ben Ali", city: "Tunis", discipline: "Breakdance", role: "Danseur", licenseActive: true, email: "ahmed@mail.com", phone: "+216 20 111 222" },
-  { id: 2, type: "member", accountType: "athlete", name: "Yasmine Hamdi", city: "Sousse", discipline: "Salsa", role: "Arbitre", licenseActive: true },
-  { id: 3, type: "club", name: "Club Elite Dance", city: "Tunis", discipline: "Multi-disciplines", memberCount: 45, licenseActive: true },
-  { id: 4, type: "member", accountType: "coach", name: "Sami Trabelsi", city: "Sfax", discipline: "Hip-Hop", role: "Coach", licenseActive: false },
-  { id: 5, type: "club", name: "Dance Academy", city: "Hammamet", discipline: "Ballet, Jazz", memberCount: 30, licenseActive: true },
-];
+interface DirectoryEntry {
+  id: number;
+  userId?: number;
+  accountType: "athlete" | "coach" | "referee" | "club";
+  name: string;
+  city: string;
+  discipline: string;
+  email?: string;
+  phone?: string;
+  licenseActive: boolean;
+  memberCount?: number;
+}
 
-const initialRequests: AccountRequest[] = [
-  {
-    id: 101, accountType: "athlete", fullName: "Mariem Khelifi", email: "mariem.k@mail.com",
-    phone: "+216 22 345 678", city: "Tunis", discipline: "Breakdance",
-    experience: "3 ans de pratique en compétition régionale",
-    message: "Je souhaite rejoindre la fédération pour participer aux compétitions nationales.",
-    submittedAt: "2025-04-22", status: "pending",
-  },
-  {
-    id: 102, accountType: "club", fullName: "Karim Bouazizi", email: "contact@dancestars.tn",
-    phone: "+216 71 234 567", city: "Sfax", discipline: "Multi-disciplines",
-    clubName: "Dance Stars Academy",
-    message: "Affiliation officielle pour notre club de 25 membres.",
-    submittedAt: "2025-04-21", status: "pending",
-  },
-  {
-    id: 103, accountType: "coach", fullName: "Leila Mansouri", email: "leila.coach@mail.com",
-    phone: "+216 98 765 432", city: "Sousse", discipline: "Salsa, Bachata",
-    experience: "10 ans d'enseignement, certifiée niveau international",
-    submittedAt: "2025-04-20", status: "pending",
-  },
-  {
-    id: 104, accountType: "trainer", fullName: "Hatem Gharbi", email: "hatem.g@mail.com",
-    phone: "+216 55 123 456", city: "Bizerte", discipline: "Hip-Hop",
-    experience: "Entraîneur d'équipe, 7 ans d'expérience",
-    clubName: "Club Urban Move",
-    submittedAt: "2025-04-18", status: "approved",
-  },
-  {
-    id: 105, accountType: "athlete", fullName: "Walid Saidi", email: "walid.s@mail.com",
-    phone: "+216 27 999 888", city: "Monastir", discipline: "Krump",
-    submittedAt: "2025-04-15", status: "rejected",
-  },
-];
+// ===== Types des validations de licences (sous-page « Validations ») =====
 
-const accountTypeMeta: Record<AccountType, { label: string; icon: typeof User; color: string }> = {
-  athlete: { label: "Athlète", icon: Trophy, color: "bg-blue-100 text-blue-700" },
-  club: { label: "Club", icon: Building2, color: "bg-violet-100 text-violet-700" },
-  coach: { label: "Coach", icon: GraduationCap, color: "bg-amber-100 text-amber-700" },
-  trainer: { label: "Entraîneur", icon: UsersIcon, color: "bg-emerald-100 text-emerald-700" },
+type ActivationRequest = {
+  id: number;
+  userId: number;
+  status: "pending" | "approved" | "rejected";
+  reason: string | null;
+  documents: { id: string; name: string; url: string }[];
+  createdAt: string;
+  reviewedAt: string | null;
+  reviewerNote: string | null;
+  fullName: string;
+  email: string;
+  accountType: string;
+  licenseNumber: string | null;
+  avatarUrl: string | null;
 };
 
-const statusMeta: Record<RequestStatus, { label: string; color: string }> = {
-  pending: { label: "En attente", color: "bg-yellow-100 text-yellow-700 border-yellow-300" },
-  approved: { label: "Approuvée", color: "bg-green-100 text-green-700 border-green-300" },
-  rejected: { label: "Refusée", color: "bg-red-100 text-red-700 border-red-300" },
+type ClubLicenseRequest = {
+  id: number;
+  memberId: string | null;
+  licenseNumber: string | null;
+  fullName: string;
+  email: string | null;
+  phone: string | null;
+  discipline: string | null;
+  season: string | null;
+  age: number | null;
+  gender: string | null;
+  quality: string | null;
+  approvalStatus: string;
+  paymentStatus: string;
+  receiptName: string | null;
+  receiptUrl: string | null;
+  createdAt: string;
+  clubUserId: number;
+  clubName: string;
+  clubEmail: string;
+  clubCity: string | null;
+  licenseExpiresAt?: string | null;
+};
+
+type IndividualRenewal = {
+  id: number;
+  userId: number;
+  renewalYear: number;
+  status: string;
+  renewalDocuments: { id: string; originalName: string; type?: string }[];
+  requestedAt: string;
+  reviewedAt: string | null;
+  reviewerNote: string | null;
+  fullName: string;
+  email: string;
+  accountType: string;
+  licenseNumber: string | null;
+  licenseExpiresAt: string | null;
+};
+
+type ClubMemberRenewal = {
+  id: number;
+  season: string;
+  status: string;
+  renewalDocuments: { id: string; originalName: string; type?: string }[];
+  note: string | null;
+  reviewerNote: string | null;
+  requestedAt: string;
+  reviewedAt: string | null;
+  clubMemberId: number;
+  memberName: string;
+  age: number | null;
+  discipline: string | null;
+  licenseNumber: string | null;
+  licenseExpiresAt: string | null;
+  memberStatus: string;
+  clubUserId: number;
+  clubName: string;
+  clubEmail: string;
+  clubCity: string | null;
+};
+
+const accountTypeLabels: Record<string, { label: string; icon: typeof User; color: string }> = {
+  athlete: { label: "Athlète", icon: Award, color: "bg-blue-100 text-blue-700" },
+  coach: { label: "Coach", icon: Dumbbell, color: "bg-amber-100 text-amber-700" },
+  referee: { label: "Arbitre", icon: Award, color: "bg-emerald-100 text-emerald-700" },
+  club: { label: "Club", icon: Building2, color: "bg-violet-100 text-violet-700" },
 };
 
 const AdminDirectory = () => {
-  const [search, setSearch] = useState("");
-  const [items, setItems] = useState<DirectoryEntry[]>(initialData);
-  const [requests, setRequests] = useState<AccountRequest[]>(initialRequests);
-
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editItem, setEditItem] = useState<DirectoryEntry | null>(null);
-
-  const [reqDialogOpen, setReqDialogOpen] = useState(false);
-  const [activeRequest, setActiveRequest] = useState<AccountRequest | null>(null);
-  const [reqStatusFilter, setReqStatusFilter] = useState<RequestStatus | "all">("pending");
-  const [reqTypeFilter, setReqTypeFilter] = useState<AccountType | "all">("all");
-
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [requests, setRequests] = useState<AccountRequest[]>([]);
+  const [entries, setEntries] = useState<DirectoryEntry[]>([]);
+  const [typeFilter, setTypeFilter] = useState<"all" | "individual" | "club">("all");
+  const [roleFilter, setRoleFilter] = useState<"all" | "athlete" | "coach" | "referee">("all");
+  const [search, setSearch] = useState("");
+  const [selectedRequest, setSelectedRequest] = useState<AccountRequest | null>(null);
+  const [reviewNote, setReviewNote] = useState("");
+  const [approving, setApproving] = useState(false);
 
-  // Club member submissions (from clubs portal)
-  const [clubMembers, setClubMembers] = useState<ClubMember[]>([]);
-  const [cmStatusFilter, setCmStatusFilter] = useState<"pending" | "accepted" | "rejected" | "all">("pending");
-  const [activeClubMember, setActiveClubMember] = useState<ClubMember | null>(null);
-  const [rejectNote, setRejectNote] = useState("");
-
-  // Main view: choose between Clubs and Individuels
-  const [mainView, setMainView] = useState<"select" | "clubs" | "individuels">("select");
-  const [selectedClub, setSelectedClub] = useState<string | null>(null);
-  const [individualSubView, setIndividualSubView] = useState<"select" | "athlete" | "coach" | "referee">("select");
-
-  // QR dialog
-  const [qrPayload, setQrPayload] = useState<MemberQRPayload | null>(null);
-
-  // View dialogs
-  const [viewIndividual, setViewIndividual] = useState<DirectoryEntry | null>(null);
-  const [viewClub, setViewClub] = useState<{ name: string; city: string; discipline: string; membersCount: number } | null>(null);
-
-  const openClubMemberQR = (m: ClubMember) => {
-    setQrPayload({
-      kind: "athlete",
-      id: m.id,
-      name: m.fullName,
-      club: m.clubName,
-      birthDate: m.birthDate,
-      age: m.age,
-      gender: m.gender,
-      discipline: m.discipline,
-      season: m.season,
-      quality: m.quality,
-      phone: m.phone,
-      email: m.email,
-      payment: m.payment.status,
-      approval: m.approval.status,
-    });
-  };
-
-  const openClubQR = (club: { name: string; city: string; discipline: string; membersCount: number }) => {
-    setQrPayload({
-      kind: "club",
-      id: club.name,
-      name: club.name,
-      city: club.city,
-      discipline: club.discipline,
-      membersCount: club.membersCount,
-    });
-  };
-
-  const openIndividualQR = (item: DirectoryEntry) => {
-    setQrPayload({
-      kind: (item.accountType as MemberQRPayload["kind"]) || "member",
-      id: item.id,
-      name: item.name,
-      city: item.city,
-      discipline: item.discipline,
-      role: item.role,
-      email: item.email,
-      phone: item.phone,
-      licenseActive: item.licenseActive,
-    });
-  };
+  // Filtre dans l'angle : deux sous-pages — nouveaux comptes (méthode actuelle)
+  // ou validations de licences (première attribution + renouvellements).
+  const [view, setView] = useState<"new" | "validations">(
+    new URLSearchParams(window.location.search).get("view") === "validations" ? "validations" : "new",
+  );
+  const [activations, setActivations] = useState<ActivationRequest[]>([]);
+  const [clubLicenses, setClubLicenses] = useState<ClubLicenseRequest[]>([]);
+  const [individualRenewals, setIndividualRenewals] = useState<IndividualRenewal[]>([]);
+  const [memberRenewals, setMemberRenewals] = useState<ClubMemberRenewal[]>([]);
 
   useEffect(() => {
-    setClubMembers(loadClubMembers());
-    const onStorage = () => setClubMembers(loadClubMembers());
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    loadData();
   }, []);
 
-  const filteredClubMembers = clubMembers.filter(
-    (m) => cmStatusFilter === "all" || m.approval.status === cmStatusFilter,
-  );
-  const pendingClubMembersCount = clubMembers.filter((m) => m.approval.status === "pending").length;
-
-  const approveClubMember = (m: ClubMember) => {
-    const updated: ClubMember = {
-      ...m,
-      approval: { ...m.approval, status: "accepted", reviewedAt: new Date().toISOString() },
-    };
-    upsertClubMember(updated);
-    setClubMembers(loadClubMembers());
-    setActiveClubMember(null);
-    toast({ title: "Membre approuvé", description: `${m.fullName} (${m.clubName}) a été accepté(e).` });
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [accountRequests, directoryData, activationList, clubLicenseList, individualRenewalList, memberRenewalList] = await Promise.all([
+        apiRequest<AccountRequest[]>("/api/admin/account-requests"),
+        apiRequest<DirectoryEntry[]>("/api/directory"),
+        apiRequest<ActivationRequest[]>("/api/admin/activation-requests").catch(() => []),
+        apiRequest<ClubLicenseRequest[]>("/api/admin/license-requests").catch(() => []),
+        apiRequest<IndividualRenewal[]>("/api/admin/license-renewals").catch(() => []),
+        apiRequest<ClubMemberRenewal[]>("/api/admin/club-member-renewals").catch(() => []),
+      ]);
+      setRequests(accountRequests);
+      setEntries(directoryData || []);
+      setActivations(activationList);
+      setClubLicenses(clubLicenseList);
+      setIndividualRenewals(individualRenewalList);
+      setMemberRenewals(memberRenewalList);
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Erreur lors du chargement",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const rejectClubMember = (m: ClubMember) => {
-    const updated: ClubMember = {
-      ...m,
-      approval: {
-        ...m.approval, status: "rejected",
-        reviewedAt: new Date().toISOString(),
-        reviewerNote: rejectNote || undefined,
-      },
-    };
-    upsertClubMember(updated);
-    setClubMembers(loadClubMembers());
-    setActiveClubMember(null);
-    setRejectNote("");
-    toast({ title: "Membre refusé", variant: "destructive" });
-  };
-
-  const filtered = items.filter((e) =>
-    e.name.toLowerCase().includes(search.toLowerCase()) ||
-    e.city.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const filteredRequests = requests.filter((r) => {
-    if (reqStatusFilter !== "all" && r.status !== reqStatusFilter) return false;
-    if (reqTypeFilter !== "all" && r.accountType !== reqTypeFilter) return false;
+  const filteredRequests = requests.filter((req) => {
+    if (typeFilter === "club" && req.accountType !== "club") return false;
+    if (typeFilter === "individual" && req.accountType === "club") return false;
+    if (typeFilter === "individual" && roleFilter !== "all" && req.accountType !== roleFilter) return false;
+    if (search && !req.fullName.toLowerCase().includes(search.toLowerCase()) &&
+        !req.email.toLowerCase().includes(search.toLowerCase()) &&
+        !req.city.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
 
-  const pendingCount = requests.filter((r) => r.status === "pending").length;
-
-  // Build clubs list: union of directory clubs + clubs that appear in clubMembers store
-  const clubsFromDirectory = items.filter((i) => i.type === "club");
-  const clubNameSet = new Set<string>([
-    ...clubsFromDirectory.map((c) => c.name),
-    ...clubMembers.map((m) => m.clubName),
-  ]);
-  const clubsList = Array.from(clubNameSet).map((name) => {
-    const dirEntry = clubsFromDirectory.find((c) => c.name === name);
-    const members = clubMembers.filter((m) => m.clubName === name);
-    return {
-      name,
-      city: dirEntry?.city ?? members[0]?.clubName ?? "—",
-      discipline: dirEntry?.discipline ?? "Multi-disciplines",
-      membersCount: members.length || dirEntry?.memberCount || 0,
-      pendingCount: members.filter((m) => m.approval.status === "pending").length,
-    };
+  const filteredEntries = entries.filter((entry) => {
+    if (typeFilter === "club" && entry.accountType !== "club") return false;
+    if (typeFilter === "individual" && entry.accountType === "club") return false;
+    if (typeFilter === "individual" && roleFilter !== "all" && entry.accountType !== roleFilter) return false;
+    if (search && !entry.name.toLowerCase().includes(search.toLowerCase()) &&
+        !entry.city.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
   });
 
-  const individualMembers = items.filter((i) => i.type === "member");
-  const clubMembersForSelected = selectedClub
-    ? clubMembers.filter((m) => m.clubName === selectedClub)
-    : [];
-
-  const handleDelete = (id: number) => {
-    setItems((prev) => prev.filter((e) => e.id !== id));
-    toast({ title: "Entrée supprimée" });
+  const handleApprove = async (req: AccountRequest) => {
+    try {
+      setApproving(true);
+      await apiRequest(`/api/admin/account-requests/${req.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: "approved", reviewerNote: reviewNote || null }),
+      });
+      toast({ title: "Profil approuvé", description: `${req.fullName} a été ajouté à l'annuaire.` });
+      setSelectedRequest(null);
+      setReviewNote("");
+      await loadData();
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Erreur lors de l'approbation",
+        variant: "destructive",
+      });
+    } finally {
+      setApproving(false);
+    }
   };
 
-  const handleSave = () => {
-    setDialogOpen(false);
-    toast({ title: editItem ? "Entrée modifiée" : "Entrée créée" });
+  const handleReject = async (req: AccountRequest) => {
+    try {
+      setApproving(true);
+      await apiRequest(`/api/admin/account-requests/${req.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: "rejected", reviewerNote: reviewNote || null }),
+      });
+      toast({ title: "Profil refusé" });
+      setSelectedRequest(null);
+      setReviewNote("");
+      await loadData();
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Erreur lors du refus",
+        variant: "destructive",
+      });
+    } finally {
+      setApproving(false);
+    }
   };
 
-  const approveRequest = (req: AccountRequest) => {
-    setRequests((prev) => prev.map((r) => (r.id === req.id ? { ...r, status: "approved" } : r)));
-    // Add to directory
-    const newEntry: DirectoryEntry = {
-      id: Date.now(),
-      type: req.accountType === "club" ? "club" : "member",
-      accountType: req.accountType,
-      name: req.accountType === "club" ? (req.clubName || req.fullName) : req.fullName,
-      city: req.city,
-      discipline: req.discipline,
-      role: accountTypeMeta[req.accountType].label,
-      licenseActive: true,
-      email: req.email,
-      phone: req.phone,
+  const downloadDocument = async (req: AccountRequest, doc: AccountRequest["documents"][0]) => {
+    try {
+      await downloadProtectedFile(
+        `/api/admin/account-requests/${req.id}/documents/${doc.id}`,
+        doc.originalName,
+      );
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Erreur de téléchargement",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // ===== Handlers de validation des licences =====
+
+  const viewRenewalDocument = async (url: string, name: string) => {
+    try {
+      await openProtectedFile(url);
+    } catch (error) {
+      toast({
+        title: "Aperçu impossible",
+        description: error instanceof Error ? error.message : "Erreur",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const reviewActivation = async (request: ActivationRequest, status: "approved" | "rejected") => {
+    try {
+      await apiRequest(`/api/admin/activation-requests/${request.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
+      toast({
+        title: status === "approved" ? "Licence activée" : "Demande refusée",
+        description: status === "approved"
+          ? `La licence de ${request.fullName} est désormais active${request.licenseNumber ? ` (${request.licenseNumber})` : ""}.`
+          : `${request.fullName} a été notifié de la décision.`,
+      });
+      await loadData();
+    } catch (error) {
+      toast({
+        title: "Décision impossible",
+        description: error instanceof Error ? error.message : "Erreur",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const reviewClubMember = async (request: ClubLicenseRequest, status: "approved" | "rejected" | "pending") => {
+    try {
+      const updated = await apiRequest<{ licenseNumber: string | null }>(`/api/admin/club-members/${request.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
+      toast({
+        title: status === "approved" ? "Licence attribuée" : status === "rejected" ? "Membre refusé" : "Membre remis en attente",
+        description: status === "approved"
+          ? `${request.fullName} · Licence : ${updated.licenseNumber || "générée"}`
+          : `${request.fullName} a été mis à jour.`,
+      });
+      await loadData();
+    } catch (error) {
+      toast({
+        title: "Décision impossible",
+        description: error instanceof Error ? error.message : "Erreur",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const reviewRenewal = async (renewal: IndividualRenewal, status: "approved" | "rejected") => {
+    try {
+      const result = await apiRequest<{ licenseExpiresAt: string | null }>(`/api/admin/license-renewals/${renewal.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
+      toast({
+        title: status === "approved" ? "Renouvellement approuvé" : "Renouvellement refusé",
+        description: status === "approved"
+          ? `${renewal.fullName} · licence valable jusqu'au ${result.licenseExpiresAt}`
+          : `${renewal.fullName} a été notifié de la décision.`,
+      });
+      await loadData();
+    } catch (error) {
+      toast({
+        title: "Décision impossible",
+        description: error instanceof Error ? error.message : "Erreur",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const reviewMemberRenewal = async (renewal: ClubMemberRenewal, status: "approved" | "rejected") => {
+    try {
+      const result = await apiRequest<{ licenseExpiresAt: string | null }>(`/api/admin/club-member-renewals/${renewal.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
+      toast({
+        title: status === "approved" ? "Renouvellement approuvé" : "Renouvellement refusé",
+        description: status === "approved"
+          ? `${renewal.memberName} (${renewal.clubName}) · valable jusqu'au ${result.licenseExpiresAt}`
+          : `${renewal.clubName} a été notifié de la décision.`,
+      });
+      await loadData();
+    } catch (error) {
+      toast({
+        title: "Décision impossible",
+        description: error instanceof Error ? error.message : "Erreur",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const statusPill = (status: string) => {
+    const map: Record<string, { label: string; cls: string }> = {
+      pending: { label: "En attente", cls: "bg-yellow-100 text-yellow-800" },
+      // Dossier reçu côté admin (documents transmis) — à ne PAS confondre avec un refus.
+      submitted: { label: "Dossier reçu", cls: "bg-blue-100 text-blue-800" },
+      approved: { label: "Approuvé", cls: "bg-green-100 text-green-800" },
+      rejected: { label: "Refusé", cls: "bg-red-100 text-red-800" },
     };
-    setItems((prev) => [newEntry, ...prev]);
-    setReqDialogOpen(false);
-    toast({ title: "Demande approuvée", description: `${req.fullName} a été ajouté(e) à l'annuaire.` });
+    const tone = map[status] || { label: status, cls: "bg-muted text-muted-foreground" };
+    return (
+      <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${tone.cls}`}>
+        {tone.label}
+      </span>
+    );
   };
 
-  const rejectRequest = (req: AccountRequest) => {
-    setRequests((prev) => prev.map((r) => (r.id === req.id ? { ...r, status: "rejected" } : r)));
-    setReqDialogOpen(false);
-    toast({ title: "Demande refusée", variant: "destructive" });
-  };
-
-  const deleteRequest = (id: number) => {
-    setRequests((prev) => prev.filter((r) => r.id !== id));
-    toast({ title: "Demande supprimée" });
-  };
+  const pendingCount = requests.filter((r) => r.status === "pending").length;
+  const approvedCount = requests.filter((r) => r.status === "approved").length;
+  const validationsCount =
+    clubLicenses.filter((r) => r.approvalStatus === "pending").length +
+    activations.filter((r) => r.status === "pending").length +
+    memberRenewals.filter((r) => r.status === "pending").length +
+    individualRenewals.filter((r) => r.status === "submitted").length;
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Gestion de l'Annuaire"
-        description="Membres, clubs, licences et demandes d'inscription"
+        title="Gestion de l'Annuaire & Validations"
+        description="Gérez les profils, clubs, et demandes d'inscription"
         stats={[
-          { label: "Total membres", value: items.length },
-          { label: "Demandes en attente", value: pendingCount, color: "text-yellow-600" },
-          { label: "Clubs", value: items.filter((i) => i.type === "club").length, color: "text-violet-600" },
-          { label: "Licences actives", value: items.filter((i) => i.licenseActive).length, color: "text-emerald-600" },
+          { label: "Total demandes", value: requests.length },
+          { label: "En attente", value: pendingCount, color: "text-yellow-600" },
+          { label: "Approuvés", value: approvedCount, color: "text-green-600" },
+          { label: "Refusés", value: requests.filter((r) => r.status === "rejected").length, color: "text-red-600" },
         ]}
-        actions={
-          <Button onClick={() => { setEditItem(null); setDialogOpen(true); }}>
-            <Plus className="mr-2 h-4 w-4" /> Nouvelle entrée
-          </Button>
-        }
       />
 
-      {/* === MAIN VIEW SELECTOR === */}
-      {mainView === "select" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* FILTRE DANS L'ANGLE : deux sous-pages — nouveaux comptes / validations */}
+      <div className="flex justify-end">
+        <div className="inline-flex rounded-lg border border-border bg-muted/40 p-1 gap-1">
           <button
             type="button"
-            onClick={() => setMainView("clubs")}
-            className="group relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-violet-50 to-white p-10 text-left shadow-sm transition hover:shadow-lg hover:-translate-y-0.5"
+            onClick={() => { setView("new"); navigate("/admin/directory", { replace: true }); }}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
+              view === "new" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"
+            }`}
           >
-            <div className="flex items-center gap-5">
-              <div className="rounded-2xl bg-violet-600 p-5 text-white shadow-md">
-                <Building2 className="h-10 w-10" />
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold text-violet-900">Clubs</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Gérer tous les clubs et leurs membres
-                </p>
-                <p className="text-xs text-violet-700 mt-2 font-medium">
-                  {clubsList.length} club{clubsList.length > 1 ? "s" : ""} enregistré{clubsList.length > 1 ? "s" : ""}
-                </p>
-              </div>
-            </div>
+            <UserPlus className="w-4 h-4" /> Nouveaux comptes
+            {pendingCount > 0 && (
+              <Badge variant="destructive" className="ml-1 h-5 min-w-5 px-1 flex items-center justify-center text-[10px]">
+                {pendingCount}
+              </Badge>
+            )}
           </button>
-
           <button
             type="button"
-            onClick={() => setMainView("individuels")}
-            className="group relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-blue-50 to-white p-10 text-left shadow-sm transition hover:shadow-lg hover:-translate-y-0.5"
+            onClick={() => { setView("validations"); navigate("/admin/directory?view=validations", { replace: true }); }}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
+              view === "validations" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"
+            }`}
           >
-            <div className="flex items-center gap-5">
-              <div className="rounded-2xl bg-blue-600 p-5 text-white shadow-md">
-                <UserRound className="h-10 w-10" />
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold text-blue-900">Individuels</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Athlètes, coachs, entraîneurs indépendants
-                </p>
-                <p className="text-xs text-blue-700 mt-2 font-medium">
-                  {individualMembers.length} membre{individualMembers.length > 1 ? "s" : ""}
-                </p>
-              </div>
-            </div>
+            <BadgeCheck className="w-4 h-4" /> Validations
+            {validationsCount > 0 && (
+              <Badge variant="destructive" className="ml-1 h-5 min-w-5 px-1 flex items-center justify-center text-[10px]">
+                {validationsCount}
+              </Badge>
+            )}
           </button>
         </div>
-      )}
+      </div>
 
-      {/* === CLUBS VIEW === */}
-      {mainView === "clubs" && !selectedClub && (
-        <Card>
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <Button variant="ghost" size="sm" onClick={() => setMainView("select")}>
-              <ArrowLeft className="mr-2 h-4 w-4" /> Retour
-            </Button>
-            <h3 className="text-lg font-semibold">Tous les clubs</h3>
-            <div />
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {clubsList.map((club) => (
-                <div
-                  key={club.name}
-                  className="relative text-left rounded-xl border border-border p-5 bg-card hover:shadow-md hover:border-violet-300 transition"
-                >
-                  <div className="absolute top-2 right-2 flex gap-1">
+      {/* FILTERS */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm font-medium mb-2 block">Filtrer par type:</Label>
+                <div className="flex gap-2 flex-wrap">
+                  {["all", "individual", "club"].map((t) => (
                     <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      title="Voir les informations du club"
-                      onClick={(e) => { e.stopPropagation(); setViewClub(club); }}
+                      key={t}
+                      size="sm"
+                      variant={typeFilter === t ? "default" : "outline"}
+                      onClick={() => { setTypeFilter(t as any); setRoleFilter("all"); }}
+                      className="text-xs"
                     >
-                      <Eye className="h-4 w-4" />
+                      {t === "all" ? "Tous" : t === "individual" ? "Individual" : "Club"}
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      title="QR code du club"
-                      onClick={(e) => { e.stopPropagation(); openClubQR(club); }}
-                    >
-                      <QrCode className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedClub(club.name)}
-                    className="flex items-start gap-3 w-full text-left"
-                  >
-                    <div className="rounded-lg bg-violet-100 p-3 text-violet-700">
-                      <Building2 className="h-6 w-6" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold truncate">{club.name}</h4>
-                      <p className="text-xs text-muted-foreground">{club.city}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{club.discipline}</p>
-                      <div className="flex items-center gap-2 mt-3">
-                        <Badge variant="secondary">{club.membersCount} membres</Badge>
-                        {club.pendingCount > 0 && (
-                          <Badge className="bg-yellow-500 hover:bg-yellow-500 text-white">
-                            {club.pendingCount} en attente
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                </div>
-              ))}
-            </div>
-            {clubsList.length === 0 && (
-              <p className="text-center text-muted-foreground py-8">Aucun club</p>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* === SELECTED CLUB MEMBERS === */}
-      {mainView === "clubs" && selectedClub && (
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <Button variant="ghost" size="sm" onClick={() => setSelectedClub(null)}>
-                <ArrowLeft className="mr-2 h-4 w-4" /> Tous les clubs
-              </Button>
-              <div className="text-right">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <Building2 className="h-5 w-5 text-violet-600" />
-                  {selectedClub}
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  {clubMembersForSelected.length} membre{clubMembersForSelected.length > 1 ? "s" : ""}
-                </p>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Photo</TableHead>
-                  <TableHead>Membre</TableHead>
-                  <TableHead>ID Athlète</TableHead>
-                  <TableHead>Âge</TableHead>
-                  <TableHead>Discipline</TableHead>
-                  <TableHead>Saison</TableHead>
-                  <TableHead>Documents</TableHead>
-                  <TableHead>Paiement</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {clubMembersForSelected.map((m) => {
-                  const docsCount = Object.values(m.documents).filter(Boolean).length;
-                  const minor = m.age < 18;
-                  const required = minor ? 2 : 1;
-                  const stMeta = {
-                    pending: { label: "En attente", color: "bg-yellow-100 text-yellow-700 border-yellow-300" },
-                    accepted: { label: "Accepté", color: "bg-green-100 text-green-700 border-green-300" },
-                    rejected: { label: "Refusé", color: "bg-red-100 text-red-700 border-red-300" },
-                  }[m.approval.status];
-                  return (
-                    <TableRow key={m.id}>
-                      <TableCell>
-                        <div className="w-10 h-10 rounded-full bg-muted border border-border overflow-hidden flex items-center justify-center">
-                          {m.documents.photo?.dataUrl ? (
-                            <img src={m.documents.photo.dataUrl} alt={m.fullName} className="w-full h-full object-cover" />
-                          ) : (
-                            <User className="w-5 h-5 text-muted-foreground" />
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {m.fullName}
-                        <div className="text-xs text-muted-foreground">{m.gender === "M" ? "Homme" : "Femme"}</div>
-                      </TableCell>
-                      <TableCell><span className="font-mono text-xs">{m.id}</span></TableCell>
-                      <TableCell>
-                        {m.age} ans
-                        {minor && <Badge variant="outline" className="ml-1 text-[10px]">Mineur</Badge>}
-                      </TableCell>
-                      <TableCell>{m.discipline}</TableCell>
-                      <TableCell className="text-xs">{m.season || "—"}</TableCell>
-                      <TableCell>
-                        <span className={`text-xs ${docsCount >= required ? "text-green-700" : "text-yellow-700"}`}>
-                          {docsCount}/{required}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${m.payment.status === "paid" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                          {m.payment.status === "paid" ? "Payé" : "Non payé"}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${stMeta.color}`}>
-                          {stMeta.label}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => setActiveClubMember(m)}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          {m.approval.status === "pending" && (
-                            <>
-                              <Button variant="ghost" size="icon" className="text-green-600" onClick={() => approveClubMember(m)}>
-                                <Check className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="text-destructive" onClick={() => rejectClubMember(m)}>
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-            {clubMembersForSelected.length === 0 && (
-              <p className="text-center text-muted-foreground py-8">Aucun membre dans ce club</p>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* === INDIVIDUELS VIEW === */}
-      {mainView === "individuels" && individualSubView === "select" && (
-        <div className="space-y-4">
-          <Button variant="ghost" size="sm" onClick={() => setMainView("select")}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Retour
-          </Button>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <button
-              type="button"
-              onClick={() => setIndividualSubView("athlete")}
-              className="group relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-blue-50 to-white p-8 text-left shadow-sm transition hover:shadow-lg hover:-translate-y-0.5"
-            >
-              <div className="flex items-center gap-4">
-                <div className="rounded-2xl bg-blue-600 p-4 text-white shadow-md">
-                  <Trophy className="h-8 w-8" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-blue-900">Athlètes</h3>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {individualMembers.filter((i) => i.accountType === "athlete" && i.role !== "Arbitre").length} enregistré(s)
-                  </p>
-                </div>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIndividualSubView("coach")}
-              className="group relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-amber-50 to-white p-8 text-left shadow-sm transition hover:shadow-lg hover:-translate-y-0.5"
-            >
-              <div className="flex items-center gap-4">
-                <div className="rounded-2xl bg-amber-600 p-4 text-white shadow-md">
-                  <GraduationCap className="h-8 w-8" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-amber-900">Coachs</h3>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {individualMembers.filter((i) => i.accountType === "coach" || i.accountType === "trainer").length} enregistré(s)
-                  </p>
-                </div>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIndividualSubView("referee")}
-              className="group relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-emerald-50 to-white p-8 text-left shadow-sm transition hover:shadow-lg hover:-translate-y-0.5"
-            >
-              <div className="flex items-center gap-4">
-                <div className="rounded-2xl bg-emerald-600 p-4 text-white shadow-md">
-                  <ShieldCheck className="h-8 w-8" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-emerald-900">Arbitres</h3>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {individualMembers.filter((i) => i.role === "Arbitre").length} enregistré(s)
-                  </p>
-                </div>
-              </div>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {mainView === "individuels" && individualSubView !== "select" && (
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between gap-3">
-              <Button variant="ghost" size="sm" onClick={() => setIndividualSubView("select")}>
-                <ArrowLeft className="mr-2 h-4 w-4" /> Retour
-              </Button>
-              <h3 className="text-lg font-semibold">
-                {individualSubView === "athlete" && "Athlètes"}
-                {individualSubView === "coach" && "Coachs"}
-                {individualSubView === "referee" && "Arbitres"}
-              </h3>
-              <div className="relative w-full max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Rechercher..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nom</TableHead>
-                  <TableHead>Ville</TableHead>
-                  <TableHead>Discipline</TableHead>
-                  <TableHead>Rôle</TableHead>
-                  <TableHead>Licence</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {individualMembers
-                  .filter((e) => {
-                    const matchSearch = e.name.toLowerCase().includes(search.toLowerCase()) ||
-                      e.city.toLowerCase().includes(search.toLowerCase());
-                    if (!matchSearch) return false;
-                    if (individualSubView === "athlete") return e.accountType === "athlete" && e.role !== "Arbitre";
-                    if (individualSubView === "coach") return e.accountType === "coach" || e.accountType === "trainer";
-                    if (individualSubView === "referee") return e.role === "Arbitre";
-                    return true;
-                  })
-                  .map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">{item.name}</TableCell>
-                      <TableCell>{item.city}</TableCell>
-                      <TableCell>{item.discipline}</TableCell>
-                      <TableCell>{item.role}</TableCell>
-                      <TableCell>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${item.licenseActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                          {item.licenseActive ? "Active" : "Inactive"}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" title="Voir le profil" onClick={() => setViewIndividual(item)}><Eye className="h-4 w-4" /></Button>
-                          <Button variant="ghost" size="icon" title="QR code" onClick={() => openIndividualQR(item)}><QrCode className="h-4 w-4" /></Button>
-                          <Button variant="ghost" size="icon" onClick={() => { setEditItem(item); setDialogOpen(true); }}><Pencil className="h-4 w-4" /></Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
                   ))}
-              </TableBody>
-            </Table>
-            {(() => {
-              const count = individualMembers.filter((e) => {
-                if (individualSubView === "athlete") return e.accountType === "athlete" && e.role !== "Arbitre";
-                if (individualSubView === "coach") return e.accountType === "coach" || e.accountType === "trainer";
-                if (individualSubView === "referee") return e.role === "Arbitre";
-                return false;
-              }).filter((e) =>
-                e.name.toLowerCase().includes(search.toLowerCase()) ||
-                e.city.toLowerCase().includes(search.toLowerCase())
-              ).length;
-              return count === 0 ? <p className="text-center text-muted-foreground py-8">Aucun résultat</p> : null;
-            })()}
-          </CardContent>
-        </Card>
-      )}
-
-
-      {/* Edit dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>{editItem ? "Modifier l'entrée" : "Nouvelle entrée"}</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Type</Label>
-              <Select defaultValue={editItem?.type || "member"}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="member">Membre</SelectItem>
-                  <SelectItem value="club">Club</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2"><Label>Nom</Label><Input defaultValue={editItem?.name || ""} /></div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Ville</Label><Input defaultValue={editItem?.city || ""} /></div>
-              <div className="space-y-2"><Label>Discipline</Label><Input defaultValue={editItem?.discipline || ""} /></div>
-            </div>
-            <div className="space-y-2"><Label>Rôle / Nombre de membres</Label><Input defaultValue={editItem?.role || editItem?.memberCount?.toString() || ""} /></div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
-              <Button onClick={handleSave}>Enregistrer</Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Request detail dialog */}
-      <Dialog open={reqDialogOpen} onOpenChange={setReqDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {activeRequest && (
-                <>
-                  <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${accountTypeMeta[activeRequest.accountType].color}`}>
-                    {accountTypeMeta[activeRequest.accountType].label}
-                  </span>
-                  Demande de {activeRequest.fullName}
-                </>
-              )}
-            </DialogTitle>
-          </DialogHeader>
-          {activeRequest && (
-            <div className="space-y-4 py-2">
-              <div className="grid grid-cols-2 gap-4">
-                <div><Label className="text-xs text-muted-foreground">Nom complet</Label><p className="font-medium">{activeRequest.fullName}</p></div>
-                {activeRequest.clubName && <div><Label className="text-xs text-muted-foreground">Nom du club</Label><p className="font-medium">{activeRequest.clubName}</p></div>}
-                <div><Label className="text-xs text-muted-foreground">Email</Label><p>{activeRequest.email}</p></div>
-                <div><Label className="text-xs text-muted-foreground">Téléphone</Label><p>{activeRequest.phone}</p></div>
-                <div><Label className="text-xs text-muted-foreground">Ville</Label><p>{activeRequest.city}</p></div>
-                <div><Label className="text-xs text-muted-foreground">Discipline</Label><p>{activeRequest.discipline}</p></div>
-                <div><Label className="text-xs text-muted-foreground">Date de soumission</Label><p>{activeRequest.submittedAt}</p></div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Statut</Label>
-                  <p><span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${statusMeta[activeRequest.status].color}`}>{statusMeta[activeRequest.status].label}</span></p>
                 </div>
               </div>
-              {activeRequest.experience && (
+              {typeFilter === "individual" && (
                 <div>
-                  <Label className="text-xs text-muted-foreground">Expérience</Label>
-                  <Textarea readOnly value={activeRequest.experience} className="mt-1" />
+                  <Label className="text-sm font-medium mb-2 block">Filtrer par rôle:</Label>
+                  <div className="flex gap-2 flex-wrap">
+                    {["all", "athlete", "coach", "referee"].map((r) => (
+                      <Button
+                        key={r}
+                        size="sm"
+                        variant={roleFilter === r ? "default" : "outline"}
+                        onClick={() => setRoleFilter(r as any)}
+                        className="text-xs"
+                      >
+                        {r === "all" ? "Tous" : r === "athlete" ? "Athlète" : r === "coach" ? "Coach" : "Arbitre"}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
               )}
-              {activeRequest.message && (
-                <div>
-                  <Label className="text-xs text-muted-foreground">Message</Label>
-                  <Textarea readOnly value={activeRequest.message} className="mt-1" />
-                </div>
-              )}
-              {activeRequest.status === "pending" && (
-                <div className="flex justify-end gap-2 pt-2 border-t">
-                  <Button variant="outline" onClick={() => rejectRequest(activeRequest)}>
-                    <X className="mr-2 h-4 w-4" /> Refuser
-                  </Button>
-                  <Button onClick={() => approveRequest(activeRequest)}>
-                    <Check className="mr-2 h-4 w-4" /> Approuver et créer le compte
-                  </Button>
-                </div>
-              )}
+            </div>
+            <Input placeholder="Rechercher..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-9" />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ===== SOUS-PAGE « NOUVEAUX COMPTES » (gestion actuelle, inchangée) ===== */}
+      {view === "new" && (
+      <Tabs defaultValue="pending" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="pending" className="text-xs">
+            En attente {filteredRequests.filter((r) => r.status === "pending").length > 0 && (
+              <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-[10px]">
+                {filteredRequests.filter((r) => r.status === "pending").length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="approved" className="text-xs">Approuvés ({filteredEntries.length})</TabsTrigger>
+          <TabsTrigger value="rejected" className="text-xs">Refusés</TabsTrigger>
+          <TabsTrigger value="all" className="text-xs">Tous</TabsTrigger>
+        </TabsList>
+
+        {/* PENDING */}
+        <TabsContent value="pending">
+          {loading ? (
+            <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin" /></div>
+          ) : filteredRequests.filter((r) => r.status === "pending").length === 0 ? (
+            <Card><CardContent className="py-12 text-center"><CheckCircle2 className="h-12 w-12 text-green-600 mx-auto mb-3" /><p>Aucune demande</p></CardContent></Card>
+          ) : (
+            <div className="space-y-4">
+              {filteredRequests.filter((r) => r.status === "pending").map((req) => {
+                const meta = accountTypeLabels[req.accountType];
+                return (
+                  <Card key={req.id} className="hover:shadow-md">
+                    <CardContent className="pt-6">
+                      <div className="flex gap-4 items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className={`p-2 rounded-lg ${meta.color}`}><meta.icon className="h-5 w-5" /></div>
+                            <div><h3 className="font-semibold">{req.fullName}</h3><p className="text-xs text-muted-foreground">{meta.label}</p></div>
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs mb-3">
+                            <div className="flex items-center gap-1"><Mail className="h-3 w-3" /><span className="truncate">{req.email}</span></div>
+                            <div className="flex items-center gap-1"><Phone className="h-3 w-3" />{req.phone}</div>
+                            <div className="flex items-center gap-1"><MapPin className="h-3 w-3" />{req.city}</div>
+                            <div className="flex items-center gap-1"><Award className="h-3 w-3" />{req.discipline}</div>
+                          </div>
+                          {req.documents.length > 0 && (
+                            <div className="mb-3"><p className="text-xs font-medium mb-2">Documents:</p>
+                              <div className="flex flex-wrap gap-2">
+                                {req.documents.map((doc) => (
+                                  <Button key={doc.id} size="sm" variant="outline" className="text-xs" onClick={() => downloadDocument(req, doc)}>
+                                    <Download className="h-3 w-3 mr-1" />{doc.originalName}
+                                  </Button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" onClick={() => setSelectedRequest(req)}><Eye className="h-4 w-4 mr-1" />Voir</Button>
+                          <Button size="sm" onClick={() => { setSelectedRequest(req); setReviewNote(""); }}><Check className="h-4 w-4 mr-1" />Valider</Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
-        </DialogContent>
-      </Dialog>
+        </TabsContent>
 
-      {/* Club member detail dialog */}
-      <Dialog open={!!activeClubMember} onOpenChange={(o) => !o && setActiveClubMember(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Dossier du membre</DialogTitle>
-          </DialogHeader>
-          {activeClubMember && (
-            <div className="space-y-4 py-2">
-              <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b">
-                <div className="text-xs font-mono text-muted-foreground">ID: {activeClubMember.id}</div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => openClubMemberQR(activeClubMember)}>
-                    <QrCode className="mr-2 h-4 w-4" /> QR
-                  </Button>
-                  <Button size="sm" onClick={() => printMemberLicense(activeClubMember)}>
-                    <Printer className="mr-2 h-4 w-4" /> Imprimer la licence
-                  </Button>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div><Label className="text-xs text-muted-foreground">Club</Label><p className="font-medium">{activeClubMember.clubName}</p></div>
-                <div><Label className="text-xs text-muted-foreground">Nom complet</Label><p className="font-medium">{activeClubMember.fullName}</p></div>
-                <div><Label className="text-xs text-muted-foreground">Date de naissance</Label><p>{activeClubMember.birthDate} ({activeClubMember.age} ans)</p></div>
-                <div><Label className="text-xs text-muted-foreground">Genre</Label><p>{activeClubMember.gender === "M" ? "Homme" : "Femme"}</p></div>
-                <div><Label className="text-xs text-muted-foreground">Discipline</Label><p>{activeClubMember.discipline}</p></div>
-                <div><Label className="text-xs text-muted-foreground">Qualité</Label><p>{activeClubMember.quality || "—"}</p></div>
-                <div><Label className="text-xs text-muted-foreground">Saison</Label><p>{activeClubMember.season || "—"}</p></div>
-                <div><Label className="text-xs text-muted-foreground">Téléphone</Label><p>{activeClubMember.phone || "—"}</p></div>
-                <div className="col-span-2"><Label className="text-xs text-muted-foreground">Email</Label><p>{activeClubMember.email || "—"}</p></div>
-              </div>
+        {/* APPROVED */}
+        <TabsContent value="approved">
+          <div className="space-y-4">
+            {filteredEntries.length === 0 ? (
+              <Card><CardContent className="py-8 text-center text-muted-foreground">Aucun compte</CardContent></Card>
+            ) : (
+              filteredEntries.map((entry) => {
+                const meta = accountTypeLabels[entry.accountType];
+                return (
+                  <Link key={entry.id} to={`/admin/directory/${entry.userId ?? entry.id}`}>
+                    <Card className="border-green-200 bg-green-50/30 cursor-pointer hover:shadow-md transition">
+                      <CardContent className="pt-6">
+                        <div className="flex justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <div className={`p-2 rounded-lg ${meta.color}`}><meta.icon className="h-5 w-5" /></div>
+                              <div><h3 className="font-semibold">{entry.name}</h3><p className="text-xs text-muted-foreground">{meta.label}</p></div>
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs text-muted-foreground">
+                              <div className="flex items-center gap-1"><MapPin className="h-3 w-3" />{entry.city}</div>
+                              <div className="flex items-center gap-1"><Award className="h-3 w-3" />{entry.discipline}</div>
+                              {entry.email && <div className="flex items-center gap-1"><Mail className="h-3 w-3" />{entry.email}</div>}
+                              {entry.memberCount !== undefined && <div className="flex items-center gap-1"><Users className="h-3 w-3" />{entry.memberCount} membres</div>}
+                            </div>
+                          </div>
+                          <Badge className="bg-green-100 text-green-700 border-green-300">Actif</Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })
+            )}
+          </div>
+        </TabsContent>
 
-              {activeClubMember.emergencyContact && (
-                <div className="border border-border rounded-lg p-3 space-y-2">
-                  <h4 className="font-semibold text-sm">Contact en cas d'urgence</h4>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div><span className="text-muted-foreground text-xs">Relation</span><p>{activeClubMember.emergencyContact.relation}</p></div>
-                    <div><span className="text-muted-foreground text-xs">Nom</span><p>{activeClubMember.emergencyContact.name}</p></div>
-                    <div><span className="text-muted-foreground text-xs">Téléphone</span><p>{activeClubMember.emergencyContact.phone}</p></div>
-                    {activeClubMember.emergencyContact.email && (
-                      <div><span className="text-muted-foreground text-xs">Email</span><p>{activeClubMember.emergencyContact.email}</p></div>
+        {/* REJECTED */}
+        <TabsContent value="rejected">
+          <div className="space-y-4">
+            {filteredRequests.filter((r) => r.status === "rejected").length === 0 ? (
+              <Card><CardContent className="py-8 text-center">Aucun refus</CardContent></Card>
+            ) : (
+              filteredRequests.filter((r) => r.status === "rejected").map((req) => {
+                const meta = accountTypeLabels[req.accountType];
+                return (
+                  <Card key={req.id} className="border-red-200 bg-red-50/30">
+                    <CardContent className="pt-6">
+                      <div className="flex justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className={`p-2 rounded-lg ${meta.color}`}><meta.icon className="h-5 w-5" /></div>
+                            <div><h3 className="font-semibold">{req.fullName}</h3><p className="text-xs text-muted-foreground">{meta.label}</p></div>
+                          </div>
+                          {req.message && <div className="text-xs bg-red-100 text-red-700 p-2 rounded"><strong>Motif:</strong> {req.message}</div>}
+                        </div>
+                        <Badge className="bg-red-100 text-red-700 border-red-300">Refusé</Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )}
+          </div>
+        </TabsContent>
+
+        {/* ALL */}
+        <TabsContent value="all">
+          <div className="space-y-4">
+            {filteredRequests.length === 0 ? (
+              <Card><CardContent className="py-8 text-center">Aucune demande</CardContent></Card>
+            ) : (
+              filteredRequests.map((req) => {
+                const meta = accountTypeLabels[req.accountType];
+                const colors: Record<string, string> = { pending: "border-yellow-200 bg-yellow-50/30", approved: "border-green-200 bg-green-50/30", rejected: "border-red-200 bg-red-50/30" };
+                return (
+                  <Card key={req.id} className={colors[req.status]}>
+                    <CardContent className="pt-6">
+                      <div className="flex justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-lg ${meta.color}`}><meta.icon className="h-5 w-5" /></div>
+                          <div><h3 className="font-semibold">{req.fullName}</h3><p className="text-xs">{meta.label}</p></div>
+                        </div>
+                        <Badge>{req.status === "pending" ? "En attente" : req.status === "approved" ? "Approuvé" : "Refusé"}</Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
+      )}
+
+      {/* ===== SOUS-PAGE « VALIDATIONS » : licences à attribuer/activer + renouvellements ===== */}
+      {view === "validations" && (
+        <div className="space-y-6">
+          {/* Licences de membres soumis par les clubs (première attribution) */}
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Users className="w-5 h-5 text-primary" /> Licences de membres de club
+            </h2>
+            {!loading && clubLicenses.length === 0 && (
+              <p className="text-sm text-muted-foreground">Aucune licence soumise par un club pour le moment.</p>
+            )}
+            {clubLicenses.map((request) => (
+              <Card key={`club-license-${request.id}`} className={request.approvalStatus === "pending" ? "border-yellow-300" : undefined}>
+                <CardHeader>
+                  <CardTitle className="flex flex-wrap items-center gap-3">
+                    {request.fullName}
+                    <span className="text-sm font-normal text-muted-foreground">
+                      · {request.quality || "athlete"}{request.age ? ` · ${request.age} ans` : ""}
+                      {request.discipline ? ` · ${request.discipline}` : ""}
+                    </span>
+                    {statusPill(request.approvalStatus)}
+                    {request.licenseNumber && (
+                      <span className="font-mono text-xs font-bold text-primary px-2 py-1 bg-muted rounded">
+                        {request.licenseNumber}
+                      </span>
+                    )}
+                    <ExpiryChip
+                      info={{
+                        licenseExpiresAt: request.licenseExpiresAt ?? null,
+                        daysRemaining: request.licenseExpiresAt
+                          ? Math.ceil((new Date(`${request.licenseExpiresAt}T00:00:00Z`).getTime() - Date.now()) / 86400000)
+                          : null,
+                      }}
+                    />
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Club : <span className="font-medium text-foreground">{request.clubName}</span>
+                    {request.clubCity ? ` · ${request.clubCity}` : ""} · {request.clubEmail}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {request.email || "Sans email"} · Saison {request.season || "—"} · Paiement : {request.paymentStatus === "paid" ? "enregistré" : request.paymentStatus}
+                    · Soumis le {new Date(request.createdAt).toLocaleDateString("fr-FR")}
+                  </p>
+                  {request.receiptUrl && (
+                    <Button variant="outline" size="sm" onClick={() => void viewRenewalDocument(request.receiptUrl, request.receiptName || "reçu")}>
+                      Voir le reçu : {request.receiptName || "paiement"}
+                    </Button>
+                  )}
+                  <div className="flex flex-wrap gap-2 pt-2 border-t">
+                    {request.approvalStatus !== "approved" && (
+                      <Button size="sm" onClick={() => void reviewClubMember(request, "approved")}>
+                        <BadgeCheck className="w-4 h-4 mr-1" /> Attribuer la licence
+                      </Button>
+                    )}
+                    {request.approvalStatus !== "rejected" && (
+                      <Button variant="destructive" size="sm" onClick={() => void reviewClubMember(request, "rejected")}>
+                        <XCircle className="w-4 h-4 mr-1" /> Refuser
+                      </Button>
+                    )}
+                    {request.approvalStatus !== "pending" && (
+                      <Button variant="outline" size="sm" onClick={() => void reviewClubMember(request, "pending")}>
+                        <Clock className="w-4 h-4 mr-1" /> Remettre en attente
+                      </Button>
                     )}
                   </div>
-                </div>
-              )}
+                </CardContent>
+              </Card>
+            ))}
+          </section>
 
-              <div className="border border-border rounded-lg p-3 space-y-2">
-                <h4 className="font-semibold text-sm flex items-center gap-2"><FileText className="w-4 h-4" /> Documents</h4>
-                {Object.entries(activeClubMember.documents).map(([k, v]) =>
-                  v ? (
-                    <div key={k} className="flex items-center justify-between text-sm">
-                      <span>
-                        {k === "cin" && "CIN"}
-                        {k === "birthExtract" && "مضمون (Extrait de naissance)"}
-                        {k === "parentalAuth" && "ترخيص أبوي (Autorisation parentale)"}
-                        : <span className="text-muted-foreground">{v.name}</span>
+          {/* Renouvellements des licences de membres de club */}
+          <section className="space-y-3 pt-4 border-t">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <CalendarClock className="w-5 h-5 text-primary" /> Renouvellements — membres de club
+            </h2>
+            {!loading && memberRenewals.length === 0 && (
+              <p className="text-sm text-muted-foreground">Aucune demande de renouvellement de membre de club pour le moment.</p>
+            )}
+            {memberRenewals.map((renewal) => (
+              <Card key={`member-renewal-${renewal.id}`} className={renewal.status === "pending" ? "border-yellow-300" : undefined}>
+                <CardHeader>
+                  <CardTitle className="flex flex-wrap items-center gap-3">
+                    {renewal.memberName}
+                    <span className="text-sm font-normal text-muted-foreground">
+                      {renewal.age ? `· ${renewal.age} ans` : ""}{renewal.discipline ? ` · ${renewal.discipline}` : ""} · Saison {renewal.season}
+                    </span>
+                    {statusPill(renewal.status)}
+                    {renewal.licenseNumber && (
+                      <span className="font-mono text-xs font-bold text-primary px-2 py-1 bg-muted rounded">
+                        {renewal.licenseNumber}
                       </span>
-                      <Button size="sm" variant="ghost">Voir</Button>
-                    </div>
-                  ) : null,
-                )}
-                {Object.values(activeClubMember.documents).filter(Boolean).length === 0 && (
-                  <p className="text-xs text-muted-foreground">Aucun document fourni</p>
-                )}
-              </div>
-
-              <div className="border border-border rounded-lg p-3 space-y-2">
-                <h4 className="font-semibold text-sm flex items-center gap-2"><Receipt className="w-4 h-4" /> Paiement</h4>
-                <p className="text-sm">
-                  Statut :{" "}
-                  <span className={`px-2 py-0.5 rounded-full text-xs ${activeClubMember.payment.status === "paid" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                    {activeClubMember.payment.status === "paid" ? "Payé" : "Non payé"}
-                  </span>
-                </p>
-                {activeClubMember.payment.receipt && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span>Reçu : <span className="text-muted-foreground">{activeClubMember.payment.receipt.name}</span></span>
-                    <Button size="sm" variant="ghost">Voir</Button>
-                  </div>
-                )}
-              </div>
-
-              {activeClubMember.approval.reviewerNote && (
-                <div>
-                  <Label className="text-xs text-muted-foreground">Note de l'examinateur</Label>
-                  <p className="text-sm">{activeClubMember.approval.reviewerNote}</p>
-                </div>
-              )}
-
-              {activeClubMember.approval.status === "pending" && (
-                <div className="space-y-2 pt-2 border-t">
-                  <Label className="text-xs">Note (optionnel, en cas de refus)</Label>
-                  <Textarea value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} placeholder="Motif du refus..." />
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => rejectClubMember(activeClubMember)}>
-                      <X className="mr-2 h-4 w-4" /> Refuser
-                    </Button>
-                    <Button onClick={() => approveClubMember(activeClubMember)}>
-                      <Check className="mr-2 h-4 w-4" /> Approuver
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <MemberQRDialog
-        open={!!qrPayload}
-        onOpenChange={(o) => !o && setQrPayload(null)}
-        payload={qrPayload}
-        title={qrPayload?.kind === "club" ? "QR du club" : "QR du membre"}
-      />
-
-      {/* Individual member detail dialog */}
-      <Dialog open={!!viewIndividual} onOpenChange={(o) => !o && setViewIndividual(null)}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>Coordonnées du membre</DialogTitle></DialogHeader>
-          {viewIndividual && (
-            <div className="space-y-3 py-2">
-              <div className="flex items-center gap-3">
-                <div className="w-14 h-14 rounded-full bg-muted border flex items-center justify-center">
-                  <User className="w-7 h-7 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="font-semibold">{viewIndividual.name}</p>
-                  <p className="text-xs text-muted-foreground">{viewIndividual.role || accountTypeMeta[viewIndividual.accountType || "athlete"].label}</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><Label className="text-xs text-muted-foreground">Ville</Label><p>{viewIndividual.city || "—"}</p></div>
-                <div><Label className="text-xs text-muted-foreground">Discipline</Label><p>{viewIndividual.discipline || "—"}</p></div>
-                <div><Label className="text-xs text-muted-foreground">Email</Label><p className="break-all">{viewIndividual.email || "—"}</p></div>
-                <div><Label className="text-xs text-muted-foreground">Téléphone</Label><p>{viewIndividual.phone || "—"}</p></div>
-                <div><Label className="text-xs text-muted-foreground">Licence</Label>
-                  <p><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${viewIndividual.licenseActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                    {viewIndividual.licenseActive ? "Active" : "Inactive"}
-                  </span></p>
-                </div>
-                <div><Label className="text-xs text-muted-foreground">ID</Label><p className="font-mono text-xs">{viewIndividual.id}</p></div>
-              </div>
-              <div className="flex justify-end gap-2 pt-2 border-t">
-                <Button variant="outline" onClick={() => openIndividualQR(viewIndividual)}>
-                  <QrCode className="mr-2 h-4 w-4" /> QR Code
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Club info dialog */}
-      <Dialog open={!!viewClub} onOpenChange={(o) => !o && setViewClub(null)}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Informations du club</DialogTitle></DialogHeader>
-          {viewClub && (() => {
-            const members = clubMembers.filter((m) => m.clubName === viewClub.name);
-            const dir = clubsFromDirectory.find((c) => c.name === viewClub.name);
-            return (
-              <div className="space-y-4 py-2">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-violet-100 p-3 text-violet-700"><Building2 className="h-7 w-7" /></div>
-                  <div>
-                    <p className="font-semibold text-lg">{viewClub.name}</p>
-                    <p className="text-xs text-muted-foreground">{viewClub.city} • {viewClub.discipline}</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div><Label className="text-xs text-muted-foreground">Email</Label><p className="break-all">{dir?.email || members[0]?.email || "—"}</p></div>
-                  <div><Label className="text-xs text-muted-foreground">Téléphone</Label><p>{dir?.phone || members[0]?.phone || "—"}</p></div>
-                  <div><Label className="text-xs text-muted-foreground">Membres</Label><p>{viewClub.membersCount}</p></div>
-                  <div><Label className="text-xs text-muted-foreground">Licence</Label>
-                    <p><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${dir?.licenseActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                      {dir?.licenseActive ? "Active" : "Inactive"}
-                    </span></p>
-                  </div>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-sm mb-2">Membres ({members.length})</h4>
-                  {members.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">Aucun membre enregistré.</p>
-                  ) : (
-                    <div className="border rounded-lg divide-y">
-                      {members.map((m) => (
-                        <div key={m.id} className="flex items-center justify-between p-2 text-sm">
-                          <div className="min-w-0">
-                            <p className="font-medium truncate">{m.fullName}</p>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {m.discipline} • {m.phone || "—"} • {m.email || "—"}
-                            </p>
-                          </div>
-                          <Button variant="ghost" size="icon" title="Voir" onClick={() => { setViewClub(null); setActiveClubMember(m); }}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </div>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Club : <span className="font-medium text-foreground">{renewal.clubName}</span>
+                    {renewal.clubCity ? ` · ${renewal.clubCity}` : ""} · {renewal.clubEmail}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Échéance actuelle : {renewal.licenseExpiresAt
+                      ? new Date(`${renewal.licenseExpiresAt}T00:00:00`).toLocaleDateString("fr-FR")
+                      : "—"} · Demande du {new Date(renewal.requestedAt).toLocaleDateString("fr-FR")}
+                    {renewal.reviewedAt ? ` · traitée le ${new Date(renewal.reviewedAt).toLocaleDateString("fr-FR")}` : ""}
+                  </p>
+                  {renewal.note && <p className="text-sm bg-muted/50 border border-border rounded p-3">« {renewal.note} »</p>}
+                  {renewal.reviewerNote && <p className="text-sm text-muted-foreground">Note : {renewal.reviewerNote}</p>}
+                  {renewal.renewalDocuments.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {renewal.renewalDocuments.map((document) => (
+                        <Button
+                          key={document.id}
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            void viewRenewalDocument(
+                              `/api/admin/club-member-renewals/${renewal.id}/documents/${document.id}`,
+                              document.originalName,
+                            )
+                          }
+                        >
+                          Voir : {document.originalName}{document.type ? ` (${document.type})` : ""}
+                        </Button>
                       ))}
                     </div>
                   )}
-                </div>
-                <div className="flex justify-end gap-2 pt-2 border-t">
-                  <Button variant="outline" onClick={() => openClubQR(viewClub)}>
-                    <QrCode className="mr-2 h-4 w-4" /> QR Code
-                  </Button>
-                  <Button onClick={() => { const name = viewClub.name; setViewClub(null); setSelectedClub(name); }}>
-                    Ouvrir le club
-                  </Button>
-                </div>
+                  {renewal.status === "pending" && (
+                    <div className="flex flex-wrap gap-2 pt-2 border-t">
+                      <Button size="sm" onClick={() => void reviewMemberRenewal(renewal, "approved")}>
+                        <BadgeCheck className="w-4 h-4 mr-1" /> Approuver le renouvellement
+                      </Button>
+                      <Button variant="destructive" size="sm" onClick={() => void reviewMemberRenewal(renewal, "rejected")}>
+                        <XCircle className="w-4 h-4 mr-1" /> Refuser
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </section>
+
+          {/* Renouvellements des licences individuelles */}
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <CalendarClock className="w-5 h-5 text-primary" /> Renouvellements — licences individuelles
+            </h2>
+            {!loading && individualRenewals.length === 0 && (
+              <p className="text-sm text-muted-foreground">Aucune demande de renouvellement pour le moment.</p>
+            )}
+            {individualRenewals.map((renewal) => (
+              <Card key={`individual-renewal-${renewal.id}`} className={renewal.status === "pending" ? "border-yellow-300" : undefined}>
+                <CardHeader>
+                  <CardTitle className="flex flex-wrap items-center gap-3">
+                    {renewal.fullName}
+                    <span className="text-sm font-normal text-muted-foreground">· {renewal.accountType} · Saison {renewal.renewalYear}</span>
+                    {statusPill(renewal.status)}
+                    {renewal.licenseNumber && (
+                      <span className="font-mono text-xs font-bold text-primary px-2 py-1 bg-muted rounded">
+                        {renewal.licenseNumber}
+                      </span>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm">{renewal.email}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Échéance actuelle : {renewal.licenseExpiresAt
+                      ? new Date(`${renewal.licenseExpiresAt}T00:00:00`).toLocaleDateString("fr-FR")
+                      : "—"} · Demande du {new Date(renewal.requestedAt).toLocaleDateString("fr-FR")}
+                    {renewal.reviewedAt ? ` · traitée le ${new Date(renewal.reviewedAt).toLocaleDateString("fr-FR")}` : ""}
+                  </p>
+                  {renewal.reviewerNote && <p className="text-sm text-muted-foreground">Note : {renewal.reviewerNote}</p>}
+                  {renewal.renewalDocuments.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {renewal.renewalDocuments.map((document) => (
+                        <Button
+                          key={document.id}
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            void viewRenewalDocument(
+                              `/api/admin/license-renewals/${renewal.id}/documents/${document.id}`,
+                              document.originalName,
+                            )
+                          }
+                        >
+                          Voir : {document.originalName}{document.type ? ` (${document.type})` : ""}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+                  {renewal.status !== "approved" && (
+                    <div className="flex flex-wrap gap-2 pt-2 border-t">
+                      {renewal.status === "pending" && (
+                        <p className="text-xs text-muted-foreground w-full">
+                          Dossier incomplet : le membre n'a pas encore joint ses documents (statut « brouillon »).
+                        </p>
+                      )}
+                      <Button
+                        size="sm"
+                        disabled={renewal.status === "pending"}
+                        onClick={() => void reviewRenewal(renewal, "approved")}
+                      >
+                        <BadgeCheck className="w-4 h-4 mr-1" /> Approuver le renouvellement
+                      </Button>
+                      {renewal.status !== "rejected" && (
+                        <Button variant="destructive" size="sm" onClick={() => void reviewRenewal(renewal, "rejected")}>
+                          <XCircle className="w-4 h-4 mr-1" /> Refuser
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </section>
+
+          {/* Demandes d'activation de licence (première activation, envoyées depuis l'espace membre) */}
+          <section className="space-y-3 pt-4 border-t">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <BadgeCheck className="w-5 h-5 text-primary" /> Demandes d'activation de licence
+            </h2>
+            {!loading && activations.length === 0 && (
+              <p className="text-sm text-muted-foreground">Aucune demande d'activation pour le moment.</p>
+            )}
+            {activations.map((request) => (
+              <Card key={`activation-${request.id}`} className={request.status === "pending" ? "border-yellow-300" : undefined}>
+                <CardHeader>
+                  <CardTitle className="flex flex-wrap items-center gap-3">
+                    {request.fullName}
+                    <span className="text-sm font-normal text-muted-foreground">· {request.accountType}</span>
+                    {statusPill(request.status)}
+                    {request.licenseNumber && (
+                      <span className="font-mono text-xs font-bold text-primary px-2 py-1 bg-muted rounded">
+                        {request.licenseNumber}
+                      </span>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm">{request.email}</p>
+                  {request.reason && (
+                    <p className="text-sm bg-muted/50 border border-border rounded p-3">« {request.reason} »</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Demande du {new Date(request.createdAt).toLocaleDateString("fr-FR")}
+                    {request.reviewedAt ? ` · traitée le ${new Date(request.reviewedAt).toLocaleDateString("fr-FR")}` : ""}
+                  </p>
+
+                  {request.documents.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {request.documents.map((document) => (
+                        <Button
+                          key={document.id}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => void viewRenewalDocument(document.url, document.name)}
+                        >
+                          Voir : {document.name}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+
+                  {request.reviewerNote && (
+                    <p className="text-sm text-muted-foreground">Note : {request.reviewerNote}</p>
+                  )}
+
+                  {request.status === "pending" && (
+                    <div className="flex flex-wrap gap-2 pt-2 border-t">
+                      <Button size="sm" onClick={() => void reviewActivation(request, "approved")}>
+                        <BadgeCheck className="w-4 h-4 mr-1" /> Activer la licence
+                      </Button>
+                      <Button variant="destructive" size="sm" onClick={() => void reviewActivation(request, "rejected")}>
+                        <XCircle className="w-4 h-4 mr-1" /> Refuser
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </section>
+        </div>
+      )}
+
+      {/* REQUEST DETAIL */}
+      <Dialog open={!!selectedRequest} onOpenChange={(open) => !open && setSelectedRequest(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{selectedRequest?.fullName}</DialogTitle>
+          </DialogHeader>
+          {selectedRequest && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div><Label className="text-xs">Email</Label><p>{selectedRequest.email}</p></div>
+                <div><Label className="text-xs">Téléphone</Label><p>{selectedRequest.phone}</p></div>
+                <div><Label className="text-xs">Ville</Label><p>{selectedRequest.city}</p></div>
+                <div><Label className="text-xs">Discipline</Label><p>{selectedRequest.discipline}</p></div>
               </div>
-            );
-          })()}
+              {selectedRequest.documents.length > 0 && (
+                <div className="border-t pt-4">
+                  <Label className="text-xs font-semibold mb-3 block">Documents</Label>
+                  {selectedRequest.documents.map((doc) => (
+                    <div key={doc.id} className="flex justify-between p-2 bg-muted rounded mb-2">
+                      <div><p className="text-sm">{doc.originalName}</p><p className="text-xs text-muted-foreground">{doc.type}</p></div>
+                      <Button size="sm" variant="outline" onClick={() => downloadDocument(selectedRequest, doc)}><Download className="h-4 w-4" /></Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {selectedRequest.status === "pending" && (
+                <div className="border-t pt-4">
+                  <Textarea placeholder="Note..." value={reviewNote} onChange={(e) => setReviewNote(e.target.value)} rows={3} className="mb-4" />
+                  <div className="flex gap-2 justify-end">
+                    <Button variant="outline" onClick={() => handleReject(selectedRequest)} disabled={approving}><X className="mr-2 h-4 w-4" />Refuser</Button>
+                    <Button onClick={() => handleApprove(selectedRequest)} disabled={approving}><Check className="mr-2 h-4 w-4" />Approuver</Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

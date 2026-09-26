@@ -6,92 +6,49 @@ import { useLang } from "@/contexts/LangContext";
 import Navbar from "@/components/Navbar";
 import TopBar from "@/components/TopBar";
 import Footer from "@/components/Footer";
+import { useContent, contentUrl } from "@/lib/contentApi";
 
-import g1 from "@/assets/gallery1.jpg";
-import g2 from "@/assets/gallery2.jpg";
-import g3 from "@/assets/gallery3.jpg";
-import g4 from "@/assets/gallery4.jpg";
-import g5 from "@/assets/gallery5.jpg";
-import g6 from "@/assets/gallery6.jpg";
-import heroDance from "@/assets/hero-dance.jpg";
-import news1 from "@/assets/news1.jpg";
-import news2 from "@/assets/news2.jpg";
-import news3 from "@/assets/news3.jpg";
-import styleBreak from "@/assets/style-breakdance.jpg";
-import styleContemp from "@/assets/style-contemporain.jpg";
-import styleHiphop from "@/assets/style-hiphop.jpg";
-import danceAbout from "@/assets/dance-about.jpg";
-
-interface MediaEvent {
-  titleKey: string;
-  date: string;
-  discipline: string;
-  eventType: string;
-  eventNameKey: string;
+interface ApiMediaEvent {
+  id: number;
+  title: string;
+  date?: string;
+  discipline?: string;
+  eventType?: string;
+  eventName?: string;
   photos: string[];
   videos: string[];
 }
 
-const eventsData: MediaEvent[] = [
-  {
-    titleKey: "media.event1",
-    date: "2025",
-    discipline: "breakdance",
-    eventType: "comp_nat",
-    eventNameKey: "media.eventName.champNat",
-    photos: [g1, g2, g3, g4, heroDance, styleBreak, g5, g6],
-    videos: ["https://www.youtube.com/embed/dQw4w9WgXcQ"],
-  },
-  {
-    titleKey: "media.event2",
-    date: "2025",
-    discipline: "contemporain",
-    eventType: "comp_int",
-    eventNameKey: "media.eventName.galaContemp",
-    photos: [g5, g6, news1, news2, styleContemp, danceAbout, g1, g3],
-    videos: [],
-  },
-  {
-    titleKey: "media.event3",
-    date: "2024",
-    discipline: "hiphop",
-    eventType: "comp_nat",
-    eventNameKey: "media.eventName.compRegion",
-    photos: [heroDance, news3, styleHiphop, g4, g2, news1, g6, g5],
-    videos: [],
-  },
-  {
-    titleKey: "media.event4",
-    date: "2024",
-    discipline: "classique",
-    eventType: "formations",
-    eventNameKey: "media.eventName.stageClassique",
-    photos: [danceAbout, g1, g3, g5, styleContemp, news2, heroDance, g4],
-    videos: [],
-  },
-];
-
 const disciplines = ["all", "breakdance", "contemporain", "hiphop", "classique"];
 const eventTypes = ["all", "comp_nat", "comp_int", "formations"];
-const eventNames = ["all", "media.eventName.champNat", "media.eventName.galaContemp", "media.eventName.compRegion", "media.eventName.stageClassique"];
-const years = ["all", "2025", "2024", "2023"];
 
 const MediathequePage = () => {
-  const { t, lang } = useLang();
+  const { t } = useLang();
   const [search, setSearch] = useState("");
   const [discFilter, setDiscFilter] = useState("all");
   const [yearFilter, setYearFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
-  const [eventFilter, setEventFilter] = useState("all");
   const [activeTabs, setActiveTabs] = useState<Record<number, "photos" | "videos">>({});
 
-  const filtered = eventsData.filter((ev) => {
-    const matchSearch = t(ev.titleKey).toLowerCase().includes(search.toLowerCase());
+  const { items: rawItems, isFallback } = useContent("media");
+  const events: ApiMediaEvent[] = rawItems.map((raw) => {
+    const item = raw as unknown as Omit<ApiMediaEvent, "id"> & { id: number };
+    return {
+      ...item,
+      title: item.title || "",
+      photos: (item.photos || []).map(contentUrl),
+      videos: item.videos || [],
+    };
+  });
+
+  const years = ["all", ...Array.from(new Set(events.map((e) => e.date).filter(Boolean) as string[]))];
+
+  const filtered = events.filter((ev) => {
+    const matchSearch = ev.title.toLowerCase().includes(search.toLowerCase());
     const matchDisc = discFilter === "all" || ev.discipline === discFilter;
     const matchYear = yearFilter === "all" || ev.date === yearFilter;
     const matchType = typeFilter === "all" || ev.eventType === typeFilter;
-    const matchEvent = eventFilter === "all" || ev.eventNameKey === eventFilter;
-    return matchSearch && matchDisc && matchYear && matchType && matchEvent;
+    return matchSearch && matchDisc && matchYear && matchType;
   });
 
   const getTab = (idx: number) => activeTabs[idx] || "photos";
@@ -184,21 +141,9 @@ const MediathequePage = () => {
             <ChevronDown className="absolute end-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
           </div>
 
-          <div className="relative">
-            <Filter className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-            <select
-              value={eventFilter}
-              onChange={(e) => setEventFilter(e.target.value)}
-              className="appearance-none text-sm rounded-lg border border-border bg-background text-foreground ps-9 pe-8 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary cursor-pointer"
-            >
-              {eventNames.map((en) => (
-                <option key={en} value={en}>
-                  {en === "all" ? t("media.event.all") : t(en)}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute end-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-          </div>
+          {isFallback && (
+            <span className="text-xs text-muted-foreground">Données d'exemple — publiez vos médias depuis l'administration.</span>
+          )}
         </div>
       </section>
 
@@ -211,7 +156,7 @@ const MediathequePage = () => {
 
           {filtered.map((ev, idx) => (
             <motion.div
-              key={idx}
+              key={ev.id}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -220,7 +165,7 @@ const MediathequePage = () => {
               {/* Event Title */}
               <div className="bg-primary rounded-lg px-5 py-3 mb-4 inline-block">
                 <h2 className="text-lg font-bold text-primary-foreground">
-                  {t(ev.titleKey)}
+                  {ev.title}
                 </h2>
               </div>
 
@@ -264,7 +209,7 @@ const MediathequePage = () => {
                     >
                       <img
                         src={img}
-                        alt={`${t(ev.titleKey)} - ${i + 1}`}
+                        alt={`${ev.title} - ${i + 1}`}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     </motion.div>
@@ -279,7 +224,7 @@ const MediathequePage = () => {
                           src={url}
                           className="w-full h-full"
                           allowFullScreen
-                          title={`${t(ev.titleKey)} video ${i + 1}`}
+                          title={`${ev.title} video ${i + 1}`}
                         />
                       </div>
                     ))

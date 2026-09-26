@@ -1,10 +1,13 @@
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Calendar, Image, FileText, Download } from "lucide-react";
+import { ArrowLeft, Calendar, Image, FileText, Download, Loader2 } from "lucide-react";
 import { useLang } from "@/contexts/LangContext";
 import Navbar from "@/components/Navbar";
 import TopBar from "@/components/TopBar";
 import Footer from "@/components/Footer";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/api";
+import { contentUrl } from "@/lib/contentApi";
 import { newsData } from "@/data/newsData";
 
 const fadeUp = {
@@ -12,16 +15,62 @@ const fadeUp = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
 };
 
-const documents = [
-  { name: "Plan_Strategique_2026-2030.pdf", type: "PDF", size: "2.4 Mo" },
-  { name: "Synthese_Plan_Strategique.pdf", type: "PDF", size: "580 Ko" },
-  { name: "Budget_Previsionnel.xlsx", type: "XLSX", size: "1.1 Mo" },
-];
+interface ApiArticle {
+  id: number;
+  title?: string;
+  titleKey?: string;
+  description?: string;
+  body?: string;
+  bodyKey?: string;
+  category?: string;
+  date?: string;
+  image?: string;
+  galleryImages?: string[];
+  documents?: { name: string; type?: string; size?: string; url?: string }[];
+}
+
+const staticArticle = (id: number) => {
+  const article = newsData.find((n) => n.id === id);
+  if (!article) return null;
+  return {
+    id: article.id,
+    titleKey: article.titleKey,
+    descKey: article.descKey,
+    bodyKey: article.bodyKey,
+    category: article.category,
+    date: article.date,
+    image: article.image,
+    galleryImages: article.galleryImages,
+    documents: [],
+  } as ApiArticle;
+};
 
 const NewsDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { t } = useLang();
-  const article = newsData.find((n) => n.id === Number(id));
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["news-detail", id],
+    queryFn: () => apiRequest<ApiArticle>(`/api/content/news/${id}`),
+    retry: false,
+  });
+
+  const article: ApiArticle | null = data
+    ? { ...data, image: data.image ? contentUrl(data.image) : undefined, galleryImages: data.galleryImages?.map(contentUrl) }
+    : staticArticle(Number(id));
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <TopBar />
+        <Navbar />
+        <div className="container mx-auto py-32 flex justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!article) {
     return (
@@ -38,6 +87,10 @@ const NewsDetailPage = () => {
       </div>
     );
   }
+
+  const title = article.title || (article.titleKey ? t(article.titleKey) : "");
+  const bodyText = article.body || (article.bodyKey ? t(article.bodyKey) : "");
+  const paragraphs = bodyText.split("\n\n").filter(Boolean);
 
   return (
     <div className="min-h-screen bg-background">
@@ -66,7 +119,7 @@ const NewsDetailPage = () => {
           </div>
 
           <h1 className="text-2xl md:text-4xl font-bold text-primary-foreground max-w-2xl leading-tight">
-            {t(article.titleKey)}
+            {title}
           </h1>
         </div>
       </section>
@@ -81,71 +134,77 @@ const NewsDetailPage = () => {
             variants={fadeUp}
             className="prose-sm md:prose text-muted-foreground leading-relaxed space-y-6"
           >
-            {t(article.bodyKey).split("\n\n").map((paragraph, i) => (
+            {paragraphs.map((paragraph, i) => (
               <p key={i}>{paragraph}</p>
             ))}
           </motion.div>
 
           {/* Photo Gallery */}
-          <motion.div
-            className="mt-12"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeUp}
-          >
-            <h2 className="flex items-center gap-2 text-lg font-bold text-primary mb-5">
-              <Image className="w-5 h-5" />
-              {t("nd.gallery")}
-            </h2>
-            <div className="grid grid-cols-3 gap-4">
-              {article.galleryImages.map((img, i) => (
-                <div key={i} className="group">
-                  <img
-                    src={img}
-                    alt={`${t(article.titleKey)} - ${i + 1}`}
-                    className="rounded-xl w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <p className="text-[11px] text-muted-foreground text-center mt-2">
-                    {t(`nd.caption${i + 1}`)}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </motion.div>
+          {(article.galleryImages?.length ?? 0) > 0 && (
+            <motion.div
+              className="mt-12"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={fadeUp}
+            >
+              <h2 className="flex items-center gap-2 text-lg font-bold text-primary mb-5">
+                <Image className="w-5 h-5" />
+                {t("nd.gallery")}
+              </h2>
+              <div className="grid grid-cols-3 gap-4">
+                {article.galleryImages!.map((img, i) => (
+                  <div key={i} className="group">
+                    <img
+                      src={contentUrl(img)}
+                      alt={`${title} - ${i + 1}`}
+                      className="rounded-xl w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <p className="text-[11px] text-muted-foreground text-center mt-2">
+                      {t(`nd.caption${i + 1}`)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
 
           {/* Attached Documents */}
-          <motion.div
-            className="mt-12"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeUp}
-          >
-            <h2 className="flex items-center gap-2 text-lg font-bold text-primary mb-5">
-              <FileText className="w-5 h-5" />
-              {t("nd.documents")}
-            </h2>
-            <div className="space-y-3">
-              {documents.map((doc, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-4 bg-card border border-border rounded-xl px-5 py-4 card-hover"
-                >
-                  <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
-                    <FileText className="w-5 h-5 text-accent" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-primary truncate">{doc.name}</p>
-                    <p className="text-xs text-muted-foreground">{doc.type} — {doc.size}</p>
-                  </div>
-                  <button className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors shrink-0">
-                    <Download className="w-4 h-4 text-muted-foreground" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </motion.div>
+          {(article.documents?.length ?? 0) > 0 && (
+            <motion.div
+              className="mt-12"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={fadeUp}
+            >
+              <h2 className="flex items-center gap-2 text-lg font-bold text-primary mb-5">
+                <FileText className="w-5 h-5" />
+                {t("nd.documents")}
+              </h2>
+              <div className="space-y-3">
+                {article.documents!.map((doc, i) => (
+                  <a
+                    key={i}
+                    href={doc.url ? contentUrl(doc.url) : "#"}
+                    download
+                    className="flex items-center gap-4 bg-card border border-border rounded-xl px-5 py-4 card-hover"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
+                      <FileText className="w-5 h-5 text-accent" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-primary truncate">{doc.name}</p>
+                      <p className="text-xs text-muted-foreground">{doc.type || "FILE"}{doc.size ? ` — ${doc.size}` : ""}</p>
+                    </div>
+                    <span className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors shrink-0">
+                      <Download className="w-4 h-4 text-muted-foreground" />
+                    </span>
+                  </a>
+                ))}
+              </div>
+            </motion.div>
+          )}
         </div>
       </section>
 

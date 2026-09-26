@@ -13,19 +13,39 @@ const AdminLogin = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, user } = useAuth();
   const navigate = useNavigate();
+
+  // If already logged in and is admin, redirect to dashboard
+  if (user && user.role === "admin") {
+    navigate("/admin");
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
-    const { error } = await signIn(email, password);
-    if (error) {
-      setError(error.message);
+    const { error: authError } = await signIn(email, password);
+    if (authError) {
+      setError(authError.message);
       setLoading(false);
     } else {
-      navigate("/admin");
+      // Check if user is admin
+      setTimeout(() => {
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+          const userData = JSON.parse(storedUser);
+          if (userData.role === "admin") {
+            navigate("/admin");
+          } else {
+            setError("Vous n'avez pas les droits d'administrateur");
+            localStorage.removeItem("authToken");
+            localStorage.removeItem("user");
+            setLoading(false);
+          }
+        }
+      }, 100);
     }
   };
 
@@ -59,6 +79,7 @@ const AdminLogin = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
                   required
+                  disabled={loading}
                 />
               </div>
             </div>
@@ -74,6 +95,7 @@ const AdminLogin = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10"
                   required
+                  disabled={loading}
                 />
               </div>
             </div>

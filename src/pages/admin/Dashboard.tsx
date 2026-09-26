@@ -1,36 +1,83 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import {
-  Newspaper, Trophy, Users, Image, Medal, TrendingUp,
-  ArrowUpRight, Plus, Calendar, Activity
+  Users, Clock, CheckCircle2, XCircle, Plus, ArrowUpRight,
+  Loader2, Newspaper, Trophy, TrendingUp
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { newsData } from "@/data/newsData";
+import { apiRequest } from "@/lib/api";
 
-const stats = [
-  { title: "Actualités", value: newsData.length, change: "+2 ce mois", icon: Newspaper, color: "from-blue-500 to-blue-600", url: "/admin/news" },
-  { title: "Compétitions", value: 5, change: "+1 à venir", icon: Trophy, color: "from-amber-500 to-orange-600", url: "/admin/competitions" },
-  { title: "Résultats", value: 12, change: "Mis à jour", icon: Medal, color: "from-emerald-500 to-green-600", url: "/admin/results" },
-  { title: "Membres", value: 24, change: "+3 ce mois", icon: Users, color: "from-violet-500 to-purple-600", url: "/admin/directory" },
-  { title: "Médias", value: 36, change: "+5 cette semaine", icon: Image, color: "from-pink-500 to-rose-600", url: "/admin/media" },
-  { title: "Visiteurs ce mois", value: "1.2K", change: "+12% vs dernier", icon: TrendingUp, color: "from-cyan-500 to-teal-600", url: "/admin" },
-];
+interface DirectoryEntry {
+  id: number;
+  accountType: "athlete" | "coach" | "referee" | "club";
+  name: string;
+  city: string;
+  discipline: string;
+  licenseActive: boolean;
+}
 
-const recentActivity = [
-  { action: "Nouvelle actualité publiée", detail: "Championnat National 2025", time: "Il y a 2h", icon: Newspaper, color: "text-blue-600 bg-blue-100" },
-  { action: "Résultats ajoutés", detail: "Coupe de Tunisie", time: "Il y a 5h", icon: Medal, color: "text-emerald-600 bg-emerald-100" },
-  { action: "Nouveau membre", detail: "Yasmine Hamdi", time: "Hier", icon: Users, color: "text-violet-600 bg-violet-100" },
-  { action: "Photos ajoutées", detail: "Festival de Danse (5)", time: "Il y a 2j", icon: Image, color: "text-pink-600 bg-pink-100" },
-  { action: "Compétition créée", detail: "Open International", time: "Il y a 3j", icon: Trophy, color: "text-amber-600 bg-amber-100" },
-];
+interface AccountRequest {
+  id: number;
+  accountType: "athlete" | "coach" | "referee" | "club";
+  fullName: string;
+  email: string;
+  status: "pending" | "approved" | "rejected";
+}
 
-const upcomingEvents = [
-  { title: "Championnat National 2025", date: "15 Mars", location: "Tunis" },
-  { title: "Open International", date: "10 Juin", location: "Hammamet" },
-  { title: "Festival de Danse", date: "28 Fév", location: "Sfax" },
-];
+interface NewsItem {
+  id: number;
+  title: string;
+  excerpt: string;
+  createdAt: string;
+}
+
+interface Competition {
+  id: number;
+  name: string;
+  date: string;
+  location: string;
+}
 
 const Dashboard = () => {
+  const [entries, setEntries] = useState<DirectoryEntry[]>([]);
+  const [requests, setRequests] = useState<AccountRequest[]>([]);
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [competitions, setCompetitions] = useState<Competition[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [directoryData, requestsData, newsData, competitionsData] = await Promise.all([
+        apiRequest<DirectoryEntry[]>("/api/directory").catch(() => []),
+        apiRequest<AccountRequest[]>("/api/admin/account-requests").catch(() => []),
+        apiRequest<NewsItem[]>("/api/admin/news").catch(() => []),
+        apiRequest<Competition[]>("/api/admin/competitions").catch(() => []),
+      ]);
+      setEntries(directoryData || []);
+      setRequests(requestsData || []);
+      setNews(newsData || []);
+      setCompetitions(competitionsData || []);
+    } catch (error) {
+      console.error("Failed to load dashboard data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Stats
+  const approvedCount = entries.filter((e) => e.licenseActive).length;
+  const pendingCount = requests.filter((r) => r.status === "pending").length;
+  const approvedRequests = requests.filter((r) => r.status === "approved").length;
+  const rejectedCount = requests.filter((r) => r.status === "rejected").length;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -49,84 +96,164 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-        {stats.map((stat) => (
-          <Link key={stat.title} to={stat.url}>
-            <Card className="hover:shadow-md transition-all hover:-translate-y-0.5 cursor-pointer h-full">
-              <CardContent className="p-4">
-                <div className={`inline-flex p-2 rounded-lg bg-gradient-to-br ${stat.color} text-white mb-3`}>
-                  <stat.icon className="h-4 w-4" />
+      {/* Stats Grid */}
+      {!loading && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Profils approuvés</p>
+                  <p className="text-3xl font-bold">{approvedCount}</p>
                 </div>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <p className="text-xs text-muted-foreground mt-0.5">{stat.title}</p>
-                <p className="text-[10px] text-emerald-600 font-medium mt-1">{stat.change}</p>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-      </div>
+                <div className="p-3 rounded-lg bg-green-100 text-green-700">
+                  <Users className="h-6 w-6" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Demandes en attente</p>
+                  <p className="text-3xl font-bold">{pendingCount}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-yellow-100 text-yellow-700">
+                  <Clock className="h-6 w-6" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Demandes approuvées</p>
+                  <p className="text-3xl font-bold">{approvedRequests}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-blue-100 text-blue-700">
+                  <CheckCircle2 className="h-6 w-6" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Demandes refusées</p>
+                  <p className="text-3xl font-bold">{rejectedCount}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-red-100 text-red-700">
+                  <XCircle className="h-6 w-6" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      )}
 
       {/* Two-column section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent activity */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <div className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-primary" />
-              <CardTitle className="text-lg">Activité récente</CardTitle>
-            </div>
-            <Button variant="ghost" size="sm" className="text-xs">
-              Voir tout <ArrowUpRight className="ml-1 h-3 w-3" />
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1">
-              {recentActivity.map((item, i) => (
-                <div key={i} className="flex items-center gap-3 py-2.5 border-b last:border-0">
-                  <div className={`p-2 rounded-lg ${item.color}`}>
-                    <item.icon className="h-4 w-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{item.action}</p>
-                    <p className="text-xs text-muted-foreground truncate">{item.detail}</p>
-                  </div>
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">{item.time}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Upcoming events */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Actualités récentes */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <div className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-primary" />
-              <CardTitle className="text-lg">Événements à venir</CardTitle>
+              <Newspaper className="h-5 w-5 text-blue-600" />
+              <CardTitle className="text-lg">Actualités récentes ({news.length})</CardTitle>
             </div>
+            <Button variant="ghost" size="sm" asChild className="text-xs">
+              <Link to="/admin/news">Voir tout <ArrowUpRight className="ml-1 h-3 w-3" /></Link>
+            </Button>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {upcomingEvents.map((event, i) => (
-                <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/40 hover:bg-muted transition-colors">
-                  <div className="flex flex-col items-center justify-center w-12 h-12 rounded-md bg-primary text-primary-foreground shrink-0">
-                    <span className="text-xs font-medium uppercase">{event.date.split(" ")[1]}</span>
-                    <span className="text-base font-bold leading-none">{event.date.split(" ")[0]}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{event.title}</p>
-                    <p className="text-xs text-muted-foreground">{event.location}</p>
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {news.slice(0, 5).map((item) => (
+                <div key={item.id} className="p-3 border border-border rounded-lg hover:bg-muted/50 transition">
+                  <h4 className="text-sm font-medium truncate">{item.title}</h4>
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.excerpt}</p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {new Date(item.createdAt).toLocaleDateString("fr-FR")}
+                  </p>
+                </div>
+              ))}
+              {news.length === 0 && (
+                <p className="text-center text-muted-foreground py-6">Aucune actualité</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Compétitions à venir */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <div className="flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-amber-600" />
+              <CardTitle className="text-lg">Compétitions à venir ({competitions.length})</CardTitle>
+            </div>
+            <Button variant="ghost" size="sm" asChild className="text-xs">
+              <Link to="/admin/competitions">Voir tout <ArrowUpRight className="ml-1 h-3 w-3" /></Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {competitions.slice(0, 5).map((comp) => (
+                <div key={comp.id} className="p-3 border border-border rounded-lg hover:bg-muted/50 transition">
+                  <h4 className="text-sm font-medium truncate">{comp.name}</h4>
+                  <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
+                    <span>{new Date(comp.date).toLocaleDateString("fr-FR")}</span>
+                    <span>{comp.location}</span>
                   </div>
                 </div>
               ))}
+              {competitions.length === 0 && (
+                <p className="text-center text-muted-foreground py-6">Aucune compétition</p>
+              )}
             </div>
-            <Button variant="outline" size="sm" className="w-full mt-4" asChild>
-              <Link to="/admin/competitions">Gérer les compétitions</Link>
-            </Button>
           </CardContent>
         </Card>
       </div>
+
+      {/* Demandes en attente */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-purple-600" />
+            <CardTitle className="text-lg">Demandes en attente ({pendingCount})</CardTitle>
+          </div>
+          <Button variant="ghost" size="sm" asChild className="text-xs">
+            <Link to="/admin/directory">Gérer <ArrowUpRight className="ml-1 h-3 w-3" /></Link>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {requests.filter((r) => r.status === "pending").slice(0, 5).map((req) => (
+              <div key={req.id} className="flex items-center justify-between p-3 border border-yellow-200 bg-yellow-50 rounded-lg">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">{req.fullName}</p>
+                  <p className="text-xs text-muted-foreground truncate">{req.email}</p>
+                </div>
+                <Badge variant="secondary" className="text-xs">
+                  {req.accountType === "athlete" ? "Athlète" : req.accountType === "coach" ? "Coach" : req.accountType === "referee" ? "Arbitre" : "Club"}
+                </Badge>
+              </div>
+            ))}
+            {pendingCount === 0 && (
+              <p className="text-center text-muted-foreground py-6">Aucune demande en attente</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

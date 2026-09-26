@@ -1,6 +1,5 @@
-import { useState, useRef } from "react";
-import { newsData, type NewsItem } from "@/data/newsData";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useState, useRef } from "react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -9,18 +8,23 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, Search, Upload, X, FileText, ImageIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, X, FileText, ImageIcon, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/admin/PageHeader";
+import { ImageUploadField } from "@/components/admin/ImageUploadField";
+import {
+  adminListContent, adminCreateContent, adminUpdateContent, adminDeleteContent,
+  uploadMediaFile, contentUrl, type ContentItem,
+} from "@/lib/contentApi";
 
 interface AttachedDoc {
   name: string;
   type: string;
   size: string;
+  url?: string;
 }
 
-interface EditableNews {
-  id: number;
+interface EditableNews extends ContentItem {
   image: string;
   category: "competition" | "event";
   date: string;
@@ -31,20 +35,8 @@ interface EditableNews {
   documents: AttachedDoc[];
 }
 
-const toEditable = (n: NewsItem): EditableNews => ({
-  id: n.id,
-  image: n.image,
-  category: n.category,
-  date: n.date,
-  title: n.titleKey,
-  description: n.descKey,
-  body: n.bodyKey,
-  galleryImages: [...n.galleryImages],
-  documents: [],
-});
-
 const emptyNews = (): EditableNews => ({
-  id: Date.now(),
+  id: 0,
   image: "",
   category: "event",
   date: new Date().toISOString().slice(0, 10),
@@ -55,59 +47,56 @@ const emptyNews = (): EditableNews => ({
   documents: [],
 });
 
-// Single image picker
-const ImageField = ({ value, onChange, label, ratio = "aspect-video" }: { value: string; onChange: (v: string) => void; label: string; ratio?: string }) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const handleFile = (file?: File) => {
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    onChange(url);
-  };
-  return (
-    <div className="space-y-2">
-      <Label>{label}</Label>
-      <div className={`relative ${ratio} w-full rounded-lg border-2 border-dashed border-border bg-muted/30 overflow-hidden flex items-center justify-center`}>
-        {value ? (
-          <>
-            <img src={value} alt="" className="w-full h-full object-cover" />
-            <button type="button" onClick={() => onChange("")} className="absolute top-2 right-2 bg-destructive text-destructive-foreground p-1 rounded-full">
-              <X className="h-3 w-3" />
-            </button>
-          </>
-        ) : (
-          <button type="button" onClick={() => inputRef.current?.click()} className="flex flex-col items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-            <Upload className="h-8 w-8" />
-            <span className="text-xs">Cliquer pour téléverser</span>
-          </button>
-        )}
-      </div>
-      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
-      {value && (
-        <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()}>
-          Remplacer l'image
-        </Button>
-      )}
-    </div>
-  );
-};
+const toEditable = (raw: ContentItem): EditableNews => ({
+  id: raw.id,
+  image: (raw.image as string) || "",
+  category: (raw.category as "competition" | "event") || "event",
+  date: (raw.date as string) || "",
+  title: (raw.title as string) || "",
+  description: (raw.description as string) || "",
+  body: (raw.body as string) || "",
+  galleryImages: ((raw.galleryImages as string[]) || []).map(contentUrl),
+  documents: (raw.documents as AttachedDoc[]) || [],
+});
 
 const AdminNews = () => {
   const [search, setSearch] = useState("");
-  const [items, setItems] = useState<EditableNews[]>(newsData.map(toEditable));
+  const [items, setItems] = useState<EditableNews[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [editItem, setEditItem] = useState<EditableNews | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
+  const load = async () => {
+    try {
+      setLoading(true);
+      const data = await adminListContent("news");
+      setItems(data.map(toEditable));
+    } catch (error) {
+      toast({ title: "Chargement impossible", description: (error as Error).message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { void load(); }, []);
+
   const filtered = items.filter((n) =>
     n.title.toLowerCase().includes(search.toLowerCase()) ||
     n.category.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleDelete = (id: number) => {
-    setItems((prev) => prev.filter((n) => n.id !== id));
-    toast({ title: "Actualité supprimée", description: "L'article a été supprimé avec succès." });
+  const handleDelete = async (id: number) => {
+    try {
+      await adminDeleteContent("news", id);
+      setItems((prev) => prev.filter((n) => n.id !== id));
+      toast({ title: "Actualité supprimée", description: "L'article a été supprimé avec succès." });
+    } catch (error) {
+      toast({ title: "Suppression impossible", description: (error as Error).message, variant: "destructive" });
+    }
   };
 
   const handleEdit = (item: EditableNews) => {
@@ -120,24 +109,56 @@ const AdminNews = () => {
     setDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!editItem) return;
-    setItems((prev) => {
-      const exists = prev.some((p) => p.id === editItem.id);
-      return exists ? prev.map((p) => (p.id === editItem.id ? editItem : p)) : [editItem, ...prev];
-    });
-    setDialogOpen(false);
-    toast({ title: "Enregistré", description: "Les changements ont été enregistrés." });
+    if (!editItem.title.trim()) {
+      toast({ title: "Le titre est requis", variant: "destructive" });
+      return;
+    }
+    try {
+      setSaving(true);
+      const payload = {
+        image: editItem.image,
+        category: editItem.category,
+        date: editItem.date,
+        title: editItem.title,
+        description: editItem.description,
+        body: editItem.body,
+        galleryImages: editItem.galleryImages,
+        documents: editItem.documents,
+      };
+      const saved = editItem.id
+        ? await adminUpdateContent("news", editItem.id, payload)
+        : await adminCreateContent("news", payload);
+      setItems((prev) => {
+        const exists = prev.some((p) => p.id === saved.id);
+        return exists ? prev.map((p) => (p.id === saved.id ? toEditable(saved) : p)) : [toEditable(saved), ...prev];
+      });
+      setDialogOpen(false);
+      toast({ title: "Enregistré", description: "Les changements sont publiés sur le site." });
+    } catch (error) {
+      toast({ title: "Enregistrement impossible", description: (error as Error).message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const update = <K extends keyof EditableNews>(key: K, val: EditableNews[K]) => {
     setEditItem((prev) => (prev ? { ...prev, [key]: val } : prev));
   };
 
-  const addGalleryImages = (files: FileList | null) => {
+  const addGalleryImages = async (files: FileList | null) => {
     if (!files || !editItem) return;
-    const urls = Array.from(files).map((f) => URL.createObjectURL(f));
-    update("galleryImages", [...editItem.galleryImages, ...urls]);
+    try {
+      const urls: string[] = [];
+      for (const file of Array.from(files)) {
+        const url = await uploadMediaFile(file);
+        if (url) urls.push(url);
+      }
+      update("galleryImages", [...editItem.galleryImages, ...urls]);
+    } catch {
+      toast({ title: "Téléversement impossible", variant: "destructive" });
+    }
   };
 
   const removeGalleryImage = (idx: number) => {
@@ -181,7 +202,7 @@ const AdminNews = () => {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editItem && items.some(i => i.id === editItem.id) ? "Modifier l'article" : "Nouvel article"}</DialogTitle>
+            <DialogTitle>{editItem && editItem.id ? "Modifier l'article" : "Nouvel article"}</DialogTitle>
           </DialogHeader>
           {editItem && (
             <Tabs defaultValue="general" className="mt-2">
@@ -194,7 +215,7 @@ const AdminNews = () => {
 
               {/* GENERAL */}
               <TabsContent value="general" className="space-y-4 pt-4">
-                <ImageField value={editItem.image} onChange={(v) => update("image", v)} label="Image principale (héro)" />
+                <ImageUploadField value={editItem.image} onChange={(v) => update("image", v)} label="Image principale (héro)" />
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Catégorie</Label>
@@ -208,7 +229,7 @@ const AdminNews = () => {
                   </div>
                   <div className="space-y-2">
                     <Label>Date</Label>
-                    <Input value={editItem.date} onChange={(e) => update("date", e.target.value)} placeholder="ex: 23 Sept 2023" />
+                    <Input type="date" value={editItem.date} onChange={(e) => update("date", e.target.value)} />
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -236,7 +257,7 @@ const AdminNews = () => {
                   <Button type="button" size="sm" onClick={() => galleryInputRef.current?.click()}>
                     <Plus className="h-4 w-4 mr-1" /> Ajouter des images
                   </Button>
-                  <input ref={galleryInputRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => { addGalleryImages(e.target.files); e.target.value = ""; }} />
+                  <input ref={galleryInputRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => { void addGalleryImages(e.target.files); e.target.value = ""; }} />
                 </div>
                 {editItem.galleryImages.length === 0 ? (
                   <div className="border-2 border-dashed border-border rounded-lg py-12 text-center text-muted-foreground">
@@ -247,7 +268,7 @@ const AdminNews = () => {
                   <div className="grid grid-cols-3 gap-3">
                     {editItem.galleryImages.map((img, i) => (
                       <div key={i} className="relative aspect-square rounded-lg overflow-hidden border border-border group">
-                        <img src={img} alt={`Galerie ${i + 1}`} className="w-full h-full object-cover" />
+                        <img src={contentUrl(img)} alt={`Galerie ${i + 1}`} className="w-full h-full object-cover" />
                         <button type="button" onClick={() => removeGalleryImage(i)} className="absolute top-1.5 right-1.5 bg-destructive text-destructive-foreground p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
                           <X className="h-3 w-3" />
                         </button>
@@ -294,7 +315,10 @@ const AdminNews = () => {
           )}
           <div className="flex justify-end gap-2 pt-4 border-t">
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
-            <Button onClick={handleSave}>Enregistrer</Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              Enregistrer
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -312,60 +336,66 @@ const AdminNews = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Image</TableHead>
-                <TableHead>Titre</TableHead>
-                <TableHead>Catégorie</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Médias</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>
-                    {item.image ? (
-                      <img src={item.image} alt="" className="w-12 h-12 rounded object-cover" />
-                    ) : (
-                      <div className="w-12 h-12 rounded bg-muted flex items-center justify-center">
-                        <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell className="font-medium max-w-xs truncate">{item.title}</TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      item.category === "competition" ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"
-                    }`}>
-                      {item.category === "competition" ? "Compétition" : "Événement"}
-                    </span>
-                  </TableCell>
-                  <TableCell>{item.date}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1"><ImageIcon className="h-3 w-3" /> {item.galleryImages.length}</span>
-                      <span className="flex items-center gap-1"><FileText className="h-3 w-3" /> {item.documents.length}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)} className="text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          {filtered.length === 0 && (
-            <p className="text-center text-muted-foreground py-8">Aucun résultat trouvé</p>
+          {loading ? (
+            <div className="flex justify-center py-10"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Image</TableHead>
+                    <TableHead>Titre</TableHead>
+                    <TableHead>Catégorie</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Médias</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell>
+                        {item.image ? (
+                          <img src={contentUrl(item.image)} alt="" className="w-12 h-12 rounded object-cover" />
+                        ) : (
+                          <div className="w-12 h-12 rounded bg-muted flex items-center justify-center">
+                            <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="font-medium max-w-xs truncate">{item.title}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          item.category === "competition" ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"
+                        }`}>
+                          {item.category === "competition" ? "Compétition" : "Événement"}
+                        </span>
+                      </TableCell>
+                      <TableCell>{item.date}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1"><ImageIcon className="h-3 w-3" /> {item.galleryImages.length}</span>
+                          <span className="flex items-center gap-1"><FileText className="h-3 w-3" /> {item.documents.length}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)} className="text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              {filtered.length === 0 && (
+                <p className="text-center text-muted-foreground py-8">Aucun résultat trouvé</p>
+              )}
+            </>
           )}
         </CardContent>
       </Card>

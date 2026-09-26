@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Filter, MapPin, Users, ArrowLeft, ChevronDown, CheckCircle2, Trophy } from "lucide-react";
+import { Search, Filter, MapPin, Users, ArrowLeft, ChevronDown, CheckCircle2, Trophy, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import TopBar from "@/components/TopBar";
@@ -10,6 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/api";
+import { useContent } from "@/lib/contentApi";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Competition {
   id: number;
@@ -23,85 +27,92 @@ interface Competition {
   disciplines: string[];
 }
 
+interface ApiCompetition {
+  id: number;
+  title?: string;
+  dateStart?: string;
+  dateEnd?: string;
+  location?: string;
+  athletesLabel?: string;
+  status?: "open" | "closed" | "upcoming";
+  disciplines?: string[];
+}
+
+const MONTHS_FR = ["JAN", "FÉV", "MAR", "AVR", "MAI", "JUN", "JUL", "AOÛ", "SEP", "OCT", "NOV", "DÉC"];
+
+const apiToCompetition = (item: ApiCompetition): Competition => {
+  const start = item.dateStart ? new Date(item.dateStart) : null;
+  const valid = start && !isNaN(start.getTime());
+  return {
+    id: item.id,
+    date: valid ? String(start!.getDate()).padStart(2, "0") : "—",
+    month: valid ? MONTHS_FR[start!.getMonth()] : "",
+    year: valid ? String(start!.getFullYear()) : "",
+    title: item.title || "Compétition",
+    location: item.location || "—",
+    athletes: item.athletesLabel || "—",
+    status: item.status || "upcoming",
+    disciplines: item.disciplines || [],
+  };
+};
+
+const staticCompetitions = (): Competition[] => [
+  { id: 1, date: "15", month: "MARS", year: "2026", title: "Championnat National", location: "Tunis", athletes: "200+", status: "open", disciplines: ["Classique", "Contemporain"] },
+  { id: 2, date: "28", month: "AVR", year: "2026", title: "Coupe de Tunisie", location: "Sousse", athletes: "350+", status: "closed", disciplines: ["Hip-Hop", "Jazz"] },
+  { id: 3, date: "12", month: "MAI", year: "2026", title: "Battle Nationale", location: "Sfax", athletes: "150+", status: "closed", disciplines: ["Breaking", "Hip-Hop"] },
+  { id: 4, date: "08", month: "JUN", year: "2026", title: "Open International", location: "Tunis", athletes: "500+", status: "upcoming", disciplines: ["Multi-disciplines"] },
+];
+
 const CompetitionsPage = () => {
   const { t } = useLang();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
+  const [typeFilter] = useState("all");
   const [disciplineFilter, setDisciplineFilter] = useState("all");
-  const [isClub, setIsClub] = useState(false);
-  const [clubName, setClubName] = useState("");
   const [joined, setJoined] = useState<number[]>([]);
   const [joinTarget, setJoinTarget] = useState<Competition | null>(null);
+  const [joining, setJoining] = useState(false);
 
+  const isClub = user?.accountType === "club" && user?.status === "approved";
+
+  const { data: joinedData } = useQuery({
+    queryKey: ["competition-joined"],
+    queryFn: () => apiRequest<{ joined: number[] }>("/api/competitions-joined"),
+    enabled: !!isClub,
+  });
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("ftdap_member");
-      if (raw) {
-        const s = JSON.parse(raw);
-        if (s.kind === "club") {
-          setIsClub(true);
-          setClubName(s.fullName || "");
-        }
-      }
-      setJoined(JSON.parse(localStorage.getItem("ftdap_joined_comps") || "[]"));
-    } catch {}
-  }, []);
+    if (joinedData?.joined) setJoined(joinedData.joined);
+  }, [joinedData]);
 
-  const confirmJoin = () => {
+  const { items: apiItems } = useContent<ApiCompetition>("competitions");
+  // API rows (title key present) → mapped; fallback list keeps the site usable pre-seeding.
+  const usingApi = apiItems.some((i) => "title" in i);
+  const competitions: Competition[] = usingApi
+    ? apiItems.map(apiToCompetition)
+    : staticCompetitions();
+
+  const confirmJoin = async () => {
     if (!joinTarget) return;
-    const next = Array.from(new Set([...joined, joinTarget.id]));
-    setJoined(next);
-    localStorage.setItem("ftdap_joined_comps", JSON.stringify(next));
-    toast({
-      title: "Inscription envoyée",
-      description: `${clubName} a rejoint « ${joinTarget.title} ». Confirmation sous 48h.`,
-    });
-    setJoinTarget(null);
+    try {
+      setJoining(true);
+      await apiRequest(`/api/competitions/${joinTarget.id}/join`, { method: "POST" });
+      setJoined((prev) => Array.from(new Set([...prev, joinTarget.id])));
+      toast({
+        title: "Inscription envoyée",
+        description: `Le club a rejoint « ${joinTarget.title} ». Confirmation sous 48h.`,
+      });
+      setJoinTarget(null);
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Inscription impossible",
+        variant: "destructive",
+      });
+    } finally {
+      setJoining(false);
+    }
   };
-
-  const competitions: Competition[] = [
-    {
-      id: 1, date: "15", month: "MARS", year: "2026",
-      title: t("cp.c1.title"), location: t("cp.c1.loc"), athletes: "200+",
-      status: "open", disciplines: [t("cp.classique"), t("cp.contemporain")],
-    },
-    {
-      id: 2, date: "28", month: "AVR", year: "2026",
-      title: t("cp.c2.title"), location: t("cp.c2.loc"), athletes: "350+",
-      status: "closed", disciplines: [t("cp.hiphop"), t("cp.jazz"), t("cp.contemporain")],
-    },
-    {
-      id: 3, date: "12", month: "MAI", year: "2026",
-      title: t("cp.c3.title"), location: t("cp.c3.loc"), athletes: "150+",
-      status: "closed", disciplines: [t("cp.breaking"), t("cp.hiphop"), t("cp.freestyle")],
-    },
-    {
-      id: 4, date: "08", month: "JUN", year: "2026",
-      title: t("cp.c4.title"), location: t("cp.c4.loc"), athletes: "500+",
-      status: "upcoming", disciplines: [t("cp.allDisc")],
-    },
-    {
-      id: 5, date: "20", month: "JUL", year: "2026",
-      title: t("cp.c5.title"), location: t("cp.c5.loc"), athletes: "300+",
-      status: "upcoming", disciplines: [t("cp.classique"), t("cp.jazz"), t("cp.contemporain")],
-    },
-    {
-      id: 6, date: "08", month: "JUN", year: "2026",
-      title: t("cp.c6.title"), location: t("cp.c6.loc"), athletes: "500+",
-      status: "upcoming", disciplines: [t("cp.allDisc")],
-    },
-    {
-      id: 7, date: "20", month: "JUL", year: "2026",
-      title: t("cp.c7.title"), location: t("cp.c7.loc"), athletes: "300+",
-      status: "upcoming", disciplines: [t("cp.classique"), t("cp.jazz"), t("cp.contemporain")],
-    },
-    {
-      id: 8, date: "08", month: "JUN", year: "2026",
-      title: t("cp.c8.title"), location: t("cp.c8.loc"), athletes: "500+",
-      status: "upcoming", disciplines: [t("cp.allDisc")],
-    },
-  ];
 
   const statusConfig = {
     open: { label: t("cp.statusOpen"), className: "bg-accent text-accent-foreground" },
@@ -111,7 +122,8 @@ const CompetitionsPage = () => {
 
   const filtered = competitions.filter((c) => {
     const matchSearch = c.title.toLowerCase().includes(search.toLowerCase());
-    return matchSearch;
+    const matchDisc = disciplineFilter === "all" || c.disciplines.some((d) => d.toLowerCase().includes(disciplineFilter));
+    return matchSearch && matchDisc;
   });
 
   return (
@@ -151,24 +163,6 @@ const CompetitionsPage = () => {
               />
             </div>
 
-            {/* Type filter */}
-            <div className="relative">
-              <div className="flex items-center gap-1.5">
-                <Filter className="w-4 h-4 text-muted-foreground" />
-                <select
-                  value={typeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value)}
-                  className="appearance-none bg-background border border-border rounded-lg px-3 py-2.5 pe-8 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
-                >
-                  <option value="all">{t("cp.allTypes")}</option>
-                  <option value="championship">{t("cp.championship")}</option>
-                  <option value="cup">{t("cp.cup")}</option>
-                  <option value="gala">{t("cp.gala")}</option>
-                </select>
-                <ChevronDown className="absolute end-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-              </div>
-            </div>
-
             {/* Discipline filter */}
             <div className="relative">
               <select
@@ -179,7 +173,7 @@ const CompetitionsPage = () => {
                 <option value="all">{t("cp.allDisciplines")}</option>
                 <option value="classique">{t("cp.classique")}</option>
                 <option value="contemporain">{t("cp.contemporain")}</option>
-                <option value="hiphop">{t("cp.hiphop")}</option>
+                <option value="hip-hop">{t("cp.hiphop")}</option>
                 <option value="jazz">{t("cp.jazz")}</option>
                 <option value="breaking">{t("cp.breaking")}</option>
               </select>
@@ -292,7 +286,7 @@ const CompetitionsPage = () => {
           </DialogHeader>
           <div className="space-y-4">
             <div className="text-sm text-muted-foreground">
-              Vous êtes sur le point d'inscrire <strong className="text-foreground">{clubName}</strong> à :
+              Vous êtes sur le point d'inscrire <strong className="text-foreground">votre club</strong> à :
             </div>
             {joinTarget && (
               <div className="border border-border rounded-lg p-3 space-y-1">
@@ -307,7 +301,10 @@ const CompetitionsPage = () => {
             </p>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setJoinTarget(null)}>Annuler</Button>
-              <Button onClick={confirmJoin}>Confirmer l'inscription</Button>
+              <Button onClick={confirmJoin} disabled={joining}>
+                {joining ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                Confirmer l'inscription
+              </Button>
             </div>
           </div>
         </DialogContent>

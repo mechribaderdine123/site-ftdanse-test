@@ -5,12 +5,25 @@ import { useLang } from "@/contexts/LangContext";
 import Navbar from "@/components/Navbar";
 import TopBar from "@/components/TopBar";
 import Footer from "@/components/Footer";
-import { disciplinesData } from "@/data/disciplinesData";
+import { useContent, contentUrl } from "@/lib/contentApi";
+import { disciplinesData, type DisciplineItem as StaticDiscipline } from "@/data/disciplinesData";
+
+interface ApiDiscipline {
+  id: number;
+  slug: string;
+  name: string;
+  shortDesc: string;
+  image?: string;
+}
 
 const DisciplinesPage = () => {
   const { t, isRTL } = useLang();
+  const { items } = useContent<ApiDiscipline>("disciplines");
 
-  const disciplines = disciplinesData;
+  const usingApi = items.some((d) => typeof d.shortDesc === "string" && !d.shortDesc.startsWith("disc."));
+  const disciplines: ApiDiscipline[] = usingApi
+    ? items.map((d) => ({ ...d, image: contentUrl(d.image || "") }))
+    : disciplinesData.map((d: StaticDiscipline) => ({ id: -d.name.length - d.slug.length, slug: d.slug, name: d.name, shortDesc: d.shortDesc, image: d.image }));
 
   const Arrow = isRTL ? ArrowLeft : ArrowRight;
 
@@ -43,7 +56,7 @@ const DisciplinesPage = () => {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {disciplines.map((d, i) => (
               <motion.div
-                key={d.slug}
+                key={`${d.slug}-${i}`}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}

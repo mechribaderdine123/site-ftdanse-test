@@ -1,114 +1,90 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Search, ArrowLeft, ArrowRight, Users, User, Award, Dumbbell, Building2, MapPin, CheckCircle } from "lucide-react";
+import { Search, ArrowLeft, ArrowRight, Users, User, Award, Dumbbell, Building2, MapPin, CheckCircle, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLang } from "@/contexts/LangContext";
 import Navbar from "@/components/Navbar";
 import TopBar from "@/components/TopBar";
 import Footer from "@/components/Footer";
+import { apiRequest } from "@/lib/api";
 
-type MemberType = "dancer" | "referee" | "coach";
-type EntryType = "member" | "club";
-type FilterCategory = "all" | "dancers" | "referees" | "coaches" | "clubs";
+type FilterCategory = "all" | "athletes" | "referees" | "coaches" | "clubs";
 
-interface MemberEntry {
-  type: "member";
-  name: string;
-  memberType: MemberType;
-  disciplines: string[];
-  club: string;
-  city: string;
-  level: string;
-  licenseActive: boolean;
-  org?: string;
-}
-
-interface ClubEntry {
-  type: "club";
+interface DirectoryEntry {
+  id: number;
+  accountType: "athlete" | "coach" | "referee" | "club";
   name: string;
   city: string;
-  disciplines: string[];
-  members: number;
+  discipline: string;
+  email?: string;
+  phone?: string;
+  clubName?: string;
   licenseActive: boolean;
+  memberCount?: number;
 }
-
-type Entry = MemberEntry | ClubEntry;
-
-const membersDataByLang: Record<string, Entry[]> = {
-  fr: [
-    { type: "member", name: "Danseur Amine", memberType: "dancer", disciplines: ["Classique"], club: "Club Tunis", city: "Tunis", level: "Élite", licenseActive: true },
-    { type: "member", name: "Danseuse Hiba", memberType: "dancer", disciplines: ["Contemporain"], club: "Académie Sousse", city: "Sousse", level: "Élite", licenseActive: true },
-    { type: "member", name: "Danseuse Meriem", memberType: "dancer", disciplines: ["Hip-Hop"], club: "Club Sfax", city: "Sfax", level: "Avancé", licenseActive: true },
-    { type: "member", name: "Danseur Walid", memberType: "dancer", disciplines: ["Breaking"], club: "Troupe Hammamet", city: "Nabeul", level: "Élite", licenseActive: true },
-    { type: "member", name: "Arbitre Nabil", memberType: "referee", disciplines: ["Classique", "Contemporain"], club: "Tunis", city: "Tunis", level: "International", licenseActive: true, org: "WDSF" },
-    { type: "member", name: "Danseuse Rim", memberType: "dancer", disciplines: ["Hip-Hop"], club: "Sousse", city: "Sousse", level: "National", licenseActive: true, org: "FTDAP" },
-    { type: "member", name: "Entraineur Tarek", memberType: "coach", disciplines: ["Classique", "Jazz"], club: "Club Tunis", city: "Tunis", level: "Expert", licenseActive: true, org: "WDSF Coach" },
-    { type: "member", name: "Entraineur Salma", memberType: "coach", disciplines: ["Contemporain"], club: "Académie Sousse", city: "Sousse", level: "Premier", licenseActive: true, org: "FTDAP Coach" },
-    { type: "club", name: "Club Tunis Danse", city: "Tunis", disciplines: ["Classique", "Jazz", "Contemporain"], members: 85, licenseActive: true },
-    { type: "club", name: "Académie Sousse Danse", city: "Sousse", disciplines: ["Classique", "Contemporain", "Hip-Hop"], members: 72, licenseActive: true },
-    { type: "club", name: "Club Sfax Danse", city: "Sfax", disciplines: ["Hip-Hop", "Breaking"], members: 45, licenseActive: true },
-    { type: "club", name: "Troupe Hammamet", city: "Nabeul", disciplines: ["Jazz", "Contemporain"], members: 38, licenseActive: true },
-  ],
-  en: [
-    { type: "member", name: "Dancer Amine", memberType: "dancer", disciplines: ["Classical"], club: "Tunis Club", city: "Tunis", level: "Elite", licenseActive: true },
-    { type: "member", name: "Dancer Hiba", memberType: "dancer", disciplines: ["Contemporary"], club: "Sousse Academy", city: "Sousse", level: "Elite", licenseActive: true },
-    { type: "member", name: "Dancer Meriem", memberType: "dancer", disciplines: ["Hip-Hop"], club: "Sfax Club", city: "Sfax", level: "Advanced", licenseActive: true },
-    { type: "member", name: "Dancer Walid", memberType: "dancer", disciplines: ["Breaking"], club: "Hammamet Troupe", city: "Nabeul", level: "Elite", licenseActive: true },
-    { type: "member", name: "Referee Nabil", memberType: "referee", disciplines: ["Classical", "Contemporary"], club: "Tunis", city: "Tunis", level: "International", licenseActive: true, org: "WDSF" },
-    { type: "member", name: "Dancer Rim", memberType: "dancer", disciplines: ["Hip-Hop"], club: "Sousse", city: "Sousse", level: "National", licenseActive: true, org: "FTDAP" },
-    { type: "member", name: "Coach Tarek", memberType: "coach", disciplines: ["Classical", "Jazz"], club: "Tunis Club", city: "Tunis", level: "Expert", licenseActive: true, org: "WDSF Coach" },
-    { type: "member", name: "Coach Salma", memberType: "coach", disciplines: ["Contemporary"], club: "Sousse Academy", city: "Sousse", level: "Premier", licenseActive: true, org: "FTDAP Coach" },
-    { type: "club", name: "Tunis Dance Club", city: "Tunis", disciplines: ["Classical", "Jazz", "Contemporary"], members: 85, licenseActive: true },
-    { type: "club", name: "Sousse Dance Academy", city: "Sousse", disciplines: ["Classical", "Contemporary", "Hip-Hop"], members: 72, licenseActive: true },
-    { type: "club", name: "Sfax Dance Club", city: "Sfax", disciplines: ["Hip-Hop", "Breaking"], members: 45, licenseActive: true },
-    { type: "club", name: "Hammamet Troupe", city: "Nabeul", disciplines: ["Jazz", "Contemporary"], members: 38, licenseActive: true },
-  ],
-  ar: [
-    { type: "member", name: "راقص أمين", memberType: "dancer", disciplines: ["كلاسيكي"], club: "نادي تونس", city: "تونس", level: "نخبة", licenseActive: true },
-    { type: "member", name: "راقصة هبة", memberType: "dancer", disciplines: ["معاصر"], club: "أكاديمية سوسة", city: "سوسة", level: "نخبة", licenseActive: true },
-    { type: "member", name: "راقصة مريم", memberType: "dancer", disciplines: ["هيب هوب"], club: "نادي صفاقس", city: "صفاقس", level: "متقدم", licenseActive: true },
-    { type: "member", name: "راقص وليد", memberType: "dancer", disciplines: ["بريكنغ"], club: "فرقة الحمامات", city: "نابل", level: "نخبة", licenseActive: true },
-    { type: "member", name: "حكم نبيل", memberType: "referee", disciplines: ["كلاسيكي", "معاصر"], club: "تونس", city: "تونس", level: "دولي", licenseActive: true, org: "WDSF" },
-    { type: "member", name: "راقصة ريم", memberType: "dancer", disciplines: ["هيب هوب"], club: "سوسة", city: "سوسة", level: "وطني", licenseActive: true, org: "FTDAP" },
-    { type: "member", name: "مدرب طارق", memberType: "coach", disciplines: ["كلاسيكي", "جاز"], club: "نادي تونس", city: "تونس", level: "خبير", licenseActive: true, org: "مدرب WDSF" },
-    { type: "member", name: "مدربة سلمى", memberType: "coach", disciplines: ["معاصر"], club: "أكاديمية سوسة", city: "سوسة", level: "أول", licenseActive: true, org: "مدرب FTDAP" },
-    { type: "club", name: "نادي تونس للرقص", city: "تونس", disciplines: ["كلاسيكي", "جاز", "معاصر"], members: 85, licenseActive: true },
-    { type: "club", name: "أكاديمية سوسة للرقص", city: "سوسة", disciplines: ["كلاسيكي", "معاصر", "هيب هوب"], members: 72, licenseActive: true },
-    { type: "club", name: "نادي صفاقس للرقص", city: "صفاقس", disciplines: ["هيب هوب", "بريكنغ"], members: 45, licenseActive: true },
-    { type: "club", name: "فرقة الحمامات", city: "نابل", disciplines: ["جاز", "معاصر"], members: 38, licenseActive: true },
-  ],
-};
 
 const AnnuairePage = () => {
   const { t, isRTL, lang } = useLang();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterCategory>("all");
-  const membersData = membersDataByLang[lang] || membersDataByLang.fr;
+  const [entries, setEntries] = useState<DirectoryEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadDirectory();
+  }, []);
+
+  const loadDirectory = async () => {
+    try {
+      setLoading(true);
+      const data = await apiRequest<DirectoryEntry[]>("/api/directory");
+      setEntries(data || []);
+    } catch (error) {
+      console.error("Failed to load directory:", error);
+      setEntries([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filters: { key: FilterCategory; labelKey: string; icon: typeof Users }[] = [
     { key: "all", labelKey: "ann.filter.all", icon: Users },
-    { key: "dancers", labelKey: "ann.filter.dancers", icon: User },
+    { key: "athletes", labelKey: "ann.filter.dancers", icon: User },
     { key: "referees", labelKey: "ann.filter.referees", icon: Award },
     { key: "coaches", labelKey: "ann.filter.coaches", icon: Dumbbell },
     { key: "clubs", labelKey: "ann.filter.clubs", icon: Building2 },
   ];
 
-  const filtered = membersData.filter((entry) => {
-    const matchSearch = entry.name.toLowerCase().includes(search.toLowerCase()) ||
+  const filtered = entries.filter((entry) => {
+    const matchSearch = 
+      entry.name.toLowerCase().includes(search.toLowerCase()) ||
       entry.city.toLowerCase().includes(search.toLowerCase()) ||
-      entry.disciplines.some(d => d.toLowerCase().includes(search.toLowerCase()));
+      entry.discipline.toLowerCase().includes(search.toLowerCase()) ||
+      (entry.clubName?.toLowerCase().includes(search.toLowerCase()) ?? false);
 
     if (filter === "all") return matchSearch;
-    if (filter === "clubs") return entry.type === "club" && matchSearch;
-    if (filter === "dancers") return entry.type === "member" && (entry as MemberEntry).memberType === "dancer" && matchSearch;
-    if (filter === "referees") return entry.type === "member" && (entry as MemberEntry).memberType === "referee" && matchSearch;
-    if (filter === "coaches") return entry.type === "member" && (entry as MemberEntry).memberType === "coach" && matchSearch;
+    if (filter === "clubs") return entry.accountType === "club" && matchSearch;
+    if (filter === "athletes") return entry.accountType === "athlete" && matchSearch;
+    if (filter === "referees") return entry.accountType === "referee" && matchSearch;
+    if (filter === "coaches") return entry.accountType === "coach" && matchSearch;
     return matchSearch;
   });
 
-  const getMemberIcon = (entry: Entry) => {
-    if (entry.type === "club") return <Building2 className="w-6 h-6 text-muted-foreground" />;
+  const getMemberIcon = (entry: DirectoryEntry) => {
+    if (entry.accountType === "club") return <Building2 className="w-6 h-6 text-muted-foreground" />;
+    if (entry.accountType === "coach") return <Dumbbell className="w-6 h-6 text-muted-foreground" />;
+    if (entry.accountType === "referee") return <Award className="w-6 h-6 text-muted-foreground" />;
     return <User className="w-6 h-6 text-muted-foreground" />;
+  };
+
+  const getTypeLabel = (accountType: string) => {
+    const labels: Record<string, string> = {
+      athlete: t("ann.filter.dancers"),
+      coach: t("ann.filter.coaches"),
+      referee: t("ann.filter.referees"),
+      club: t("ann.filter.clubs"),
+    };
+    return labels[accountType] || accountType;
   };
 
   return (
@@ -170,72 +146,78 @@ const AnnuairePage = () => {
             })}
           </div>
 
+          {/* Loading State */}
+          {loading && (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+            </div>
+          )}
+
           {/* Cards Grid */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filtered.map((entry, i) => (
-              <motion.div
-                key={entry.name + i}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.04 }}
-                className="bg-card border border-border rounded-xl p-5 flex flex-col gap-3 hover:shadow-md transition-shadow"
-              >
-                {/* Header */}
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
-                    {getMemberIcon(entry)}
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="font-semibold text-foreground text-sm">{entry.name}</h3>
-                    <p className="text-accent text-xs font-medium">{entry.disciplines.join(", ")}</p>
-                  </div>
-                </div>
+          {!loading && (
+            <>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {filtered.map((entry, i) => (
+                  <motion.div
+                    key={entry.id}
+                    initial={{ opacity: 0, y: 16 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.4, delay: i * 0.04 }}
+                    className="bg-card border border-border rounded-xl p-5 flex flex-col gap-3 hover:shadow-md transition-shadow"
+                  >
+                    {/* Header */}
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+                        {getMemberIcon(entry)}
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="font-semibold text-foreground text-sm">{entry.name}</h3>
+                        <p className="text-accent text-xs font-medium">{entry.discipline}</p>
+                      </div>
+                    </div>
 
-                {/* Details */}
-                <div className="text-xs text-muted-foreground space-y-0.5">
-                  {entry.type === "member" && (
-                    <>
-                      <p>{(entry as MemberEntry).club}</p>
-                      <p className="flex items-center gap-1">
-                        <MapPin className="w-3 h-3" /> {entry.city}
-                      </p>
-                      {(entry as MemberEntry).org && (
-                        <p>{(entry as MemberEntry).org}</p>
+                    {/* Details */}
+                    <div className="text-xs text-muted-foreground space-y-0.5">
+                      {entry.accountType !== "club" && (
+                        <>
+                          {entry.clubName && <p>{entry.clubName}</p>}
+                          <p className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3" /> {entry.city}
+                          </p>
+                        </>
                       )}
-                    </>
-                  )}
-                  {entry.type === "club" && (
-                    <>
-                      <p className="flex items-center gap-1">
-                        <MapPin className="w-3 h-3" /> {entry.city}
-                      </p>
-                      <p>{(entry as ClubEntry).members} {t("ann.members")}</p>
-                    </>
-                  )}
-                </div>
+                      {entry.accountType === "club" && (
+                        <>
+                          <p className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3" /> {entry.city}
+                          </p>
+                          {entry.memberCount && (
+                            <p>{entry.memberCount} {t("ann.members")}</p>
+                          )}
+                        </>
+                      )}
+                    </div>
 
-                {/* Footer */}
-                <div className="flex items-center justify-between mt-auto pt-2">
-                  {entry.type === "member" ? (
-                    <span className="text-[11px] border border-border rounded-md px-2.5 py-1 text-muted-foreground">
-                      {(entry as MemberEntry).level}
-                    </span>
-                  ) : (
-                    <span />
-                  )}
-                  {entry.licenseActive && (
-                    <span className="inline-flex items-center gap-1 text-[11px] text-green-600 font-medium">
-                      <CheckCircle className="w-3.5 h-3.5" /> {t("ann.license")}
-                    </span>
-                  )}
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                    {/* Footer */}
+                    <div className="flex items-center justify-between mt-auto pt-2">
+                      <span className="text-[11px] border border-border rounded-md px-2.5 py-1 text-muted-foreground">
+                        {getTypeLabel(entry.accountType)}
+                      </span>
+                      {entry.licenseActive && (
+                        <span className="inline-flex items-center gap-1 text-[11px] text-green-600 font-medium">
+                          <CheckCircle className="w-3.5 h-3.5" /> {t("ann.license")}
+                        </span>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
 
-          {filtered.length === 0 && (
-            <p className="text-center text-muted-foreground py-12">{t("ann.empty")}</p>
+              {filtered.length === 0 && (
+                <p className="text-center text-muted-foreground py-12">{t("ann.empty")}</p>
+              )}
+            </>
           )}
         </div>
       </section>

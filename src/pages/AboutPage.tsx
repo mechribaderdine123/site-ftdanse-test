@@ -3,6 +3,7 @@ import { useLang } from "@/contexts/LangContext";
 import Navbar from "@/components/Navbar";
 import TopBar from "@/components/TopBar";
 import Footer from "@/components/Footer";
+import { useContent, contentUrl } from "@/lib/contentApi";
 import {
   Target, Eye, Flag, Clock, TrendingUp, Star,
   User, Users, FileText, DollarSign, Briefcase,
@@ -20,6 +21,38 @@ const fadeUp = {
 
 const AboutPage = () => {
   const { t } = useLang();
+  const { items } = useContent<{
+    id: number;
+    heroImage?: string;
+    heroTitle1?: string;
+    heroTitle2?: string;
+    heroDesc?: string;
+    pratiquesImage?: string;
+    pratiquesTitle1?: string;
+    pratiquesTitle2?: string;
+    pratiquesDesc?: string;
+    bureau?: { id: string; name: string; role: string; date: string }[];
+    timeline?: { id: string; year: string; title: string; desc: string }[];
+  }>("about");
+  const about = items[0];
+  const heroImg = about?.heroImage ? contentUrl(about.heroImage) : heroDanceImg;
+  const pratiquesImg = about?.pratiquesImage ? contentUrl(about.pratiquesImage) : danceAboutImg;
+  const heroTitle1 = about?.heroTitle1 || t("ap.intro.title1");
+  const heroTitle2 = about?.heroTitle2 || t("ap.intro.title2");
+  const heroDesc = about?.heroDesc || t("ap.intro.desc");
+  const pratiquesTitle1 = about?.pratiquesTitle1 || t("ap.pratiques.title1");
+  const pratiquesTitle2 = about?.pratiquesTitle2 || t("ap.pratiques.title2");
+  const pratiquesDesc = about?.pratiquesDesc || t("ap.pratiques.desc");
+  const bureauFallback = [
+    { icon: User, key: "president" },
+    { icon: Users, key: "vice" },
+    { icon: FileText, key: "secretary" },
+    { icon: DollarSign, key: "treasurer" },
+    { icon: Briefcase, key: "technical" },
+  ];
+  const bureauEntries = (about?.bureau && about.bureau.length > 0
+    ? about.bureau.map((b, i) => ({ icon: bureauFallback[i]?.icon || User, key: b.id, name: b.name, role: b.role, date: b.date }))
+    : bureauFallback.map(({ icon, key }) => ({ icon, key, name: t(`ap.bureau.${key}.name`), role: t(`ap.bureau.${key}.role`), date: t(`ap.bureau.${key}.date`) })));
 
   const missionCards = [
     { icon: Target, key: "mission" },
@@ -31,14 +64,6 @@ const AboutPage = () => {
     { icon: Clock, year: "1989", key: "creation" },
     { icon: TrendingUp, year: "2008–2020", key: "evolution" },
     { icon: Star, year: "2020–2024", key: "moments" },
-  ];
-
-  const bureau = [
-    { icon: User, key: "president" },
-    { icon: Users, key: "vice" },
-    { icon: FileText, key: "secretary" },
-    { icon: DollarSign, key: "treasurer" },
-    { icon: Briefcase, key: "technical" },
   ];
 
   const commissions = [
@@ -80,17 +105,17 @@ const AboutPage = () => {
             variants={fadeUp}
           >
             <img
-              src={heroDanceImg}
+              src={heroImg}
               alt="Dance performance"
               className="rounded-2xl w-full h-72 md:h-80 object-cover"
             />
             <div>
               <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-primary leading-tight mb-4">
-                {t("ap.intro.title1")}{" "}
-                <span className="italic text-accent">{t("ap.intro.title2")}</span>
+                {heroTitle1}{" "}
+                <span className="italic text-accent">{heroTitle2}</span>
               </h1>
               <p className="text-muted-foreground leading-relaxed text-sm md:text-base">
-                {t("ap.intro.desc")}
+                {heroDesc}
               </p>
             </div>
           </motion.div>
@@ -108,17 +133,17 @@ const AboutPage = () => {
             variants={fadeUp}
           >
             <img
-              src={danceAboutImg}
+              src={pratiquesImg}
               alt="Dance group"
               className="rounded-2xl w-full h-72 md:h-80 object-cover"
             />
             <div>
               <h2 className="text-2xl md:text-3xl font-bold text-primary mb-3">
-                {t("ap.pratiques.title1")}{" "}
-                <span className="italic text-accent">{t("ap.pratiques.title2")}</span>
+                {pratiquesTitle1}{" "}
+                <span className="italic text-accent">{pratiquesTitle2}</span>
               </h2>
               <p className="text-muted-foreground text-sm md:text-base leading-relaxed mb-5">
-                {t("ap.pratiques.desc")}
+                {pratiquesDesc}
               </p>
               <div className="flex flex-wrap gap-2">
                 {["Breakdance", "Hip-Hop", "Contemporain", "Jazz", "Classique", "Danse Sportive"].map((d) => (
@@ -239,7 +264,7 @@ const AboutPage = () => {
           >
             {/* Top row: 3 members */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-              {bureau.slice(0, 3).map(({ icon: Icon, key }) => (
+              {bureauEntries.slice(0, 3).map(({ icon: Icon, key, name, role, date }) => (
                 <div
                   key={key}
                   className="bg-card rounded-xl border border-border p-5 flex items-start gap-4 card-hover"
@@ -248,22 +273,16 @@ const AboutPage = () => {
                     <Icon className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-primary text-sm">
-                      {t(`ap.bureau.${key}.name`)}
-                    </h4>
-                    <p className="text-accent text-xs font-semibold mt-0.5">
-                      {t(`ap.bureau.${key}.role`)}
-                    </p>
-                    <p className="text-muted-foreground text-[11px] mt-0.5">
-                      {t(`ap.bureau.${key}.date`)}
-                    </p>
+                    <h4 className="font-bold text-primary text-sm">{name}</h4>
+                    <p className="text-accent text-xs font-semibold mt-0.5">{role}</p>
+                    <p className="text-muted-foreground text-[11px] mt-0.5">{date}</p>
                   </div>
                 </div>
               ))}
             </div>
             {/* Bottom row: 2 members centered */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
-              {bureau.slice(3).map(({ icon: Icon, key }) => (
+              {bureauEntries.slice(3).map(({ icon: Icon, key, name, role, date }) => (
                 <div
                   key={key}
                   className="bg-card rounded-xl border border-border p-5 flex items-start gap-4 card-hover"
@@ -272,15 +291,9 @@ const AboutPage = () => {
                     <Icon className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-primary text-sm">
-                      {t(`ap.bureau.${key}.name`)}
-                    </h4>
-                    <p className="text-accent text-xs font-semibold mt-0.5">
-                      {t(`ap.bureau.${key}.role`)}
-                    </p>
-                    <p className="text-muted-foreground text-[11px] mt-0.5">
-                      {t(`ap.bureau.${key}.date`)}
-                    </p>
+                    <h4 className="font-bold text-primary text-sm">{name}</h4>
+                    <p className="text-accent text-xs font-semibold mt-0.5">{role}</p>
+                    <p className="text-muted-foreground text-[11px] mt-0.5">{date}</p>
                   </div>
                 </div>
               ))}

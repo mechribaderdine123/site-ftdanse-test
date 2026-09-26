@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,14 +6,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, Search, MapPin, Trophy, Medal, Upload, FileText, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, MapPin, Trophy, Medal, Upload, FileText, X, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/admin/PageHeader";
+import {
+  adminListContent, adminCreateContent, adminUpdateContent, adminDeleteContent,
+  type ContentItem,
+} from "@/lib/contentApi";
 
 interface Participant { rank: number; name: string; club: string; }
-interface AttachedDoc { name: string; type: string; size: string; }
-interface EventResult {
-  id: number;
+interface AttachedDoc { name: string; type: string; size: string; url?: string; }
+interface EventResult extends ContentItem {
   eventName: string;
   date: string;
   place: string;
@@ -23,53 +26,19 @@ interface EventResult {
   participants: Participant[];
   documents: AttachedDoc[];
 }
-interface RankingRow { id: number; name: string; club: string; points: number; gold: number; silver: number; bronze: number; }
+interface RankingRow extends ContentItem {
+  name: string; club: string; points: number; gold: number; silver: number; bronze: number;
+}
 
-const initialEvents: EventResult[] = [
-  {
-    id: 1,
-    eventName: "Championnat National de Danse Classique",
-    date: "2026-06-08",
-    place: "Tunis, Cité de la Culture",
-    type: "national",
-    discipline: "classique",
-    source: "competition",
-    participants: [
-      { rank: 1, name: "Danseur Amine", club: "Club Étoile de Tunis" },
-      { rank: 2, name: "Danseur Walid", club: "Académie de Danse Sfax" },
-      { rank: 3, name: "Danseuse Hiba", club: "Académie Danse Sousse" },
-    ],
-    documents: [{ name: "resultats-officiels.pdf", type: "application/pdf", size: "245 KB" }],
-  },
-  {
-    id: 2,
-    eventName: "Coupe de Tunisie Hip-Hop",
-    date: "2026-05-15",
-    place: "Sfax, Salle Omnisports",
-    type: "national",
-    discipline: "hiphop",
-    source: "competition",
-    participants: [
-      { rank: 1, name: "Danseur Zied", club: "Urban Crew Tunis" },
-      { rank: 2, name: "Danseur Raouf", club: "Street Dance Sfax" },
-      { rank: 3, name: "Danseuse Meriem", club: "Dance Factory Sousse" },
-    ],
-    documents: [],
-  },
-];
-
-const initialRanking: RankingRow[] = [
-  { id: 1, name: "Danseur Amine", club: "Club Étoile de Tunis", points: 2850, gold: 5, silver: 2, bronze: 1 },
-  { id: 2, name: "Danseur Zied", club: "Urban Crew Tunis", points: 2720, gold: 4, silver: 3, bronze: 2 },
-  { id: 3, name: "Danseuse Salma", club: "Compagnie Danse Libre", points: 2680, gold: 4, silver: 2, bronze: 3 },
-  { id: 4, name: "Danseur Walid", club: "Académie de Danse Sfax", points: 2510, gold: 3, silver: 4, bronze: 1 },
-];
+const RANKING_KEY = "__ranking";
 
 const formatBytes = (b: number) => b < 1024 ? `${b} B` : b < 1048576 ? `${(b/1024).toFixed(0)} KB` : `${(b/1048576).toFixed(1)} MB`;
 
 const AdminResults = () => {
-  const [events, setEvents] = useState<EventResult[]>(initialEvents);
-  const [ranking, setRanking] = useState<RankingRow[]>(initialRanking);
+  const [events, setEvents] = useState<EventResult[]>([]);
+  const [ranking, setRanking] = useState<RankingRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
   const [editEvent, setEditEvent] = useState<EventResult | null>(null);
@@ -79,25 +48,72 @@ const AdminResults = () => {
   const [rankDraft, setRankDraft] = useState<RankingRow | null>(null);
   const { toast } = useToast();
 
+  const load = async () => {
+    try {
+      setLoading(true);
+      const rows = await adminListContent("results");
+      const storedRanking = (rows.find((r) => (r as ContentItem & { kind?: string }).kind === "ranking")?.rows as RankingRow[]) || [];
+      setRanking(storedRanking.map((r) => ({ ...r })));
+      setEvents(rows.filter((r) => (r as ContentItem & { kind?: string }).kind !== "ranking") as unknown as EventResult[]);
+    } catch (error) {
+      toast({ title: "Chargement impossible", description: (error as Error).message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { void load(); }, []);
+
+  const saveRanking = async (next: RankingRow[]) => {
+    const previous = ranking;
+    setRanking(next);
+    try {
+      const existing = await adminListContent("results");
+      const rankingRow = existing.find((r) => (r as ContentItem & { kind?: string }).kind === "ranking");
+      const payload = { kind: "ranking", rows: next };
+      if (rankingRow) await adminUpdateContent("results", rankingRow.id, payload);
+      else await adminCreateContent("results", payload);
+    } catch (error) {
+      setRanking(previous);
+      toast({ title: "Enregistrement impossible", description: (error as Error).message, variant: "destructive" });
+    }
+  };
+
   const openEventDialog = (item: EventResult | null) => {
     setEditEvent(item);
     setDraft(item ? { ...item, participants: [...item.participants], documents: [...item.documents] } : {
-      id: Date.now(), eventName: "", date: "", place: "", type: "national", discipline: "classique",
+      id: 0, eventName: "", date: "", place: "", type: "national", discipline: "classique",
       source: "competition", participants: [], documents: [],
     });
     setEventDialogOpen(true);
   };
 
-  const saveEvent = () => {
+  const saveEvent = async () => {
     if (!draft) return;
-    setEvents((prev) => editEvent ? prev.map(e => e.id === draft.id ? draft : e) : [...prev, draft]);
-    setEventDialogOpen(false);
-    toast({ title: editEvent ? "Résultat modifié" : "Résultat ajouté" });
+    try {
+      setSaving(true);
+      const { id, ...payload } = draft;
+      const saved = id
+        ? await adminUpdateContent("results", id, payload)
+        : await adminCreateContent("results", payload);
+      setEvents((prev) => (id ? prev.map((e) => (e.id === saved.id ? (saved as unknown as EventResult) : e)) : [...prev, saved as unknown as EventResult]));
+      setEventDialogOpen(false);
+      toast({ title: editEvent ? "Résultat modifié" : "Résultat ajouté", description: "Publié sur le site." });
+    } catch (error) {
+      toast({ title: "Enregistrement impossible", description: (error as Error).message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const deleteEvent = (id: number) => {
-    setEvents(prev => prev.filter(e => e.id !== id));
-    toast({ title: "Supprimé" });
+  const deleteEvent = async (id: number) => {
+    try {
+      await adminDeleteContent("results", id);
+      setEvents((prev) => prev.filter((e) => e.id !== id));
+      toast({ title: "Supprimé" });
+    } catch (error) {
+      toast({ title: "Suppression impossible", description: (error as Error).message, variant: "destructive" });
+    }
   };
 
   const addParticipant = () => draft && setDraft({ ...draft, participants: [...draft.participants, { rank: draft.participants.length + 1, name: "", club: "" }] });
@@ -114,16 +130,22 @@ const AdminResults = () => {
 
   const openRankDialog = (item: RankingRow | null) => {
     setEditRank(item);
-    setRankDraft(item ? { ...item } : { id: Date.now(), name: "", club: "", points: 0, gold: 0, silver: 0, bronze: 0 });
+    setRankDraft(item ? { ...item } : { id: 0, name: "", club: "", points: 0, gold: 0, silver: 0, bronze: 0 });
     setRankDialogOpen(true);
   };
-  const saveRank = () => {
+  const saveRank = async () => {
     if (!rankDraft) return;
-    setRanking(prev => editRank ? prev.map(r => r.id === rankDraft.id ? rankDraft : r) : [...prev, rankDraft]);
+    const next = editRank
+      ? ranking.map((r) => (r.id === rankDraft.id ? rankDraft : r))
+      : [...ranking, rankDraft];
+    await saveRanking(next);
     setRankDialogOpen(false);
     toast({ title: editRank ? "Athlète modifié" : "Athlète ajouté" });
   };
-  const deleteRank = (id: number) => { setRanking(prev => prev.filter(r => r.id !== id)); toast({ title: "Supprimé" }); };
+  const deleteRank = async (id: number) => {
+    await saveRanking(ranking.filter((r) => r.id !== id));
+    toast({ title: "Supprimé" });
+  };
 
   const filteredEvents = events.filter(e => e.eventName.toLowerCase().includes(search.toLowerCase()));
   const sortedRanking = [...ranking].sort((a, b) => b.points - a.points);
@@ -160,44 +182,50 @@ const AdminResults = () => {
               </Button>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Événement</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Lieu</TableHead>
-                    <TableHead>Discipline</TableHead>
-                    <TableHead>Source</TableHead>
-                    <TableHead className="text-center">Classement</TableHead>
-                    <TableHead className="text-center">Docs</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredEvents.map((e) => (
-                    <TableRow key={e.id}>
-                      <TableCell className="font-medium">{e.eventName}</TableCell>
-                      <TableCell>{e.date}</TableCell>
-                      <TableCell className="text-muted-foreground"><MapPin className="inline w-3 h-3 mr-1" />{e.place}</TableCell>
-                      <TableCell className="capitalize">{e.discipline}</TableCell>
-                      <TableCell>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${e.source === "competition" ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}>
-                          {e.source === "competition" ? "Compétition" : "Résultat seul"}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-center">{e.participants.length}</TableCell>
-                      <TableCell className="text-center">{e.documents.length}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => openEventDialog(e)}><Pencil className="h-4 w-4" /></Button>
-                          <Button variant="ghost" size="icon" onClick={() => deleteEvent(e.id)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              {filteredEvents.length === 0 && <p className="text-center text-muted-foreground py-8">Aucun résultat</p>}
+              {loading ? (
+                <div className="flex justify-center py-10"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+              ) : (
+                <>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Événement</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Lieu</TableHead>
+                        <TableHead>Discipline</TableHead>
+                        <TableHead>Source</TableHead>
+                        <TableHead className="text-center">Classement</TableHead>
+                        <TableHead className="text-center">Docs</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredEvents.map((e) => (
+                        <TableRow key={e.id}>
+                          <TableCell className="font-medium">{e.eventName}</TableCell>
+                          <TableCell>{e.date}</TableCell>
+                          <TableCell className="text-muted-foreground"><MapPin className="inline w-3 h-3 mr-1" />{e.place}</TableCell>
+                          <TableCell className="capitalize">{e.discipline}</TableCell>
+                          <TableCell>
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${e.source === "competition" ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"}`}>
+                              {e.source === "competition" ? "Compétition" : "Résultat seul"}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-center">{e.participants.length}</TableCell>
+                          <TableCell className="text-center">{e.documents.length}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-1">
+                              <Button variant="ghost" size="icon" onClick={() => openEventDialog(e)}><Pencil className="h-4 w-4" /></Button>
+                              <Button variant="ghost" size="icon" onClick={() => deleteEvent(e.id)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  {filteredEvents.length === 0 && <p className="text-center text-muted-foreground py-8">Aucun résultat</p>}
+                </>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -245,6 +273,7 @@ const AdminResults = () => {
                   ))}
                 </TableBody>
               </Table>
+              {sortedRanking.length === 0 && <p className="text-center text-muted-foreground py-8">Aucun athlète classé</p>}
             </CardContent>
           </Card>
         </TabsContent>
@@ -333,7 +362,10 @@ const AdminResults = () => {
           )}
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => setEventDialogOpen(false)}>Annuler</Button>
-            <Button onClick={saveEvent}>Enregistrer</Button>
+            <Button onClick={saveEvent} disabled={saving}>
+              {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              Enregistrer
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

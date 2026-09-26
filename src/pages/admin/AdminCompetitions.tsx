@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,9 +8,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, Search, X, Upload, ImageIcon, FileText } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, X, Upload, ImageIcon, FileText, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/admin/PageHeader";
+import { ImageUploadField } from "@/components/admin/ImageUploadField";
+import {
+  adminListContent, adminCreateContent, adminUpdateContent, adminDeleteContent,
+  uploadMediaFile, contentUrl, type ContentItem,
+} from "@/lib/contentApi";
 
 type Status = "open" | "closed" | "upcoming";
 
@@ -43,17 +48,16 @@ interface ResultRow {
   score: string;
 }
 
-interface EditableCompetition {
-  id: number;
+interface EditableCompetition extends ContentItem {
   title: string;
-  type: string; // National, Coupe, Battle, Gala...
+  type: string;
   status: Status;
-  dateStart: string; // YYYY-MM-DD
+  dateStart: string;
   dateEnd: string;
   location: string;
-  athletesLabel: string; // "200+"
+  athletesLabel: string;
   disciplines: string[];
-  description: string; // long text (paragraphs separated by blank lines)
+  description: string;
   heroImage: string;
   galleryImages: string[];
   documents: AttachedDoc[];
@@ -71,50 +75,8 @@ const statusLabels: Record<Status, { label: string; cls: string }> = {
 const TYPES = ["Championnat National", "Coupe de Tunisie", "Battle", "Gala", "Open International", "Festival"];
 const DISCIPLINES = ["Classique", "Contemporain", "Hip-Hop", "Jazz", "Breaking", "Freestyle", "Salsa", "Bachata", "Ballet"];
 
-const initialData: EditableCompetition[] = [
-  {
-    id: 1,
-    title: "Championnat National 2026",
-    type: "Championnat National",
-    status: "open",
-    dateStart: "2026-03-15",
-    dateEnd: "2026-03-20",
-    location: "Tunis",
-    athletesLabel: "200+",
-    disciplines: ["Classique", "Contemporain"],
-    description: "Le grand rendez-vous annuel de la danse tunisienne.\n\nUne semaine de compétition réunissant les meilleurs athlètes du pays.",
-    heroImage: "",
-    galleryImages: [],
-    documents: [],
-    programme: [
-      { id: "p1", time: "09:00", title: "Cérémonie d'ouverture", detail: "Hall principal" },
-      { id: "p2", time: "10:30", title: "Phases qualificatives", detail: "Plateau A & B" },
-    ],
-    participants: [],
-    results: [],
-  },
-  {
-    id: 2,
-    title: "Coupe de Tunisie",
-    type: "Coupe de Tunisie",
-    status: "closed",
-    dateStart: "2026-04-28",
-    dateEnd: "2026-04-30",
-    location: "Sousse",
-    athletesLabel: "350+",
-    disciplines: ["Hip-Hop", "Jazz"],
-    description: "",
-    heroImage: "",
-    galleryImages: [],
-    documents: [],
-    programme: [],
-    participants: [],
-    results: [],
-  },
-];
-
 const emptyComp = (): EditableCompetition => ({
-  id: Date.now(),
+  id: 0,
   title: "",
   type: TYPES[0],
   status: "upcoming",
@@ -132,46 +94,48 @@ const emptyComp = (): EditableCompetition => ({
   results: [],
 });
 
-const ImageField = ({ value, onChange, label, ratio = "aspect-video" }: { value: string; onChange: (v: string) => void; label: string; ratio?: string }) => {
-  const onFile = (f: File | null) => {
-    if (!f) return;
-    onChange(URL.createObjectURL(f));
-  };
-  return (
-    <div className="space-y-2">
-      <Label>{label}</Label>
-      <div className={`relative ${ratio} bg-muted rounded-lg overflow-hidden border border-dashed border-border flex items-center justify-center`}>
-        {value ? (
-          <img src={value} alt="" className="w-full h-full object-cover" />
-        ) : (
-          <div className="flex flex-col items-center text-muted-foreground text-xs">
-            <ImageIcon className="w-6 h-6 mb-1" />
-            Aucune image
-          </div>
-        )}
-      </div>
-      <div className="flex gap-2">
-        <label className="inline-flex items-center gap-2 text-xs px-3 py-2 rounded-md border border-border cursor-pointer hover:bg-muted">
-          <Upload className="w-3.5 h-3.5" /> Téléverser
-          <input type="file" accept="image/*" className="hidden" onChange={(e) => onFile(e.target.files?.[0] || null)} />
-        </label>
-        {value && (
-          <Button type="button" variant="ghost" size="sm" onClick={() => onChange("")}>
-            <Trash2 className="w-3.5 h-3.5 mr-1" /> Retirer
-          </Button>
-        )}
-      </div>
-    </div>
-  );
-};
+const toEditable = (raw: ContentItem): EditableCompetition => ({
+  id: raw.id,
+  title: (raw.title as string) || "",
+  type: (raw.type as string) || TYPES[0],
+  status: (raw.status as Status) || "upcoming",
+  dateStart: (raw.dateStart as string) || "",
+  dateEnd: (raw.dateEnd as string) || "",
+  location: (raw.location as string) || "",
+  athletesLabel: (raw.athletesLabel as string) || "",
+  disciplines: (raw.disciplines as string[]) || [],
+  description: (raw.description as string) || "",
+  heroImage: (raw.heroImage as string) || "",
+  galleryImages: ((raw.galleryImages as string[]) || []).map(contentUrl),
+  documents: (raw.documents as AttachedDoc[]) || [],
+  programme: (raw.programme as ProgrammeItem[]) || [],
+  participants: (raw.participants as Participant[]) || [],
+  results: (raw.results as ResultRow[]) || [],
+});
 
 const AdminCompetitions = () => {
   const [search, setSearch] = useState("");
-  const [items, setItems] = useState<EditableCompetition[]>(initialData);
+  const [items, setItems] = useState<EditableCompetition[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [draft, setDraft] = useState<EditableCompetition>(emptyComp());
   const [isNew, setIsNew] = useState(true);
   const { toast } = useToast();
+
+  const load = async () => {
+    try {
+      setLoading(true);
+      const data = await adminListContent("competitions");
+      setItems(data.map(toEditable));
+    } catch (error) {
+      toast({ title: "Chargement impossible", description: (error as Error).message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { void load(); }, []);
 
   const filtered = items.filter(
     (c) => c.title.toLowerCase().includes(search.toLowerCase()) || c.location.toLowerCase().includes(search.toLowerCase()),
@@ -188,19 +152,35 @@ const AdminCompetitions = () => {
     setDialogOpen(true);
   };
 
-  const handleDelete = (id: number) => {
-    setItems((prev) => prev.filter((c) => c.id !== id));
-    toast({ title: "Compétition supprimée" });
+  const handleDelete = async (id: number) => {
+    try {
+      await adminDeleteContent("competitions", id);
+      setItems((prev) => prev.filter((c) => c.id !== id));
+      toast({ title: "Compétition supprimée" });
+    } catch (error) {
+      toast({ title: "Suppression impossible", description: (error as Error).message, variant: "destructive" });
+    }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!draft.title.trim()) {
       toast({ title: "Le titre est requis", variant: "destructive" });
       return;
     }
-    setItems((prev) => (isNew ? [draft, ...prev] : prev.map((c) => (c.id === draft.id ? draft : c))));
-    setDialogOpen(false);
-    toast({ title: isNew ? "Compétition créée" : "Compétition modifiée" });
+    try {
+      setSaving(true);
+      const payload = { ...draft, id: undefined };
+      const saved = isNew
+        ? await adminCreateContent("competitions", payload)
+        : await adminUpdateContent("competitions", draft.id, payload);
+      setItems((prev) => (isNew ? [toEditable(saved), ...prev] : prev.map((c) => (c.id === saved.id ? toEditable(saved) : c))));
+      setDialogOpen(false);
+      toast({ title: isNew ? "Compétition créée" : "Compétition modifiée", description: "Publiée sur le site." });
+    } catch (error) {
+      toast({ title: "Enregistrement impossible", description: (error as Error).message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const update = <K extends keyof EditableCompetition>(k: K, v: EditableCompetition[K]) => setDraft((d) => ({ ...d, [k]: v }));
@@ -213,9 +193,13 @@ const AdminCompetitions = () => {
   };
 
   // Gallery
-  const addGalleryFiles = (files: FileList | null) => {
+  const addGalleryFiles = async (files: FileList | null) => {
     if (!files) return;
-    const urls = Array.from(files).map((f) => URL.createObjectURL(f));
+    const urls: string[] = [];
+    for (const file of Array.from(files)) {
+      const url = await uploadMediaFile(file);
+      if (url) urls.push(url);
+    }
     update("galleryImages", [...draft.galleryImages, ...urls]);
   };
   const removeGallery = (i: number) => update("galleryImages", draft.galleryImages.filter((_, idx) => idx !== i));
@@ -227,7 +211,6 @@ const AdminCompetitions = () => {
       name: f.name,
       type: f.type || f.name.split(".").pop() || "file",
       size: `${(f.size / 1024).toFixed(0)} KB`,
-      url: URL.createObjectURL(f),
     }));
     update("documents", [...draft.documents, ...docs]);
   };
@@ -287,7 +270,7 @@ const AdminCompetitions = () => {
 
             {/* GENERAL */}
             <TabsContent value="general" className="space-y-4 pt-4">
-              <ImageField value={draft.heroImage} onChange={(v) => update("heroImage", v)} label="Image principale (bannière)" />
+              <ImageUploadField value={draft.heroImage} onChange={(v) => update("heroImage", v)} label="Image principale (bannière)" />
 
               <div className="space-y-2">
                 <Label>Titre</Label>
@@ -376,7 +359,7 @@ const AdminCompetitions = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {draft.galleryImages.map((g, i) => (
                     <div key={i} className="relative aspect-square rounded-lg overflow-hidden border border-border group">
-                      <img src={g} alt="" className="w-full h-full object-cover" />
+                      <img src={contentUrl(g)} alt="" className="w-full h-full object-cover" />
                       <button
                         type="button"
                         onClick={() => removeGallery(i)}
@@ -389,7 +372,7 @@ const AdminCompetitions = () => {
                   <label className="aspect-square rounded-lg border border-dashed border-border flex flex-col items-center justify-center text-xs text-muted-foreground cursor-pointer hover:bg-muted">
                     <Upload className="w-5 h-5 mb-1" />
                     Ajouter
-                    <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => addGalleryFiles(e.target.files)} />
+                    <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => { void addGalleryFiles(e.target.files); e.target.value = ""; }} />
                   </label>
                 </div>
               </div>
@@ -403,7 +386,7 @@ const AdminCompetitions = () => {
                   <Input className="col-span-4" placeholder="Titre" value={p.title} onChange={(e) => updateProg(p.id, "title", e.target.value)} />
                   <Input className="col-span-5" placeholder="Détail / Lieu" value={p.detail} onChange={(e) => updateProg(p.id, "detail", e.target.value)} />
                   <Button variant="ghost" size="icon" className="col-span-1 text-destructive" onClick={() => removeProg(p.id)}>
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 w-4" />
                   </Button>
                 </div>
               ))}
@@ -473,7 +456,10 @@ const AdminCompetitions = () => {
 
           <div className="flex justify-end gap-2 pt-4 border-t mt-4">
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
-            <Button onClick={handleSave}>Enregistrer</Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+              Enregistrer
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -486,58 +472,64 @@ const AdminCompetitions = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Image</TableHead>
-                <TableHead>Titre</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Dates</TableHead>
-                <TableHead>Lieu</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead>Médias</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>
-                    <div className="w-14 h-10 rounded-md bg-muted overflow-hidden flex items-center justify-center">
-                      {item.heroImage ? (
-                        <img src={item.heroImage} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <ImageIcon className="w-4 h-4 text-muted-foreground" />
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-medium">{item.title}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{item.type}</TableCell>
-                  <TableCell className="text-xs">{item.dateStart} → {item.dateEnd}</TableCell>
-                  <TableCell>{item.location}</TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusLabels[item.status].cls}`}>
-                      {statusLabels[item.status].label}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {item.galleryImages.length} 📷 · {item.documents.length} 📄
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(item)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)} className="text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          {filtered.length === 0 && <p className="text-center text-muted-foreground py-8">Aucun résultat</p>}
+          {loading ? (
+            <div className="flex justify-center py-10"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Image</TableHead>
+                    <TableHead>Titre</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Dates</TableHead>
+                    <TableHead>Lieu</TableHead>
+                    <TableHead>Statut</TableHead>
+                    <TableHead>Médias</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell>
+                        <div className="w-14 h-10 rounded-md bg-muted overflow-hidden flex items-center justify-center">
+                          {item.heroImage ? (
+                            <img src={contentUrl(item.heroImage)} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium">{item.title}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{item.type}</TableCell>
+                      <TableCell className="text-xs">{item.dateStart} → {item.dateEnd}</TableCell>
+                      <TableCell>{item.location}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusLabels[item.status].cls}`}>
+                          {statusLabels[item.status].label}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {item.galleryImages.length} 📷 · {item.documents.length} 📄
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => openEdit(item)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)} className="text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              {filtered.length === 0 && <p className="text-center text-muted-foreground py-8">Aucun résultat</p>}
+            </>
+          )}
         </CardContent>
       </Card>
     </div>

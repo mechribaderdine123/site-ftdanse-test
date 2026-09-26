@@ -9,10 +9,13 @@ import {
   ArrowLeft,
   Info,
   Music2,
+  BadgeCheck,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useEffect, useState } from "react";
+import { apiRequest } from "@/lib/api";
 import {
   Sidebar,
   SidebarContent,
@@ -35,7 +38,7 @@ const menuItems = [
   { title: "Compétitions", url: "/admin/competitions", icon: Trophy },
   { title: "Résultats", url: "/admin/results", icon: Medal },
   { title: "Styles de Danse", url: "/admin/disciplines", icon: Music2 },
-  { title: "Annuaire", url: "/admin/directory", icon: Users },
+  { title: "Annuaire & Validations", url: "/admin/directory", icon: Users },
   { title: "Médiathèque", url: "/admin/media", icon: Image },
 ];
 
@@ -44,6 +47,29 @@ export function AdminSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { signOut } = useAuth();
+
+  // Compteur de validations en attente (badge sur l'entrée Annuaire).
+  const [validationsCount, setValidationsCount] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([
+      apiRequest<{ approvalStatus?: string }[]>("/api/admin/license-requests").catch(() => []),
+      apiRequest<{ status?: string }[]>("/api/admin/activation-requests").catch(() => []),
+      apiRequest<{ status?: string }[]>("/api/admin/club-member-renewals").catch(() => []),
+      apiRequest<{ status?: string }[]>("/api/admin/license-renewals").catch(() => []),
+    ])
+      .then(([clubLicenses, activations, memberRenewals, individualRenewals]) => {
+        if (cancelled) return;
+        setValidationsCount(
+          clubLicenses.filter((r) => r.approvalStatus === "pending").length +
+          activations.filter((r) => r.status === "pending").length +
+          memberRenewals.filter((r) => r.status === "pending").length +
+          individualRenewals.filter((r) => r.status === "submitted").length,
+        );
+      })
+      .catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [location.pathname]);
 
   const isActive = (path: string) =>
     path === "/admin"
@@ -54,13 +80,16 @@ export function AdminSidebar() {
     <Sidebar collapsible="icon">
       <SidebarContent>
         <SidebarGroup>
-          <div className="flex items-center gap-3 px-3 py-4">
-            <img src={logoFtdap} alt="FTDAP" className="h-8 w-8 shrink-0" />
-            {!collapsed && (
-              <span className="font-bold text-sm text-sidebar-foreground">
-                Admin FTDAP
-              </span>
-            )}
+          <div className="flex items-center px-3 py-4 min-w-0">
+            {/* Logo paysage (209x60) : ratio préservé, sur pastille blanche pour
+                rester lisible sur le fond bleu foncé de la sidebar. */}
+            <div className="shrink-0 rounded-lg bg-white px-2 py-1.5 flex items-center justify-center">
+              <img
+                src={logoFtdap}
+                alt="FTDAP"
+                className={`object-contain ${collapsed ? "h-6 max-w-8" : "h-8 w-auto max-w-[150px]"}`}
+              />
+            </div>
           </div>
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -76,6 +105,14 @@ export function AdminSidebar() {
                     >
                       <item.icon className="mr-2 h-4 w-4" />
                       {!collapsed && <span>{item.title}</span>}
+                      {!collapsed && item.url === "/admin/directory" && validationsCount > 0 && (
+                        <span className="ml-auto inline-flex items-center justify-center h-5 min-w-5 px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-medium">
+                          {validationsCount}
+                        </span>
+                      )}
+                      {collapsed && item.url === "/admin/directory" && validationsCount > 0 && (
+                        <BadgeCheck className="absolute top-1 right-1 w-3 h-3 text-destructive" />
+                      )}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

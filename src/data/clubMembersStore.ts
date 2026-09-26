@@ -1,4 +1,4 @@
-export type ApprovalStatus = "pending" | "accepted" | "rejected";
+export type ApprovalStatus = "pending" | "accepted" | "rejected" | "approved";
 export type PaymentStatus = "paid" | "unpaid";
 
 export interface UploadedDoc {
@@ -6,6 +6,10 @@ export interface UploadedDoc {
   uploadedAt: string;
   size?: number;
   dataUrl?: string; // base64 image data for preview
+  /** Pending file chosen in the form; uploaded to the API on save. */
+  file?: File;
+  /** Server-side stored name (documents persisted through the API). */
+  storedName?: string;
 }
 
 export interface ClubMember {
