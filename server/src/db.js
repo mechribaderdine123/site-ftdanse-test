@@ -106,6 +106,31 @@ export const initializeDatabase = async () => {
       UNIQUE(user_id, renewal_year)
     );
 
+    -- club_members must be created BEFORE club_member_renewals (FK target).
+    CREATE TABLE IF NOT EXISTS club_members (
+      id SERIAL PRIMARY KEY,
+      club_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      member_id VARCHAR(30) UNIQUE,
+      full_name VARCHAR(255) NOT NULL,
+      birth_date VARCHAR(20),
+      age INTEGER,
+      gender VARCHAR(2) DEFAULT 'M',
+      discipline VARCHAR(255),
+      phone VARCHAR(100), email VARCHAR(255),
+      season VARCHAR(20), quality VARCHAR(50),
+      club_name VARCHAR(255),
+      emergency_contact JSONB,
+      documents JSONB NOT NULL DEFAULT '{}'::jsonb,
+      payment JSONB NOT NULL DEFAULT '{}'::jsonb,
+      approval_status VARCHAR(50) NOT NULL DEFAULT 'pending',
+      license_number VARCHAR(30) UNIQUE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS club_members_club_idx ON club_members (club_user_id);
+    CREATE UNIQUE INDEX IF NOT EXISTS club_members_member_id_idx ON club_members (member_id);
+    CREATE UNIQUE INDEX IF NOT EXISTS club_members_license_idx ON club_members (license_number);
+
     -- Renewal request for club-managed members (files uploaded by the club,
     -- reviewed by the admin; approval extends the member license by one year).
     CREATE TABLE IF NOT EXISTS club_member_renewals (
@@ -157,30 +182,6 @@ export const initializeDatabase = async () => {
     ALTER TABLE users ADD COLUMN IF NOT EXISTS act_year INTEGER;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS act_number VARCHAR(50);
     ALTER TABLE users ADD COLUMN IF NOT EXISTS emergency_contact JSONB;
-
-    CREATE TABLE IF NOT EXISTS club_members (
-      id SERIAL PRIMARY KEY,
-      club_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      member_id VARCHAR(30) UNIQUE,
-      full_name VARCHAR(255) NOT NULL,
-      birth_date VARCHAR(20),
-      age INTEGER,
-      gender VARCHAR(2) DEFAULT 'M',
-      discipline VARCHAR(255),
-      phone VARCHAR(100), email VARCHAR(255),
-      season VARCHAR(20), quality VARCHAR(50),
-      club_name VARCHAR(255),
-      emergency_contact JSONB,
-      documents JSONB NOT NULL DEFAULT '{}'::jsonb,
-      payment JSONB NOT NULL DEFAULT '{}'::jsonb,
-      approval_status VARCHAR(50) NOT NULL DEFAULT 'pending',
-      license_number VARCHAR(30) UNIQUE,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-    CREATE INDEX IF NOT EXISTS club_members_club_idx ON club_members (club_user_id);
-    CREATE UNIQUE INDEX IF NOT EXISTS club_members_member_id_idx ON club_members (member_id);
-    CREATE UNIQUE INDEX IF NOT EXISTS club_members_license_idx ON club_members (license_number);
 
     CREATE TABLE IF NOT EXISTS competition_entries (
       id SERIAL PRIMARY KEY,
