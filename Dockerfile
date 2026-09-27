@@ -10,6 +10,10 @@ ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
 
 FROM nginx:alpine
+# Railway route les domaines publics vers le port exposé par le conteneur
+# (défini ici à 8080 pour correspondre au port cible du domaine Railway).
+EXPOSE 8080
+RUN sed -i 's/listen 80;/listen 8080;/' /etc/nginx/templates/default.conf.template
 COPY --from=builder /app/dist /usr/share/nginx/html
 # Template résolu au démarrage du conteneur via la variable API_HOST
 # (docker-compose : "api" ; Railway : <service>.railway.internal).
