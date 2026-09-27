@@ -13,9 +13,11 @@ FROM nginx:alpine
 # Railway route les domaines publics vers le port exposé par le conteneur
 # (défini ici à 8080 pour correspondre au port cible du domaine Railway).
 EXPOSE 8080
-# Template résolu au démarrage du conteneur via la variable API_HOST
-# (docker-compose : "api" ; Railway : <service>.railway.internal).
+# Template résolu au démarrage du conteneur via les variables API_HOST et
+# NGINX_RESOLVER (docker-compose : "api" + DNS Docker 127.0.0.11 ;
+# Railway : <service>.railway.internal + DNS privé fd12::10).
 COPY nginx/default.conf.template /etc/nginx/templates/default.conf.template
 RUN sed -i 's/listen 80;/listen 8080;/' /etc/nginx/templates/default.conf.template
 COPY --from=builder /app/dist /usr/share/nginx/html
 ENV API_HOST=api
+ENV NGINX_RESOLVER=127.0.0.11
