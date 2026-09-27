@@ -1,0 +1,13 @@
+[
+  {
+    "id": 1,
+    "title": "Example news",
+    "slug": "example-news",
+    "excerpt": "This is a local news example.",
+    "content": "This news item is stored in a local JSON file.",
+    "category": "event",
+    "image_url": "",
+    "is_published": true,
+    "published_at": "2026-07-13T14:27:35.120Z"
+  }
+]
